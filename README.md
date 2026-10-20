@@ -41,7 +41,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 
 ### Not built or not verified yet
 
-- The Docker sandbox has not been run in this development environment because Docker is unavailable here. The security settings in the runner need validation on a machine with Docker Desktop and Linux containers.
+- The Docker sandbox has not been run in this development environment because Docker is unavailable here. Docker-backed abuse checks cover network isolation, read-only root, timeout, output truncation, and runtime memory/process limits; they skip until Docker and the preloaded Python image are available. The security settings still need validation on a machine with Docker Desktop and Linux containers.
 - Authentication, user accounts, hosted deployment, GitHub App, and VS Code extension do not exist yet.
 - No Mode 2 repository ingestion/repair engine, trained defect-risk model, or benchmark evaluation report exists yet.
 - Mode 1 does not have a general trusted oracle, broad optimization-proposal coverage, or a curated golden evaluation set. The proposal rules currently cover one pattern only. Property checks use user-supplied predicates over generated inputs, not a shrinking property-testing framework.
