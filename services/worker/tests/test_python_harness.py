@@ -132,6 +132,35 @@ def test_harness_skips_differential_cases_when_reference_disagrees_with_sample(t
     assert results[2]["outcome"] == "skipped"
 
 
+def test_harness_skips_candidate_comparison_when_references_disagree(tmp_path) -> None:
+    (tmp_path / "submission.py").write_text("def solve(value): return value * 2\n", encoding="utf-8")
+    (tmp_path / "reference.py").write_text("def solve(value): return value * 2\n", encoding="utf-8")
+    independent_code = "def solve(value): return value * 2 if value <= 2 else value + 1\n"
+    (tmp_path / "independent_reference.py").write_text(independent_code, encoding="utf-8")
+    harness_path = tmp_path / "main.py"
+    harness_path.write_text(
+        build_function_harness(
+            "solve",
+            [{"name": "sample", "args": [2], "kwargs": {}, "expected": 4}],
+            reference_code="def solve(value): return value * 2",
+            independent_reference_code=independent_code,
+            generated_samples=[{"name": "generated_1", "args": [3], "kwargs": {}}],
+            requested_generated=1,
+        ),
+        encoding="utf-8",
+    )
+    completed = subprocess.run(
+        [sys.executable, str(harness_path)], capture_output=True, text=True, timeout=5
+    )
+    output = next(
+        line for line in completed.stdout.splitlines() if line.startswith("AXIOMA_RESULT:")
+    )
+    results = json.loads(output[len("AXIOMA_RESULT:") :])
+    assert results[1]["outcome"] == "passed"
+    assert results[2]["outcome"] == "skipped"
+    assert "candidate comparison not run" in results[2]["details"]["reason"]
+
+
 def test_harness_measures_line_and_opcode_events_for_increasing_inputs(tmp_path) -> None:
     (tmp_path / "submission.py").write_text(
         "def solve(value):\n    total = 0\n    for item in range(value):\n        total += item\n    return total\n",
@@ -167,6 +196,7 @@ def test_harness_measures_line_and_opcode_events_for_increasing_inputs(tmp_path)
     assert all(
         left["opcode_events"] < right["opcode_events"] for left, right in zip(points, points[1:])
     )
+    assert all(point["peak_traced_bytes"] > 0 for point in points)
 
 
 def test_optimization_checks_equivalence_and_measures_both_variants(tmp_path) -> None:
@@ -213,6 +243,7 @@ def test_optimization_checks_equivalence_and_measures_both_variants(tmp_path) ->
         point["optimized_opcode_events"] < point["opcode_events"]
         for point in complexity["optimized_measurements"]
     )
+    assert all(point["optimized_peak_traced_bytes"] >= 0 for point in complexity["optimized_measurements"])
 
 
 def test_optimization_measurements_are_skipped_when_outputs_differ(tmp_path) -> None:

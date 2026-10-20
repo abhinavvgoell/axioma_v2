@@ -32,7 +32,12 @@ from axioma_worker.python_complexity import (
     estimate_constraint_scale,
     triangulate_python_complexity,
 )
-from axioma_worker.java_complexity import add_java_wall_time_fit, analyze_java_complexity
+from axioma_worker.java_complexity import (
+    add_java_wall_time_fit,
+    analyze_java_complexity,
+    estimate_java_heap_pool_peak_growth,
+)
+from axioma_worker.python_complexity import estimate_python_peak_memory
 from axioma_worker.mutation_testing import generate_mutants
 from axioma_worker.python_harness import build_function_harness
 from axioma_worker.sandbox import DockerSandbox, SandboxUnavailable
@@ -152,6 +157,11 @@ def run_claimed_job(
                 if any(not isinstance(sample, FunctionSample) for sample in problem.samples):
                     raise ValueError("Function interfaces require function-style samples")
                 reference_code = input_payload.get("reference_code")
+                independent_reference_code = input_payload.get("independent_reference_code")
+                if independent_reference_code and not reference_code:
+                    raise ValueError("independent_reference_code requires reference_code")
+                if independent_reference_code and independent_reference_code == reference_code:
+                    raise ValueError("independent_reference_code must differ from reference_code")
                 generated_samples: list[dict] = []
                 if exhaustive_mode:
                     generated_samples = generate_exhaustive_inputs(problem)
@@ -210,10 +220,13 @@ def run_claimed_job(
                             for mutant in generate_mutants(reference_code or "", mutation_count)
                         ],
                         mutation_tests_requested=mutation_count,
+                        independent_reference_code=independent_reference_code,
                     )
                     harness_files = {"main.py": harness.encode("utf-8")}
                     if reference_code:
                         harness_files["reference.py"] = reference_code.encode("utf-8")
+                    if independent_reference_code:
+                        harness_files["independent_reference.py"] = independent_reference_code.encode("utf-8")
                     if optimization_code:
                         harness_files["optimized.py"] = optimization_code.encode("utf-8")
                     if property_code:
@@ -266,6 +279,7 @@ def run_claimed_job(
                         complexity_benchmarks=[
                             sample.model_dump(mode="json") for sample in benchmark_samples
                         ],
+                        independent_reference_enabled=bool(independent_reference_code),
                     )
                     extra_files = {"Harness.java": harness.encode("utf-8")}
                     source_paths = [f"/work/{class_name}.java"]
@@ -276,6 +290,13 @@ def run_claimed_job(
                             )
                         extra_files["Reference.java"] = reference_code.encode("utf-8")
                         source_paths.append("/work/Reference.java")
+                    if independent_reference_code:
+                        if class_name == "ReferenceIndependent":
+                            raise ValueError(
+                                "Java submission class name cannot be ReferenceIndependent when using an independent reference"
+                            )
+                        extra_files["ReferenceIndependent.java"] = independent_reference_code.encode("utf-8")
+                        source_paths.append("/work/ReferenceIndependent.java")
                     if property_code:
                         extra_files["AxiomaProperties.java"] = property_code.encode("utf-8")
                         source_paths.append("/work/AxiomaProperties.java")
@@ -578,11 +599,19 @@ def run_claimed_job(
                             "language": language,
                             "elapsed_ms": elapsed_ms,
                             "reference_code_provided": bool(input_payload.get("reference_code")),
+                            "independent_reference_code_provided": bool(
+                                input_payload.get("independent_reference_code")
+                            ),
                             "generated_tests_requested": generated_count_effective,
                             "exhaustive_tests": exhaustive_mode,
                             "reference_limit": (
-                                "A user-supplied reference matched the declared examples; its correctness "
-                                "has not been independently established."
+                                (
+                                    "Two user-supplied references agreed with each other and matched the "
+                                    "declared examples; shared errors remain possible."
+                                    if input_payload.get("independent_reference_code")
+                                    else "A user-supplied reference matched the declared examples; its "
+                                    "correctness has not been independently established."
+                                )
                                 if input_payload.get("reference_code")
                                 else None
                             ),
@@ -707,8 +736,8 @@ def run_claimed_job(
                                 "mutants": outcomes,
                                 "analysis_note": mutation_report.get("reason"),
                                 "reference_limit": (
-                                    "The reference matched provided samples; this does not establish "
-                                    "that it is correct for every input."
+                                    "The supplied reference set passed its sample checks; this does not "
+                                    "establish correctness for every input or exclude shared errors."
                                 ),
                             },
                         },
@@ -747,6 +776,7 @@ def run_claimed_job(
                     complexity,
                     details={
                         **complexity.details,
+                        "space_measurement": estimate_python_peak_memory(measured_points),
                         "constraint_scalability": estimate_constraint_scale(
                             problem.constraints, complexity.estimate
                         ),
@@ -804,6 +834,16 @@ def run_claimed_job(
                                 for point in optimization_points
                             ],
                         )
+                    optimized_space_measurement = estimate_python_peak_memory(
+                        optimization_points, "optimized_peak_traced_bytes"
+                    )
+                    optimized_complexity = replace(
+                        optimized_complexity,
+                        details={
+                            **optimized_complexity.details,
+                            "space_measurement": optimized_space_measurement,
+                        },
+                    )
 
                     def complexity_view(value: ComplexityEstimate) -> dict:
                         return {
@@ -931,6 +971,7 @@ def run_claimed_job(
                     complexity,
                     details={
                         **complexity.details,
+                        "space_measurement": estimate_java_heap_pool_peak_growth(measured_points),
                         "constraint_scalability": estimate_constraint_scale(
                             problem.constraints, complexity.estimate
                         ),
@@ -977,6 +1018,15 @@ def run_claimed_job(
                         add_java_wall_time_fit(optimized_static, optimization_points, "optimized_elapsed_ns")
                         if optimization_points
                         else optimized_static
+                    )
+                    optimized_complexity = replace(
+                        optimized_complexity,
+                        details={
+                            **optimized_complexity.details,
+                            "space_measurement": estimate_java_heap_pool_peak_growth(
+                                optimization_points, "optimized_heap_pool_peak_increase_bytes"
+                            ),
+                        },
                     )
 
                     def java_complexity_view(value: ComplexityEstimate) -> dict:

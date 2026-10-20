@@ -4,6 +4,7 @@ from axioma_worker.python_complexity import (
     add_line_event_fit,
     analyze_python_complexity,
     estimate_constraint_scale,
+    estimate_python_peak_memory,
     triangulate_python_complexity,
 )
 
@@ -112,3 +113,33 @@ def test_constraint_scale_does_not_infer_size_from_scalar_ranges() -> None:
     )
 
     assert result["state"] == "not_estimated"
+
+
+def test_peak_traced_memory_fit_is_separate_from_time_method_disagreement() -> None:
+    points = [
+        {"size": size, "peak_traced_bytes": size * 16}
+        for size in (10, 20, 40, 80)
+    ]
+
+    result = estimate_python_peak_memory(points)
+
+    assert result["method"] == "python_tracemalloc_peak_fit"
+    assert result["state"] == "estimated"
+    assert result["estimate"] == "O(n)"
+    assert result["confidence"] == "low"
+    assert len(result["points"]) == 4
+
+
+def test_peak_traced_memory_fit_requires_four_sizes() -> None:
+    result = estimate_python_peak_memory([{"size": 10, "peak_traced_bytes": 100}])
+
+    assert result["state"] == "not_estimated"
+
+
+def test_peak_traced_memory_does_not_fit_when_every_observation_is_zero() -> None:
+    points = [{"size": size, "peak_traced_bytes": 0} for size in (10, 20, 40, 80)]
+
+    result = estimate_python_peak_memory(points)
+
+    assert result["state"] == "not_estimated"
+    assert "No positive" in result["reason"]

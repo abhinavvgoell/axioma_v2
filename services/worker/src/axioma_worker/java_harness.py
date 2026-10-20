@@ -73,6 +73,7 @@ def build_java_function_harness(
     requested_property_tests: int = 0,
     optimization_enabled: bool = False,
     complexity_benchmarks: list[dict[str, Any]] | None = None,
+    independent_reference_enabled: bool = False,
 ) -> str:
     class_name, method_name = entrypoint.split(".", maxsplit=1)
     cases_source = ",\n            ".join(
@@ -101,6 +102,10 @@ import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryType;
+import java.lang.management.MemoryUsage;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -301,6 +306,43 @@ public class Harness {{
         }} finally {{ System.setOut(out); System.setErr(err); }}
     }}
 
+    static Long medianHeapPoolPeakIncrease(String className, String methodName, Object[] args) throws Exception {{
+        PrintStream out = System.out, err = System.err;
+        try {{
+            System.setOut(new PrintStream(new ByteArrayOutputStream()));
+            System.setErr(new PrintStream(new ByteArrayOutputStream()));
+            List<MemoryPoolMXBean> pools = new ArrayList<>();
+            for (MemoryPoolMXBean pool : ManagementFactory.getMemoryPoolMXBeans()) {{
+                if (pool.getType() != MemoryType.HEAP) continue;
+                try {{
+                    pool.resetPeakUsage();
+                    if (pool.getPeakUsage() != null && pool.getUsage() != null) pools.add(pool);
+                }} catch (UnsupportedOperationException ignored) {{ }}
+            }}
+            if (pools.isEmpty()) return null;
+            for (int warmup = 0; warmup < 5; warmup++) invoke(className, methodName, copyArgs(args));
+            long[] deltas = new long[9];
+            for (int trial = 0; trial < deltas.length; trial++) {{
+                long[] before = new long[pools.size()];
+                for (int index = 0; index < pools.size(); index++) {{
+                    MemoryPoolMXBean pool = pools.get(index);
+                    MemoryUsage usage = pool.getUsage();
+                    before[index] = usage == null ? 0 : usage.getUsed();
+                    pool.resetPeakUsage();
+                }}
+                invoke(className, methodName, copyArgs(args));
+                long delta = 0;
+                for (int index = 0; index < pools.size(); index++) {{
+                    MemoryUsage peak = pools.get(index).getPeakUsage();
+                    if (peak != null) delta += Math.max(0L, peak.getUsed() - before[index]);
+                }}
+                deltas[trial] = delta;
+            }}
+            Arrays.sort(deltas);
+            return deltas[deltas.length / 2];
+        }} finally {{ System.setOut(out); System.setErr(err); }}
+    }}
+
     static String result(String name, String outcome, String reason) {{
         return result(name, outcome, reason, "");
     }}
@@ -312,10 +354,12 @@ public class Harness {{
         return value + "}}}}";
     }}
 
-    static String benchmarkResult(int size, long elapsed, Long optimizedElapsed) {{
+    static String benchmarkResult(int size, long elapsed, Long heapPoolPeakIncrease, Long optimizedElapsed, Long optimizedHeapPoolPeakIncrease) {{
         String value = "{{\\\"size\\\":" + size + ",\\\"elapsed_ns\\\":" + elapsed
             + ",\\\"warmups\\\":5,\\\"trials\\\":9";
+        if (heapPoolPeakIncrease != null) value += ",\\\"heap_pool_peak_increase_bytes\\\":" + heapPoolPeakIncrease;
         if (optimizedElapsed != null) value += ",\\\"optimized_elapsed_ns\\\":" + optimizedElapsed;
+        if (optimizedHeapPoolPeakIncrease != null) value += ",\\\"optimized_heap_pool_peak_increase_bytes\\\":" + optimizedHeapPoolPeakIncrease;
         return value + "}}";
     }}
 
@@ -351,6 +395,11 @@ public class Harness {{
             try {{
                 Object actual = invokeQuietly("Reference", {_java_string(method_name)}, test.args());
                 if (equal(actual, test.expected())) {{ outcome = "passed"; reason = ""; }}
+                if ({str(independent_reference_enabled).lower()}) {{
+                    Object independent = invokeQuietly("ReferenceIndependent", {_java_string(method_name)}, test.args());
+                    if (!equal(actual, independent)) {{ outcome = "failed"; reason = "independent references disagree"; }}
+                    else if (!equal(independent, test.expected())) {{ outcome = "failed"; reason = "independent reference differs from provided sample"; }}
+                }}
             }} catch (Throwable error) {{
                 Throwable cause = error instanceof java.lang.reflect.InvocationTargetException && error.getCause() != null ? error.getCause() : error;
                 reason = cause.getClass().getSimpleName() + ": " + String.valueOf(cause.getMessage());
@@ -365,9 +414,16 @@ public class Harness {{
             if (referenceValid) {{
                 try {{
                     Object expected = invokeQuietly("Reference", {_java_string(method_name)}, test.args());
-                    Object actual = invokeQuietly({_java_string(class_name)}, {_java_string(method_name)}, test.args());
-                    outcome = equal(actual, expected) ? "passed" : "failed";
-                    reason = outcome.equals("passed") ? "" : "candidate differs from user-supplied reference";
+                    Object independent = expected;
+                    if ({str(independent_reference_enabled).lower()}) independent = invokeQuietly("ReferenceIndependent", {_java_string(method_name)}, test.args());
+                    if (!equal(expected, independent)) {{
+                        outcome = "skipped";
+                        reason = "independent references disagree; candidate comparison not run";
+                    }} else {{
+                        Object actual = invokeQuietly({_java_string(class_name)}, {_java_string(method_name)}, test.args());
+                        outcome = equal(actual, expected) ? "passed" : "failed";
+                        reason = outcome.equals("passed") ? "" : {_java_string('candidate differs from corroborated user-supplied references' if independent_reference_enabled else 'candidate differs from user-supplied reference')};
+                    }}
                     allExecutionChecksPassed &= outcome.equals("passed");
                 }} catch (Throwable error) {{
                     Throwable cause = error instanceof java.lang.reflect.InvocationTargetException && error.getCause() != null ? error.getCause() : error;
@@ -386,7 +442,9 @@ public class Harness {{
             results.add(result("generated_" + (index + 1), "skipped", "no distinct valid input could be generated"));
         }}
         List<String> propertyExampleResults = new ArrayList<>();
-        boolean propertyValid = true;
+        boolean propertyValid = {str(requested_property_tests == 0).lower()};
+        if ({str(requested_property_tests > 0).lower()}) {{
+            propertyValid = true;
         for (int index = 0; index < cases.size(); index++) {{
             Case test = cases.get(index);
             String outcome = "skipped", reason = "candidate did not pass the provided example";
@@ -403,8 +461,10 @@ public class Harness {{
             propertyValid &= outcome.equals("passed");
             propertyExampleResults.add(result("property/" + test.name(), outcome, reason));
         }}
+        }}
         List<String> propertyGeneratedResults = new ArrayList<>();
-        boolean allPropertyChecksPassed = propertyValid;
+        boolean allPropertyChecksPassed = {str(requested_property_tests == 0).lower()} || propertyValid;
+        if ({str(requested_property_tests > 0).lower()}) {{
         for (Case test : propertyCases) {{
             String outcome = "skipped", reason = "property did not pass its example checks";
             if (propertyValid) {{
@@ -425,10 +485,12 @@ public class Harness {{
             allPropertyChecksPassed = false;
             propertyGeneratedResults.add(result("property/generated_" + (index + 1), "skipped", "no distinct valid input could be generated"));
         }}
+        }}
         System.out.println("AXIOMA_PROPERTY:{{\\\"example_checks\\\":[" + String.join(",", propertyExampleResults)
             + "],\\\"generated_checks\\\":[" + String.join(",", propertyGeneratedResults)
             + "],\\\"requested\\\":{requested_property_tests},\\\"generated\\\":" + propertyCases.size()
-            + ",\\\"property_validated_on_examples\\\":" + propertyValid + "}}");
+            + ",\\\"property_validated_on_examples\\\":"
+            + ({str(requested_property_tests > 0).lower()} ? Boolean.toString(propertyValid) : "null") + "}}");
 
         List<String> optimizationResults = new ArrayList<>();
         boolean optimizationValid = {str(optimization_enabled).lower()};
@@ -488,10 +550,12 @@ public class Harness {{
             if (allExecutionChecksPassed && allPropertyChecksPassed) {{
                 for (Benchmark benchmark : benchmarkCases) {{
                     long elapsed = medianElapsed({_java_string(class_name)}, {_java_string(method_name)}, benchmark.args());
-                    measurements.add(benchmarkResult(benchmark.size(), elapsed, null));
+                    Long heapPoolPeakIncrease = medianHeapPoolPeakIncrease({_java_string(class_name)}, {_java_string(method_name)}, benchmark.args());
+                    measurements.add(benchmarkResult(benchmark.size(), elapsed, heapPoolPeakIncrease, null, null));
                     if (optimizationValid) {{
                         long optimizedElapsed = medianElapsed("AxiomaOptimized", {_java_string(method_name)}, benchmark.args());
-                        optimizedMeasurements.add(benchmarkResult(benchmark.size(), elapsed, optimizedElapsed));
+                        Long optimizedHeapPoolPeakIncrease = medianHeapPoolPeakIncrease("AxiomaOptimized", {_java_string(method_name)}, benchmark.args());
+                        optimizedMeasurements.add(benchmarkResult(benchmark.size(), elapsed, heapPoolPeakIncrease, optimizedElapsed, optimizedHeapPoolPeakIncrease));
                     }}
                 }}
                 skippedReason = "none";

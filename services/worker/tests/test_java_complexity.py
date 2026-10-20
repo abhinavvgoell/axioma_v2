@@ -1,4 +1,7 @@
-from axioma_worker.java_complexity import analyze_java_complexity
+from axioma_worker.java_complexity import (
+    analyze_java_complexity,
+    estimate_java_heap_pool_peak_growth,
+)
 
 
 def test_counts_braced_nested_loops_in_selected_method() -> None:
@@ -30,3 +33,30 @@ def test_reports_recursion_as_unknown_and_missing_method() -> None:
 
     assert recursive.estimate == "unknown (recursion detected)"
     assert missing.estimate == "unknown (method not found)"
+
+
+def test_heap_pool_peak_increase_fit_estimates_space_separately() -> None:
+    points = [
+        {"size": size, "heap_pool_peak_increase_bytes": size * 24}
+        for size in (10, 20, 40, 80)
+    ]
+
+    result = estimate_java_heap_pool_peak_growth(points)
+
+    assert result["method"] == "java_heap_pool_peak_increase_fit"
+    assert result["state"] == "estimated"
+    assert result["estimate"] == "O(n)"
+    assert result["confidence"] == "low"
+    assert len(result["points"]) == 4
+
+
+def test_heap_pool_peak_increase_does_not_fit_when_every_observation_is_zero() -> None:
+    points = [
+        {"size": size, "heap_pool_peak_increase_bytes": 0}
+        for size in (10, 20, 40, 80)
+    ]
+
+    result = estimate_java_heap_pool_peak_growth(points)
+
+    assert result["state"] == "not_estimated"
+    assert "No positive" in result["reason"]

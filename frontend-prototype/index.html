@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#080808" />
+    <meta name="description" content="Axiōma makes code analysis easier to trust: clear findings, visible evidence, honest uncertainty." />
+    <title>Axiōma — Code review, with receipts.</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="ambient-light" aria-hidden="true"></div>
+    <header class="site-header">
+      <nav class="nav-bar" aria-label="Main navigation">
+        <a href="#top" class="nav-logo"><span class="nav-glyph">A.</span><span>axiōma</span><span class="nav-purpose">EVIDENCE, BUILT IN</span></a>
+        <div class="nav-links"><a href="#approach">WHY AXIŌMA</a><a href="#signals">METHOD</a><a href="#workspace">PREVIEW</a><a href="#footer">ABOUT</a></div>
+        <a class="nav-start" href="#workspace">OPEN THE PREVIEW <span>↗</span></a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero frame" aria-labelledby="hero-title">
+        <canvas class="vortex" id="vortex" aria-hidden="true"></canvas>
+        <div class="hero-shade" aria-hidden="true"></div>
+        <div class="hero-meta"><span>CODE INTELLIGENCE <i>—</i> EST. 2026</span><span>PYTHON&nbsp; / &nbsp;JAVA&nbsp; / &nbsp;EVIDENCE</span></div>
+        <div class="hero-service-labels" aria-hidden="true"><span>01&nbsp; SECURITY &amp; RELIABILITY</span><span>02&nbsp; COMPLEXITY &amp; QUALITY</span><span>03&nbsp; PROVENANCE &amp; CONFIDENCE</span></div>
+        <div class="hero-title-wrap">
+          <h1 class="hero-title" id="hero-title"><span class="glitch-word" data-glitch="axiōma">axiōma</span></h1>
+          <p class="hero-script">Code, under oath.</p>
+        </div>
+        <div class="hero-bottom">
+          <div class="hero-copy"><span class="copy-mark">↳</span><p>We help developers make better decisions about their code—with findings they can inspect and evidence they can understand.</p></div>
+          <a href="#workspace" class="hero-cta"><span>EXPLORE THE ANALYZER</span><b>＋</b></a>
+          <div class="hero-proof"><span class="proof-mark">✳</span><span>BUILT FOR<br />THOUGHTFUL TEAMS</span><i></i><span>REVIEW WHAT<br />MATTERS</span></div>
+        </div>
+        <div class="hero-foot"><span>AXIŌMA / OPENING NOTE</span><a href="#approach">SCROLL TO EXPLORE <b>↓</b></a><span>01 — 03</span></div>
+      </section>
+
+      <section class="approach section-shell" id="approach">
+        <div class="section-index"><span>01</span><span class="index-rule"></span><span>THE IDEA</span></div>
+        <div class="approach-main"><h2>Code review,<br />with <em>receipts.</em></h2><div class="approach-note"><span class="note-kicker">CLEAR FINDINGS. VISIBLE EVIDENCE.</span><p>Most tools hand you a score and ask you to trust it. Axiōma shows what it checked, what it found, and where a human should take a closer look.</p><a href="#signals">THE METHOD <span>↘</span></a></div></div>
+        <div class="approach-bottom"><span>NO MAGIC SCORES</span><span>NO CLAIMS WITHOUT CONTEXT</span><span>YOU KEEP THE FINAL CALL</span></div>
+      </section>
+
+      <section class="services section-shell" id="signals">
+        <div class="section-index"><span>02</span><span class="index-rule"></span><span>WHAT WE LOOK FOR</span></div>
+        <div class="service-list">
+          <article class="service-row"><span class="service-number">01</span><div class="service-name"><h3>Security <i>&amp;</i> reliability</h3><span>BOUNDARIES · FAILURE PATHS · ASSUMPTIONS</span></div><p>Spot risky inputs and fragile paths. See the context around each finding and what you can do next.</p><span class="service-arrow">↗</span></article>
+          <article class="service-row"><span class="service-number">02</span><div class="service-name"><h3>Complexity <i>&amp;</i> quality</h3><span>GROWTH · CORRECTNESS · TRADE-OFFS</span></div><p>Understand how work grows, where methods disagree, and how much confidence to place in an estimate.</p><span class="service-arrow">↗</span></article>
+          <article class="service-row"><span class="service-number">03</span><div class="service-name"><h3>Evidence <i>&amp;</i> context</h3><span>METHOD · PROVENANCE · CONFIDENCE</span></div><p>Follow a claim back to the check behind it. Know what passed, what did not run, and why.</p><span class="service-arrow">↗</span></article>
+        </div>
+        <div class="service-foot"><span>BUILT TO EXPLAIN ITS WORK</span><span>NOT JUST ITS ANSWER&nbsp; ↗</span></div>
+      </section>
+
+      <section class="work-section section-shell" id="workspace">
+        <div class="section-index"><span>03</span><span class="index-rule"></span><span>INSIDE THE ANALYZER</span></div>
+        <div class="work-heading"><h2>See the work.<br /><em>Make the call.</em></h2><p>A closer look at the review experience. Sample data for now; real analysis comes later.</p></div>
+        <div class="workbench">
+          <div class="workbench-top"><div class="workbench-brand"><span class="workbench-mark">A.</span> AXIŌMA <span class="workbench-sep">/</span> WORKSPACE</div><div class="workbench-project"><span class="project-light"></span> ACME / STOREFRONT <span class="branch-name">MAIN</span></div><button class="review-button" id="run-preview"><span>▶</span> RUN SAMPLE REVIEW</button></div>
+          <div class="workbench-main">
+            <aside class="file-tree"><div class="tree-heading">PROJECT <span>•••</span></div><div class="tree-entry tree-open">⌄ &nbsp; storefront</div><div class="tree-entry tree-open indent-one">⌄ &nbsp; src</div><div class="tree-entry tree-open indent-two">⌄ &nbsp; api</div><button class="tree-entry tree-file selected indent-three" data-sample="checkout"><span>TS</span> checkout.ts</button><button class="tree-entry tree-file indent-three" data-sample="products"><span>TS</span> products.ts</button><div class="tree-entry indent-one">› &nbsp; components</div><div class="tree-entry indent-one">› &nbsp; utils</div><div class="tree-entry tree-file package-entry"><span class="json-mark">{ }</span> package.json</div><div class="tree-note"><i></i> SAMPLE PROJECT</div></aside>
+            <div class="source-view"><div class="source-tab"><span class="ts-badge">TS</span><span id="file-name">checkout.ts</span><span class="tab-x">×</span><span class="source-language">TYPESCRIPT</span></div><pre class="source-code" id="source-code" aria-label="Sample source code"></pre><div class="source-status"><span><i></i> WORKING TREE</span><span>UTF-8&nbsp; · &nbsp;SPACES: 2</span></div></div>
+            <aside class="review-view"><div class="review-head"><div><span>REVIEW NOTES</span><h3><b id="issue-count">03</b> findings</h3></div><span class="preview-tag"><i></i> SAMPLE</span></div><div class="review-tabs" role="tablist" aria-label="Review details"><button class="review-tab active" role="tab" aria-selected="true" data-view="findings">FINDINGS <span>03</span></button><button class="review-tab" role="tab" aria-selected="false" data-view="evidence">EVIDENCE <span>06</span></button></div><div class="review-content" id="review-content" role="tabpanel"></div><div class="review-bottom"><span>ILLUSTRATIVE ONLY</span><span>NO ANALYSIS RUN</span></div></aside>
+          </div>
+          <div class="workbench-foot"><span><i></i> VISUAL PREVIEW · SAMPLE DATA ONLY</span><span>PYTHON&nbsp; / &nbsp;JAVA&nbsp; / &nbsp;EVIDENCE</span></div>
+        </div>
+      </section>
+
+      <section class="closing section-shell">
+        <div class="closing-rule"></div><span class="closing-kicker">A BETTER PICTURE OF YOUR CODE</span><h2>Know what passed.<br /><em>Know what’s uncertain.</em></h2><a href="#top" class="back-top">BACK TO TOP&nbsp; ↑</a>
+      </section>
+    </main>
+
+    <footer class="site-footer section-shell" id="footer"><a class="footer-brand" href="#top">A. <span>AXIŌMA</span></a><span>THOUGHTFUL ANALYSIS. HONEST EVIDENCE.</span><span>© AXIŌMA 2026</span></footer>
+  </body>
+</html>

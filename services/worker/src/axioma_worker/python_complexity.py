@@ -28,8 +28,43 @@ def add_line_event_fit(
     if any(point["line_events"] < 1 for point in points):
         return static
 
+    measured, goodness = fit_growth_model(points, "line_events")
+
+    measured_bucket = _fitted_growth_bucket(measured)
+    static_bucket = _static_growth_bucket(static.estimate)
+    disagrees = static_bucket is not None and static_bucket != measured_bucket
+    estimate = (
+        f"static {static.estimate}; measured line-event fit {measured}"
+        if disagrees
+        else f"{static.estimate} (measured line-event fit: {measured})"
+    )
+    return ComplexityEstimate(
+        method=f"{static.method}+dynamic_line_event_fit",
+        estimate=estimate,
+        confidence="low",
+        methods_disagree=disagrees,
+        explanation=(
+            static.explanation
+            + " The measured fit uses executed source-line events over user-declared input sizes; "
+            "input scaling is not independently checked, line events are only a proxy for work, "
+            "submitted code can interfere with tracing, and this low-confidence observation is "
+            "not an asymptotic proof."
+        ),
+        details={
+            "measurement_method": "executed_source_line_events",
+            "points": points,
+            "input_sizes_are_user_declared": True,
+            "fit": measured,
+            "goodness_of_fit_r2": round(goodness, 3),
+            "fit_quality": "strong" if goodness >= 0.9 else "weak",
+            "candidate_models": ["O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n^2)", "O(n^3)", "O(2^n)"],
+        },
+    )
+
+
+def fit_growth_model(points: list[dict[str, int]], value_key: str) -> tuple[str, float]:
     sizes = [point["size"] for point in points]
-    ys = [float(point["line_events"]) for point in points]
+    ys = [float(point[value_key]) for point in points]
     log_two = math.log(2)
     exponential_logs = [size * log_two for size in sizes]
     max_exponential_log = max(exponential_logs)
@@ -63,46 +98,52 @@ def add_line_event_fit(
         goodness = 1.0 - residual_sum_squares / total_sum_squares if total_sum_squares else 1.0
         fits.append((goodness, model))
     goodness, measured = max(fits, key=lambda item: item[0])
+    return measured, goodness
 
-    measured_bucket = {
-        "O(1)": "flat_or_logarithmic",
-        "O(log n)": "flat_or_logarithmic",
-        "O(n)": "linear",
-        "O(n log n)": "n_log_n_or_mildly_superlinear",
-        "O(n^2)": "quadratic",
-        "O(n^3)": "superquadratic",
-        "O(2^n)": "superquadratic",
-    }[measured]
 
-    static_bucket = _static_growth_bucket(static.estimate)
-    disagrees = static_bucket is not None and static_bucket != measured_bucket
-    estimate = (
-        f"static {static.estimate}; measured line-event fit {measured}"
-        if disagrees
-        else f"{static.estimate} (measured line-event fit: {measured})"
+def estimate_python_peak_memory(measurements: list[dict[str, int]], value_key: str = "peak_traced_bytes") -> dict:
+    """Fit a low-confidence growth class to Python-traced peak allocation deltas."""
+    points = sorted(
+        [
+            {"size": point["size"], value_key: point[value_key]}
+            for point in measurements
+            if isinstance(point.get("size"), int)
+            and isinstance(point.get(value_key), int)
+            and point["size"] > 0
+            and point[value_key] >= 0
+        ],
+        key=lambda point: point["size"],
     )
-    return ComplexityEstimate(
-        method=f"{static.method}+dynamic_line_event_fit",
-        estimate=estimate,
-        confidence="low",
-        methods_disagree=disagrees,
-        explanation=(
-            static.explanation
-            + " The measured fit uses executed source-line events over user-declared input sizes; "
-            "input scaling is not independently checked, line events are only a proxy for work, "
-            "submitted code can interfere with tracing, and this low-confidence observation is "
-            "not an asymptotic proof."
+    result = {
+        "method": "python_tracemalloc_peak_fit",
+        "confidence": "low",
+        "points": measurements,
+        "measurement": "peak traced Python allocation delta in bytes",
+        "limitations": (
+            "Not process RSS; native allocations may be omitted; includes harness overhead; "
+            "submitted code may interfere with tracing; input sizes are user-declared."
         ),
-        details={
-            "measurement_method": "executed_source_line_events",
-            "points": points,
-            "input_sizes_are_user_declared": True,
-            "fit": measured,
-            "goodness_of_fit_r2": round(goodness, 3),
-            "fit_quality": "strong" if goodness >= 0.9 else "weak",
-            "candidate_models": [model for model, _ in model_inputs],
-        },
-    )
+    }
+    if len(points) < 4:
+        return {**result, "state": "not_estimated", "reason": "At least four valid sizes are required."}
+    if not any(point[value_key] > 0 for point in points):
+        return {
+            **result,
+            "state": "not_estimated",
+            "reason": "No positive traced allocation increase was observed at the measured sizes.",
+        }
+    normalized = [
+        {"size": point["size"], "line_events": max(1, point[value_key])} for point in points
+    ]
+    model, goodness = fit_growth_model(normalized, "line_events")
+    return {
+        **result,
+        "state": "estimated",
+        "estimate": model,
+        "goodness_of_fit_r2": round(goodness, 3),
+        "fit_quality": "strong" if goodness >= 0.9 else "weak",
+        "candidate_models": ["O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n^2)", "O(n^3)", "O(2^n)"],
+    }
 
 
 def _static_growth_bucket(estimate: str) -> str | None:

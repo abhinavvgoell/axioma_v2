@@ -10,6 +10,23 @@ from pathlib import Path
 from typing import Any
 
 
+def _wilson_interval(
+    successes: int, trials: int, z: float = 1.959963984540054
+) -> dict[str, float] | None:
+    """Return a two-sided 95% Wilson score interval for a binomial rate."""
+    if trials == 0:
+        return None
+    rate = successes / trials
+    denominator = 1 + z * z / trials
+    center = (rate + z * z / (2 * trials)) / denominator
+    margin = (
+        z
+        * (rate * (1 - rate) / trials + z * z / (4 * trials * trials)) ** 0.5
+        / denominator
+    )
+    return {"lower": max(0.0, center - margin), "upper": min(1.0, center + margin)}
+
+
 def load_records(path: Path) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -76,10 +93,15 @@ def _score(records: list[dict[str, Any]]) -> dict[str, Any]:
         "scored_correct_controls": correct_total,
         "excluded_incomplete": dict(sorted(excluded.items())),
         "mutant_detection_recall": true_positive / mutant_total if mutant_total else None,
+        "mutant_detection_recall_95_ci": _wilson_interval(true_positive, mutant_total),
         "correct_control_false_positive_rate": (
             false_positive / correct_total if correct_total else None
         ),
+        "correct_control_false_positive_rate_95_ci": _wilson_interval(
+            false_positive, correct_total
+        ),
         "precision": true_positive / predicted_positive if predicted_positive else None,
+        "precision_95_ci": _wilson_interval(true_positive, predicted_positive),
         "confusion": {
             "mutants_detected": true_positive,
             "mutants_not_detected": false_negative,
@@ -102,7 +124,7 @@ def main() -> int:
     try:
         report = _score(load_records(args.records))
         report["input_sha256"] = hashlib.sha256(args.records.read_bytes()).hexdigest()
-        report["evaluator_version"] = "0.1.0"
+        report["evaluator_version"] = "0.2.0"
     except (OSError, ValueError) as exc:
         parser.error(str(exc))
     output = json.dumps(report, indent=2, sort_keys=True) + "\n"

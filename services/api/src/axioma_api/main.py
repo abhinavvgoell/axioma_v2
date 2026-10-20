@@ -16,6 +16,8 @@ from axioma_api.contracts import (
     Confidence,
     ProblemInputGenerationRequest,
     ProblemInputGenerationResult,
+    OptimizationProposalRequest,
+    OptimizationProposalResponse,
     GateState,
     JobCreate,
     JobEventView,
@@ -40,6 +42,7 @@ from axioma_api.models import (
 )
 from axioma_api.problem_validation import validate_problem_spec
 from axioma_api.problem_generation import generate_problem_inputs
+from axioma_api.optimization_proposals import propose_optimizations
 
 
 app = FastAPI(title="Axioma API", version="0.1.0")
@@ -60,6 +63,24 @@ def generate_problem_input_cases(
     payload: ProblemInputGenerationRequest,
 ) -> ProblemInputGenerationResult:
     return generate_problem_inputs(payload)
+
+
+@app.post(
+    "/v1/optimization-proposals",
+    response_model=OptimizationProposalResponse,
+)
+def propose_mode1_optimization(
+    payload: OptimizationProposalRequest,
+) -> OptimizationProposalResponse:
+    if payload.problem.interface.kind != "function":
+        raise HTTPException(
+            status_code=422,
+            detail="Rule-based optimization proposals currently require a function interface",
+        )
+    validation = validate_problem_spec(payload.problem)
+    if not validation.valid:
+        raise HTTPException(status_code=422, detail=validation.model_dump(mode="json"))
+    return propose_optimizations(payload.language, payload.code, payload.problem)
 
 
 @app.post("/v1/jobs/mode1/python-function", response_model=JobView, status_code=202)
@@ -87,6 +108,7 @@ def submit_python_function_job(
             "property_tests": payload.property_tests,
             "problem": payload.problem.model_dump(mode="json"),
             "reference_code": payload.reference_code,
+            "independent_reference_code": payload.independent_reference_code,
             "generated_tests": payload.generated_tests,
             "exhaustive_tests": payload.exhaustive_tests,
             "mutation_tests": payload.mutation_tests,
@@ -138,6 +160,7 @@ def submit_java_function_job(
             "optimization_notes": payload.optimization_notes,
             "problem": payload.problem.model_dump(mode="json"),
             "reference_code": payload.reference_code,
+            "independent_reference_code": payload.independent_reference_code,
             "generated_tests": payload.generated_tests,
             "exhaustive_tests": payload.exhaustive_tests,
             "seed": payload.seed,

@@ -296,6 +296,47 @@ def test_java_function_jobs_accept_a_reference_and_generated_test_count(
     assert job.status_code == 200
 
 
+def test_function_jobs_accept_an_independent_reference(client: TestClient) -> None:
+    response = client.post(
+        "/v1/jobs/mode1/python-function",
+        json={
+            "language": "python",
+            "code": "def solve(value): return value * 2",
+            "reference_code": "def solve(value): return value * 2",
+            "independent_reference_code": "def solve(value): return value + value",
+            "problem": {
+                "statement": "Double an integer.",
+                "interface": {"kind": "function", "entrypoint": "solve"},
+                "samples": [
+                    {"kind": "function", "name": "example", "args": [2], "expected": 4}
+                ],
+            },
+        },
+    )
+
+    assert response.status_code == 202
+
+
+def test_independent_reference_requires_a_primary_reference(client: TestClient) -> None:
+    response = client.post(
+        "/v1/jobs/mode1/python-function",
+        json={
+            "language": "python",
+            "code": "def solve(value): return value",
+            "independent_reference_code": "def solve(value): return value",
+            "problem": {
+                "statement": "Return an integer.",
+                "interface": {"kind": "function", "entrypoint": "solve"},
+                "samples": [
+                    {"kind": "function", "name": "example", "args": [2], "expected": 2}
+                ],
+            },
+        },
+    )
+
+    assert response.status_code == 422
+
+
 def test_java_reference_class_must_not_collide_with_submission_class(
     client: TestClient,
 ) -> None:
@@ -604,3 +645,63 @@ def test_generated_inputs_include_adversarial_numeric_array_patterns(
         elif strategy.startswith("adversarial_nearly_sorted"):
             assert sum(left > right for left, right in zip(values, values[1:])) == 1
     assert all(3 <= len(case["args"][0]) <= 5 for case in cases)
+
+
+def test_optimization_proposal_route_returns_static_unverified_candidate(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/v1/optimization-proposals",
+        json={
+            "language": "python",
+            "code": (
+                "def solve(values):\n"
+                "    total = 0\n"
+                "    for value in values:\n"
+                "        total += value\n"
+                "    return total\n"
+            ),
+            "problem": {
+                "statement": "Given an integer array, return its sum.",
+                "interface": {"kind": "function", "entrypoint": "solve"},
+                "constraints": [
+                    {"path": "args[0].length", "minimum": 1, "maximum": 100}
+                ],
+                "samples": [
+                    {
+                        "kind": "function",
+                        "name": "example",
+                        "args": [[1, 2, 3]],
+                        "kwargs": {},
+                        "expected": 6,
+                    }
+                ],
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    proposal = response.json()["proposals"][0]
+    assert proposal["evidence_type"] == "static"
+    assert proposal["confidence"] == "low"
+    assert "return sum(values)" in proposal["candidate_code"]
+    assert "unverified" in response.json()["message"]
+
+
+def test_optimization_proposals_reject_stdin_stdout_problems(client: TestClient) -> None:
+    response = client.post(
+        "/v1/optimization-proposals",
+        json={
+            "language": "python",
+            "code": "print(1)",
+            "problem": {
+                "statement": "Print one.",
+                "interface": {"kind": "stdin_stdout"},
+                "samples": [
+                    {"name": "example", "stdin": "", "expected_stdout": "1\n"}
+                ],
+            },
+        },
+    )
+
+    assert response.status_code == 422

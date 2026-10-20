@@ -34,11 +34,59 @@ def test_score_reports_exact_within_one_method_and_confidence_metrics(tmp_path) 
 
     assert report["n"] == 2
     assert report["exact_accuracy"] == 0.5
+    assert report["exact_accuracy_95_ci"]["lower"] < 0.5
+    assert report["exact_accuracy_95_ci"]["upper"] > 0.5
     assert report["within_one_class_accuracy"] == 1.0
     assert report["by_method"]["static"]["exact_accuracy"] == 1.0
     assert report["by_method"]["dynamic"]["within_one_class_accuracy"] == 1.0
     assert report["by_confidence"]["low"]["n"] == 2
-    assert "not calibrated" in report["confidence_note"]
+    assert "Without separate partitions" in report["confidence_note"]
+
+
+def test_held_out_confidence_mapping_uses_separate_solution_partitions() -> None:
+    records = [
+        {
+            "id": "cal-1",
+            "method": "static",
+            "expected": "O(n)",
+            "predicted": "O(n)",
+            "confidence": "high",
+            "partition": "calibration",
+        },
+        {
+            "id": "cal-2",
+            "method": "static",
+            "expected": "O(n)",
+            "predicted": "O(n^2)",
+            "confidence": "high",
+            "partition": "calibration",
+        },
+        {
+            "id": "eval-1",
+            "method": "static",
+            "expected": "O(n)",
+            "predicted": "O(n)",
+            "confidence": "high",
+            "partition": "evaluation",
+        },
+        {
+            "id": "eval-2",
+            "method": "static",
+            "expected": "O(n)",
+            "predicted": "O(n^2)",
+            "confidence": "high",
+            "partition": "evaluation",
+        },
+    ]
+
+    report = _score(records)
+
+    calibration = report["held_out_confidence_calibration"]
+    assert calibration["available"] is True
+    assert calibration["mapping_by_method"]["static"]["high"]["empirical_accuracy"] == 0.5
+    assert calibration["per_method_confidence"]["static"]["high"]["evaluation_accuracy"] == 0.5
+    assert calibration["brier_score"] == 0.25
+    assert calibration["expected_calibration_error"] == 0.0
 
 
 def test_load_records_rejects_duplicate_id_and_method(tmp_path) -> None:
@@ -63,4 +111,33 @@ def test_load_records_rejects_unknown_complexity_class(tmp_path) -> None:
     )
 
     with pytest.raises(ValueError, match="predicted must be one of"):
+        load_records(records_path)
+
+
+def test_load_records_rejects_solution_leakage_across_partitions(tmp_path) -> None:
+    records_path = tmp_path / "leakage.jsonl"
+    records_path.write_text(
+        "\n".join(
+            json.dumps(record)
+            for record in (
+                {
+                    "id": "same-solution",
+                    "method": "static",
+                    "expected": "O(n)",
+                    "predicted": "O(n)",
+                    "partition": "calibration",
+                },
+                {
+                    "id": "same-solution",
+                    "method": "dynamic",
+                    "expected": "O(n)",
+                    "predicted": "O(n)",
+                    "partition": "evaluation",
+                },
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="same partition"):
         load_records(records_path)

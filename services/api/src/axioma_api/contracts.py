@@ -237,6 +237,7 @@ class Mode1JobCreate(BaseModel):
     property_tests: int = Field(default=0, ge=0, le=50)
     problem: ProblemSpec
     reference_code: str | None = Field(default=None, min_length=1, max_length=65536)
+    independent_reference_code: str | None = Field(default=None, min_length=1, max_length=65536)
     generated_tests: int = Field(default=0, ge=0, le=50)
     exhaustive_tests: bool = False
     mutation_tests: int = Field(default=0, ge=0, le=20)
@@ -258,8 +259,14 @@ class Mode1JobCreate(BaseModel):
             exhaustive_argument_domains(self.problem)
         if self.mutation_tests and not self.reference_code:
             raise ValueError("mutation_tests requires a reference_code")
+        if self.independent_reference_code and not self.reference_code:
+            raise ValueError("independent_reference_code requires a reference_code")
+        if self.independent_reference_code == self.reference_code and self.reference_code:
+            raise ValueError("independent_reference_code must differ from reference_code")
         if self.reference_code and self.problem.interface.kind != "function":
             raise ValueError("reference_code currently requires a function interface")
+        if self.independent_reference_code and self.problem.interface.kind != "function":
+            raise ValueError("independent_reference_code currently requires a function interface")
         if self.optimization_code and self.problem.interface.kind != "function":
             raise ValueError("optimization_code currently requires a function interface")
         if self.optimization_notes and not self.optimization_code:
@@ -290,6 +297,14 @@ class Mode1JobCreate(BaseModel):
                 raise ValueError(
                     "Java submission class name cannot be Reference when using a reference"
                 )
+        if self.language == "java" and self.independent_reference_code:
+            entrypoint_class = self.problem.interface.entrypoint.split(".", maxsplit=1)[0]
+            if entrypoint_class == "ReferenceIndependent":
+                raise ValueError(
+                    "Java submission class name cannot be ReferenceIndependent when using an independent reference"
+                )
+            if not self.reference_code:
+                raise ValueError("independent_reference_code requires reference_code")
         if self.complexity_benchmarks:
             if self.problem.interface.kind != "function":
                 raise ValueError("complexity benchmarks currently require a function job")
@@ -301,6 +316,27 @@ class Mode1JobCreate(BaseModel):
             if self.language == "java" and any(sample.kwargs for sample in self.complexity_benchmarks):
                 raise ValueError("Java complexity benchmarks currently support positional arguments only")
         return self
+
+
+class OptimizationProposalRequest(BaseModel):
+    language: Literal["python", "java"]
+    code: str = Field(min_length=1, max_length=65536)
+    problem: ProblemSpec
+
+
+class OptimizationProposal(BaseModel):
+    rule_id: str
+    title: str
+    summary: str
+    evidence_type: Literal["static"] = "static"
+    confidence: Confidence = Confidence.LOW
+    candidate_code: str
+    limitations: list[str]
+
+
+class OptimizationProposalResponse(BaseModel):
+    proposals: list[OptimizationProposal] = Field(default_factory=list)
+    message: str
 
 
 class ProblemSpecIssue(BaseModel):

@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 
 from axioma_worker.python_complexity import ComplexityEstimate
-from axioma_worker.python_complexity import add_line_event_fit
+from axioma_worker.python_complexity import add_line_event_fit, fit_growth_model
 
 _TOKEN = re.compile(
     r"//[^\n]*|/\*[\s\S]*?\*/|\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'|[A-Za-z_$][\w$]*|\d+|[^\s]"
@@ -201,3 +201,52 @@ def add_java_wall_time_fit(
         ),
         details=details,
     )
+
+
+def estimate_java_heap_pool_peak_growth(
+    measurements: list[dict[str, int]],
+    value_key: str = "heap_pool_peak_increase_bytes",
+) -> dict:
+    """Fit a low-confidence growth class to JVM heap-pool peak-increase observations."""
+    points = sorted(
+        [
+            {"size": point["size"], value_key: point[value_key]}
+            for point in measurements
+            if isinstance(point.get("size"), int)
+            and isinstance(point.get(value_key), int)
+            and point["size"] > 0
+            and point[value_key] >= 0
+        ],
+        key=lambda point: point["size"],
+    )
+    result = {
+        "method": "java_heap_pool_peak_increase_fit",
+        "confidence": "low",
+        "points": measurements,
+        "measurement": "median sum of per-heap-pool peak usage increases in bytes",
+        "limitations": (
+            "Not process RSS; excludes off-heap/native memory; includes JVM and reflection overhead; "
+            "pool migration can overcount; small allocations may read as zero at pool reporting granularity; "
+            "submitted code can allocate concurrently; sizes are user-declared."
+        ),
+    }
+    if len(points) < 4:
+        return {**result, "state": "not_estimated", "reason": "At least four valid sizes are required."}
+    if not any(point[value_key] > 0 for point in points):
+        return {
+            **result,
+            "state": "not_estimated",
+            "reason": "No positive heap-pool peak increase was observable at the measured sizes.",
+        }
+    normalized = [
+        {"size": point["size"], "line_events": max(1, point[value_key])} for point in points
+    ]
+    model, goodness = fit_growth_model(normalized, "line_events")
+    return {
+        **result,
+        "state": "estimated",
+        "estimate": model,
+        "goodness_of_fit_r2": round(goodness, 3),
+        "fit_quality": "strong" if goodness >= 0.9 else "weak",
+        "candidate_models": ["O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n^2)", "O(n^3)", "O(2^n)"],
+    }

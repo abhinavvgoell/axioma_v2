@@ -25,6 +25,10 @@ def test_score_reports_recall_false_positives_and_excludes_incomplete_records(tm
     assert report["mutant_detection_recall"] == 0.5
     assert report["correct_control_false_positive_rate"] == 0.5
     assert report["precision"] == 0.5
+    assert report["mutant_detection_recall_95_ci"]["lower"] < 0.5
+    assert report["mutant_detection_recall_95_ci"]["upper"] > 0.5
+    assert report["correct_control_false_positive_rate_95_ci"]["lower"] < 0.5
+    assert report["precision_95_ci"]["upper"] > 0.5
     assert report["excluded_incomplete"] == {"correct": 1, "mutant": 1}
 
 

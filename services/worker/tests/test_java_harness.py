@@ -24,6 +24,23 @@ def test_java_harness_generates_reflective_array_and_nested_value_checks() -> No
     assert "AXIOMA_RESULT:[" in source
 
 
+def test_java_complexity_harness_reports_heap_pool_peak_increases() -> None:
+    source = build_java_function_harness(
+        "Solution.solve",
+        [{"name": "sample", "args": [2], "expected": 2}],
+        complexity_benchmarks=[
+            {"size": size, "args": [size]} for size in (10, 20, 40, 80)
+        ],
+        optimization_enabled=True,
+    )
+
+    assert "ManagementFactory.getMemoryPoolMXBeans()" in source
+    assert "pool.resetPeakUsage()" in source
+    assert '\\"heap_pool_peak_increase_bytes\\"' in source
+    assert '\\"optimized_heap_pool_peak_increase_bytes\\"' in source
+    assert "boolean allPropertyChecksPassed = true || propertyValid;" in source
+
+
 def test_java_harness_checks_reference_before_generated_differential_cases() -> None:
     sample = {"name": "example", "args": [2], "expected": 4}
     source = build_java_function_harness(
@@ -43,6 +60,22 @@ def test_java_harness_checks_reference_before_generated_differential_cases() -> 
     assert 'invokeQuietly("Reference", "solve"' in source
     assert "test.strategy()" in source
     assert "input_strategy" in source
+
+
+def test_java_harness_can_require_independent_reference_consensus() -> None:
+    sample = {"name": "example", "args": [2], "expected": 4}
+    source = build_java_function_harness(
+        "Solution.solve",
+        [sample],
+        reference_samples=[sample],
+        generated_samples=[{"name": "generated_1", "args": [3]}],
+        requested_generated=1,
+        independent_reference_enabled=True,
+    )
+
+    assert 'invokeQuietly("ReferenceIndependent", "solve"' in source
+    assert "independent references disagree" in source
+    assert "candidate comparison not run" in source
 
 
 def test_java_harness_checks_user_property_on_examples_then_generated_cases() -> None:

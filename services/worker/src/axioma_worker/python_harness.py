@@ -17,6 +17,7 @@ def build_function_harness(
     complexity_benchmarks: list[dict[str, Any]] | None = None,
     mutations: list[dict[str, str]] | None = None,
     mutation_tests_requested: int = 0,
+    independent_reference_code: str | None = None,
 ) -> str:
     """Build a runner for examples and optional differential tests."""
     payload = json.dumps(
@@ -24,6 +25,7 @@ def build_function_harness(
             "entrypoint": entrypoint,
             "samples": samples,
             "reference_code": reference_code,
+            "independent_reference_code": independent_reference_code,
             "optimization_code": optimization_code,
             "property_code": property_code,
             "property_samples": property_samples or [],
@@ -39,10 +41,12 @@ def build_function_harness(
     )
     return f"""import contextlib
 import copy
+import gc
 import json
 import os
 import statistics
 import sys
+import tracemalloc
 
 spec = json.loads({payload!r})
 json_dumps = json.dumps
@@ -54,6 +58,12 @@ execute_code = exec
 set_trace = sys.settrace
 median = statistics.median
 deepcopy = copy.deepcopy
+collect_garbage = gc.collect
+trace_start = tracemalloc.start
+trace_stop = tracemalloc.stop
+trace_get_memory = tracemalloc.get_traced_memory
+trace_reset_peak = tracemalloc.reset_peak
+trace_is_active = tracemalloc.is_tracing
 
 def load_source(path, module_name):
     namespace = {{"__name__": module_name}}
@@ -66,7 +76,7 @@ def load_source(path, module_name):
     except BaseException as exc:
         return namespace, type(exc).__name__ + ": " + str(exc)[:300]
 
-def call(namespace, sample):
+def call(namespace, sample, copy_inputs=True):
     target = namespace
     parts = spec["entrypoint"].split(".")
     for part in parts[:-1]:
@@ -75,7 +85,9 @@ def call(namespace, sample):
             target = target()
     function = target[parts[-1]] if isinstance(target, dict) else getattr(target, parts[-1])
     with open_file(os.devnull, "w") as sink, redirect_stdout(sink), redirect_stderr(sink):
-        return function(*deepcopy(sample.get("args", [])), **deepcopy(sample.get("kwargs", {{}})))
+        args = deepcopy(sample.get("args", [])) if copy_inputs else sample.get("args", [])
+        kwargs = deepcopy(sample.get("kwargs", {{}})) if copy_inputs else sample.get("kwargs", {{}})
+        return function(*args, **kwargs)
 
 def check_property(namespace, sample, result):
     checker = namespace.get("check")
@@ -118,6 +130,23 @@ def count_target_work(namespace, sample):
         set_trace(None)
     return counts
 
+def measure_peak_traced_bytes(namespace, sample):
+    # Prepare fresh inputs outside tracing so input copying does not dominate the measurement.
+    prepared = {{"args": deepcopy(sample.get("args", [])), "kwargs": deepcopy(sample.get("kwargs", {{}}))}}
+    collect_garbage()
+    trace_start()
+    try:
+        baseline, _ = trace_get_memory()
+        trace_reset_peak()
+        result = call(namespace, prepared, copy_inputs=False)
+        if not trace_is_active():
+            return None
+        _, peak = trace_get_memory()
+        return max(0, int(peak - baseline))
+    finally:
+        if trace_is_active():
+            trace_stop()
+
 def equal(left, right):
     return json_dumps(left, sort_keys=True, separators=(",", ":"), allow_nan=False) == json_dumps(
         right, sort_keys=True, separators=(",", ":"), allow_nan=False
@@ -128,6 +157,12 @@ reference = None
 reference_error = None
 if spec["reference_code"] is not None:
     reference, reference_error = load_source("reference.py", "axioma_reference")
+independent_reference = None
+independent_reference_error = None
+if spec["independent_reference_code"] is not None:
+    independent_reference, independent_reference_error = load_source(
+        "independent_reference.py", "axioma_independent_reference"
+    )
 optimized = None
 optimized_error = None
 if spec["optimization_code"] is not None:
@@ -141,6 +176,8 @@ results = []
 reference_results = []
 optimization_checks = []
 reference_valid = reference is not None and reference_error is None
+if independent_reference is not None:
+    reference_valid = reference_valid and independent_reference_error is None
 mutation_samples = []
 for sample in spec["samples"]:
     result = {{"name": sample["name"], "outcome": "failed", "details": {{}}}}
@@ -188,11 +225,32 @@ for sample in spec["samples"]:
         else:
             try:
                 reference_output = call(reference, sample)
-                if equal(reference_output, sample["expected"]):
+                independent_output = None
+                if independent_reference is not None and independent_reference_error is None:
+                    independent_output = call(independent_reference, sample)
+                reference_matches = equal(reference_output, sample["expected"])
+                independent_matches = independent_reference is None or (
+                    independent_reference_error is None
+                    and equal(independent_output, sample["expected"])
+                )
+                references_agree = independent_reference is None or (
+                    independent_reference_error is None
+                    and equal(reference_output, independent_output)
+                )
+                if reference_matches and independent_matches and references_agree:
                     check["outcome"] = "passed"
                 else:
-                    check["details"]["reason"] = "reference output differs from provided sample"
+                    check["details"]["reason"] = (
+                        "independent references disagree"
+                        if not references_agree
+                        else "reference output differs from provided sample"
+                    )
+                    check["details"]["references_agree"] = references_agree
                     reference_valid = False
+                if independent_reference is not None:
+                    check["details"]["independent_reference_outcome"] = (
+                        "passed" if independent_matches and references_agree else "failed"
+                    )
             except BaseException as exc:
                 check["details"]["error"] = type(exc).__name__ + ": " + str(exc)[:300]
                 reference_valid = False
@@ -210,19 +268,37 @@ if reference is not None:
             "details": {{"reason": "reference did not pass all provided samples"}},
         }}
         if reference_valid:
+            references_agree = True
             try:
                 reference_output = call(reference, sample)
-                actual = call(candidate, sample)
-                result["outcome"] = "passed" if equal(actual, reference_output) else "failed"
-                result["details"] = {{
-                    "comparison": "candidate against user-supplied reference",
-                    "input_strategy": sample.get("strategy", "unspecified"),
-                }}
+                independent_output = (
+                    call(independent_reference, sample)
+                    if independent_reference is not None
+                    else reference_output
+                )
+                if not equal(reference_output, independent_output):
+                    references_agree = False
+                    result["details"] = {{
+                        "reason": "independent references disagree; candidate comparison not run",
+                        "references_agree": False,
+                        "input_strategy": sample.get("strategy", "unspecified"),
+                    }}
+                else:
+                    actual = call(candidate, sample)
+                    result["outcome"] = "passed" if equal(actual, reference_output) else "failed"
+                    result["details"] = {{
+                        "comparison": "candidate against corroborated user-supplied references"
+                        if independent_reference is not None
+                        else "candidate against user-supplied reference",
+                        "references_agree": True,
+                        "input_strategy": sample.get("strategy", "unspecified"),
+                    }}
             except BaseException as exc:
                 result["outcome"] = "failed"
                 result["details"] = {{"error": type(exc).__name__ + ": " + str(exc)[:300]}}
             else:
-                mutation_samples.append(sample)
+                if references_agree and result["outcome"] == "passed":
+                    mutation_samples.append(sample)
         results.append(result)
         if optimized is not None:
             check = {{"name": "optimization/" + sample["name"], "outcome": "skipped", "details": {{}}}}
@@ -236,6 +312,15 @@ if reference is not None:
                     original_output = call(candidate, sample)
                     optimized_output = call(optimized, sample)
                     reference_output = call(reference, sample)
+                    independent_output = (
+                        call(independent_reference, sample)
+                        if independent_reference is not None
+                        else reference_output
+                    )
+                    if not equal(reference_output, independent_output):
+                        check["details"]["reason"] = "independent references disagree"
+                        optimization_checks.append(check)
+                        continue
                     equivalent = equal(original_output, optimized_output)
                     both_match_reference = equal(original_output, reference_output) and equal(
                         optimized_output, reference_output
@@ -341,11 +426,23 @@ if spec["complexity_benchmarks"]:
             for benchmark in spec["complexity_benchmarks"]:
                 sample = {{"args": benchmark["args"], "kwargs": benchmark["kwargs"]}}
                 counts = [count_target_work(candidate, sample) for _ in range(3)]
+                memory_samples = []
+                for _ in range(3):
+                    peak_bytes = measure_peak_traced_bytes(candidate, sample)
+                    if peak_bytes is None:
+                        benchmark_report["memory_skipped_reason"] = (
+                            "submission disabled tracemalloc during the target call"
+                        )
+                        memory_samples = []
+                        break
+                    memory_samples.append(peak_bytes)
                 measurement = {{
                     "size": benchmark["size"],
                     "line_events": int(median([item["line_events"] for item in counts])),
                     "opcode_events": int(median([item["opcode_events"] for item in counts])),
                 }}
+                if memory_samples:
+                    measurement["peak_traced_bytes"] = int(median(memory_samples))
                 benchmark_report["measurements"].append(measurement)
                 if (
                     optimized is not None
@@ -354,11 +451,26 @@ if spec["complexity_benchmarks"]:
                     and all(item["outcome"] == "passed" for item in optimization_checks)
                 ):
                     optimized_counts = [count_target_work(optimized, sample) for _ in range(3)]
-                    benchmark_report["optimized_measurements"].append({{
+                    optimized_memory_samples = []
+                    for _ in range(3):
+                        peak_bytes = measure_peak_traced_bytes(optimized, sample)
+                        if peak_bytes is None:
+                            benchmark_report["memory_skipped_reason"] = (
+                                "optimization candidate disabled tracemalloc during the target call"
+                            )
+                            optimized_memory_samples = []
+                            break
+                        optimized_memory_samples.append(peak_bytes)
+                    optimized_measurement = {{
                         **measurement,
                         "optimized_line_events": int(median([item["line_events"] for item in optimized_counts])),
                         "optimized_opcode_events": int(median([item["opcode_events"] for item in optimized_counts])),
-                    }})
+                    }}
+                    if optimized_memory_samples:
+                        optimized_measurement["optimized_peak_traced_bytes"] = int(
+                            median(optimized_memory_samples)
+                        )
+                    benchmark_report["optimized_measurements"].append(optimized_measurement)
             if optimized is not None and not benchmark_report["optimized_measurements"]:
                 benchmark_report["optimized_skipped_reason"] = (
                     optimized_error or "optimization equivalence checks did not all pass"
