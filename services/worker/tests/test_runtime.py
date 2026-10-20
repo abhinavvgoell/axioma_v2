@@ -122,6 +122,26 @@ class FakeJavaReferenceSandbox:
         )
 
 
+class FakeJavaMutationSandbox:
+    def run(self, adapter, source, cancellation_requested=None, **kwargs):
+        assert adapter.language == "java"
+        assert "AxiomaMutant1.java" in kwargs["extra_files"]
+        harness = kwargs["extra_files"]["Harness.java"].decode()
+        assert "ToolProvider.getSystemJavaCompiler()" in harness
+        assert "AXIOMA_MUTATION:" in harness
+        return SandboxResult(
+            exit_code=0,
+            stdout=(
+                'AXIOMA_RESULT:[{"name":"sample","outcome":"passed","details":{}},'
+                '{"name":"reference/sample","outcome":"passed","details":{}}]\n'
+                'AXIOMA_MUTATION:{"requested":1,"generated":1,"outcomes":'
+                '[{"id":"mutant_1","label":"operator_+_to_-_offset_48",'
+                '"state":"killed","cases_checked":1}],"reason":""}\n'
+            ),
+            stderr="",
+        )
+
+
 class FakeJavaExhaustiveSandbox:
     def run(self, adapter, source, cancellation_requested=None, **kwargs):
         assert adapter.language == "java"
@@ -568,6 +588,48 @@ def test_mutation_score_is_saved_as_separate_statistical_evidence() -> None:
         mutation_claim = next(claim for claim in claims if claim.evidence_type == "statistical")
         details = mutation_claim.provenance["details"]
         assert mutation_claim.confidence == "low"
+        assert details["killed"] == 1
+        assert details["mutation_score"] == 1.0
+
+
+def test_java_mutation_score_is_saved_as_low_confidence_evidence() -> None:
+    session_factory = make_session_factory()
+    with session_factory() as session:
+        job, _ = create_job(
+            session,
+            JobCreate(
+                mode=JobMode.DSA_ANALYSIS,
+                language="java",
+                input={
+                    "code": "class Solution { int solve(int value) { return value + 1; } }",
+                    "reference_code": "class Reference { int solve(int value) { return value + 1; } }",
+                    "mutation_tests": 1,
+                    "problem": {
+                        "statement": "Add one.",
+                        "interface": {"kind": "function", "entrypoint": "Solution.solve"},
+                        "samples": [
+                            {"kind": "function", "name": "sample", "args": [2], "expected": 3}
+                        ],
+                    },
+                },
+            ),
+        )
+        job_id = job.id
+        claim_next_job(session, "worker-java-mutation-test")
+
+    run_claimed_job(
+        session_factory, job_id, "worker-java-mutation-test", FakeJavaMutationSandbox()
+    )
+
+    with session_factory() as session:
+        mutation_claim = next(
+            claim
+            for claim in session.query(EvidenceClaimRecord).filter_by(job_id=job_id).all()
+            if claim.evidence_type == "statistical"
+        )
+        details = mutation_claim.provenance["details"]
+        assert mutation_claim.confidence == "low"
+        assert mutation_claim.provenance["tool"] == "axioma-java-mutation-runner"
         assert details["killed"] == 1
         assert details["mutation_score"] == 1.0
 

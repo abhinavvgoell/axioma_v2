@@ -296,6 +296,30 @@ def test_java_function_jobs_accept_a_reference_and_generated_test_count(
     assert job.status_code == 200
 
 
+def test_java_function_jobs_accept_reference_mutation_testing(client: TestClient) -> None:
+    response = client.post(
+        "/v1/jobs/mode1/java-function",
+        json={
+            "language": "java",
+            "code": "class Solution { int solve(int value) { return value + 1; } }",
+            "reference_code": "class Reference { int solve(int value) { return value + 1; } }",
+            "mutation_tests": 3,
+            "problem": {
+                "statement": "Add one.",
+                "interface": {"kind": "function", "entrypoint": "Solution.solve"},
+                "samples": [
+                    {"kind": "function", "name": "sample", "args": [2], "expected": 3}
+                ],
+            },
+        },
+    )
+
+    assert response.status_code == 202
+    queued_job = client.get(f"/v1/jobs/{response.json()['id']}")
+    assert queued_job.status_code == 200
+    assert queued_job.json()["status"] == "queued"
+
+
 def test_function_jobs_accept_an_independent_reference(client: TestClient) -> None:
     response = client.post(
         "/v1/jobs/mode1/python-function",

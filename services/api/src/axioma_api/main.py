@@ -137,11 +137,6 @@ def submit_java_function_job(
 ) -> Job:
     if payload.language != "java":
         raise HTTPException(status_code=422, detail="This route requires Java")
-    if payload.mutation_tests:
-        raise HTTPException(
-            status_code=422,
-            detail="Mutation tests are currently supported for Python only",
-        )
     if payload.problem.interface.kind != "function":
         raise HTTPException(status_code=422, detail="This route requires a function interface")
     if "." not in payload.problem.interface.entrypoint:
@@ -166,6 +161,7 @@ def submit_java_function_job(
             "seed": payload.seed,
             "property_code": payload.property_code,
             "property_tests": payload.property_tests,
+            "mutation_tests": payload.mutation_tests,
             "complexity_benchmarks": [
                 sample.model_dump(mode="json") for sample in payload.complexity_benchmarks
             ],

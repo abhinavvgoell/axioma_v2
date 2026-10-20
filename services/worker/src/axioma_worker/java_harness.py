@@ -74,6 +74,8 @@ def build_java_function_harness(
     optimization_enabled: bool = False,
     complexity_benchmarks: list[dict[str, Any]] | None = None,
     independent_reference_enabled: bool = False,
+    mutations: list[dict[str, str]] | None = None,
+    mutation_tests_requested: int = 0,
 ) -> str:
     class_name, method_name = entrypoint.split(".", maxsplit=1)
     cases_source = ",\n            ".join(
@@ -97,6 +99,12 @@ def build_java_function_harness(
         + "})"
         for sample in benchmark_cases
     )
+    mutation_cases_source = ",\n            ".join(
+        "new Mutation(" + ", ".join(
+            _java_string(mutant[key]) for key in ("id", "label", "class_name")
+        ) + ")"
+        for mutant in (mutations or [])
+    )
     return f"""import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
@@ -113,10 +121,21 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 
 public class Harness {{
     record Case(String name, Object[] args, Object expected, String strategy) {{}}
     record Benchmark(int size, Object[] args) {{}}
+    record Mutation(String id, String label, String className) {{}}
+    record MutationResult(String state, int casesChecked) {{}}
 
     static Map<String, Object> map(Object... values) {{
         Map<String, Object> result = new LinkedHashMap<>();
@@ -225,7 +244,10 @@ public class Harness {{
     }}
 
     static Object invoke(String className, String methodName, Object[] args) throws Exception {{
-        Class<?> type = Class.forName(className);
+        return invoke(Class.forName(className), methodName, args);
+    }}
+
+    static Object invoke(Class<?> type, String methodName, Object[] args) throws Exception {{
         Method method = findMethod(type, methodName, args);
         method.setAccessible(true);
         Object receiver = null;
@@ -247,6 +269,53 @@ public class Harness {{
             System.setErr(new PrintStream(new ByteArrayOutputStream()));
             return invoke(className, methodName, copyArgs(args));
         }} finally {{ System.setOut(out); System.setErr(err); }}
+    }}
+
+    static Object invokeQuietly(Class<?> type, String methodName, Object[] args) throws Exception {{
+        PrintStream out = System.out, err = System.err;
+        try {{
+            System.setOut(new PrintStream(new ByteArrayOutputStream()));
+            System.setErr(new PrintStream(new ByteArrayOutputStream()));
+            return invoke(type, methodName, copyArgs(args));
+        }} finally {{ System.setOut(out); System.setErr(err); }}
+    }}
+
+    static MutationResult runMutation(Mutation mutant, List<Case> referenceCases, List<Case> generatedCases,
+            boolean referenceValid, String methodName) {{
+        if (!referenceValid || referenceCases.isEmpty()) return new MutationResult("not_run", 0);
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        if (compiler == null) return new MutationResult("not_run", 0);
+        Path work = Path.of("/work");
+        Path output = work.resolve("mutants").resolve(mutant.id());
+        try {{
+            Files.createDirectories(output);
+            DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+            try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, null)) {{
+                Iterable<? extends JavaFileObject> units = manager.getJavaFileObjects(work.resolve(mutant.className() + ".java").toFile());
+                Boolean compiled = compiler.getTask(null, manager, diagnostics,
+                    Arrays.asList("-proc:none", "-classpath", work.toString(), "-d", output.toString()),
+                    null, units).call();
+                if (!Boolean.TRUE.equals(compiled)) return new MutationResult("invalid", 0);
+            }}
+            try (URLClassLoader loader = new URLClassLoader(new URL[]{{output.toUri().toURL()}}, Harness.class.getClassLoader())) {{
+                Class<?> mutantType = Class.forName(mutant.className(), true, loader);
+                List<Case> checks = new ArrayList<>(referenceCases);
+                checks.addAll(generatedCases);
+                boolean killed = false;
+                int checked = 0;
+                for (Case test : checks) {{
+                    Object expected = invokeQuietly("Reference", methodName, test.args());
+                    try {{
+                        Object actual = invokeQuietly(mutantType, methodName, test.args());
+                        if (!equal(expected, actual)) killed = true;
+                    }} catch (Throwable mutantError) {{ killed = true; }}
+                    checked++;
+                }}
+                return new MutationResult(killed ? "killed" : "survived", checked);
+            }}
+        }} catch (Throwable error) {{
+            return new MutationResult("invalid", 0);
+        }}
     }}
 
     static Object copyValue(Object value) {{
@@ -371,6 +440,7 @@ public class Harness {{
         List<Case> generatedCases = Arrays.asList({generated_cases_source});
         List<Case> propertyCases = Arrays.asList({property_cases_source});
         List<Benchmark> benchmarkCases = Arrays.asList({benchmark_cases_source});
+        List<Mutation> mutationCases = Arrays.asList({mutation_cases_source});
         List<String> results = new ArrayList<>();
         List<String> sampleOutcomes = new ArrayList<>();
         List<String> generatedOutcomes = new ArrayList<>();
@@ -436,6 +506,21 @@ public class Harness {{
             allExecutionChecksPassed &= outcome.equals("passed");
             generatedOutcomes.add(outcome);
             results.add(result(test.name(), outcome, reason, test.strategy()));
+        }}
+        if ({str(mutation_tests_requested > 0).lower()}) {{
+            List<String> mutationOutcomes = new ArrayList<>();
+            for (Mutation mutant : mutationCases) {{
+                MutationResult mutation = runMutation(mutant, referenceCases, generatedCases, referenceValid, {_java_string(method_name)});
+                String state = mutation.state();
+                mutationOutcomes.add("{{\\\"id\\\":" + quote(mutant.id()) + ",\\\"label\\\":" + quote(mutant.label())
+                    + ",\\\"state\\\":" + quote(state) + ",\\\"cases_checked\\\":"
+                    + mutation.casesChecked() + "}}");
+            }}
+            String reason = referenceValid ? (ToolProvider.getSystemJavaCompiler() == null ? "JDK compiler unavailable" : "")
+                : "reference did not pass validation samples";
+            System.out.println("AXIOMA_MUTATION:{{\\\"requested\\\":{mutation_tests_requested},\\\"generated\\\":"
+                + mutationCases.size() + ",\\\"outcomes\\\":[" + String.join(",", mutationOutcomes)
+                + "],\\\"reason\\\":" + quote(reason) + "}}");
         }}
         for (int index = generatedCases.size(); index < {requested_generated}; index++) {{
             allExecutionChecksPassed = false;

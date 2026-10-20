@@ -26,6 +26,7 @@ from axioma_api.problem_generation import generate_exhaustive_inputs, generate_p
 from axioma_api.queue import claim_next_job, reap_expired_jobs
 from axioma_worker.adapters import get_adapter
 from axioma_worker.java_harness import build_java_function_harness
+from axioma_worker.java_mutation_testing import generate_java_mutants
 from axioma_worker.python_complexity import (
     ComplexityEstimate,
     analyze_python_complexity,
@@ -132,10 +133,8 @@ def run_claimed_job(
                 input_payload.get("reference_code") or generated_count or requested_mutants
             ):
                 raise ValueError("Reference-guided checks require a function interface")
-            if requested_mutants and (
-                language != "python" or not isinstance(problem.interface, FunctionInterface)
-            ):
-                raise ValueError("Mutation testing currently requires a Python function job")
+            if requested_mutants and not isinstance(problem.interface, FunctionInterface):
+                raise ValueError("Mutation testing currently requires a function job")
             if isinstance(problem.interface, FunctionInterface):
                 benchmark_samples = [
                     ComplexityBenchmarkSample.model_validate(item)
@@ -158,6 +157,8 @@ def run_claimed_job(
                     raise ValueError("Function interfaces require function-style samples")
                 reference_code = input_payload.get("reference_code")
                 independent_reference_code = input_payload.get("independent_reference_code")
+                if requested_mutants and not reference_code:
+                    raise ValueError("Mutation testing requires reference_code")
                 if independent_reference_code and not reference_code:
                     raise ValueError("independent_reference_code requires reference_code")
                 if independent_reference_code and independent_reference_code == reference_code:
@@ -246,6 +247,11 @@ def run_claimed_job(
                         raise ValueError(
                             "Java submission class name cannot be AxiomaProperties when using properties"
                         )
+                    java_mutants = generate_java_mutants(
+                        reference_code or "",
+                        problem.interface.entrypoint.split(".", maxsplit=1)[1],
+                        requested_mutants,
+                    )
                     if optimization_code and class_name == "AxiomaOptimized":
                         raise ValueError(
                             "Java submission class name cannot be AxiomaOptimized when using an optimization"
@@ -280,6 +286,15 @@ def run_claimed_job(
                             sample.model_dump(mode="json") for sample in benchmark_samples
                         ],
                         independent_reference_enabled=bool(independent_reference_code),
+                        mutations=[
+                            {
+                                "id": mutant.id,
+                                "label": mutant.label,
+                                "class_name": mutant.class_name,
+                            }
+                            for mutant in java_mutants
+                        ],
+                        mutation_tests_requested=requested_mutants,
                     )
                     extra_files = {"Harness.java": harness.encode("utf-8")}
                     source_paths = [f"/work/{class_name}.java"]
@@ -290,6 +305,8 @@ def run_claimed_job(
                             )
                         extra_files["Reference.java"] = reference_code.encode("utf-8")
                         source_paths.append("/work/Reference.java")
+                    for mutant in java_mutants:
+                        extra_files[f"{mutant.class_name}.java"] = mutant.code.encode("utf-8")
                     if independent_reference_code:
                         if class_name == "ReferenceIndependent":
                             raise ValueError(
@@ -721,7 +738,7 @@ def run_claimed_job(
                             f"{score_text}; {survived} survived, {invalid} invalid, {not_run} not run"
                         ),
                         provenance={
-                            "tool": "axioma-python-mutation-runner",
+                            "tool": f"axioma-{language}-mutation-runner",
                             "tool_version": "0.1.0",
                             "input_hash": input_hash,
                             "observed_at": datetime.now(UTC).isoformat(),

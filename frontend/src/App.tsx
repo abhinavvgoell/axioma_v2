@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ApiError, cancelJob, findOptimizationProposals, getJob, getReport, submitJob } from './api'
 import type { AnalysisReport, Job, JobStatus, Language, OptimizationProposal, ProblemKind } from './types'
+import LandingPage from './LandingPage'
 import './App.css'
 
 const starterSamples = JSON.stringify(
@@ -36,7 +37,7 @@ const starterEntrypoint: Record<Language, string> = {
 
 const terminalStatuses = new Set<JobStatus>(['completed', 'failed', 'cancelled'])
 
-function App() {
+function AnalyzerApp() {
   const [language, setLanguage] = useState<Language>('python')
   const [problemKind, setProblemKind] = useState<ProblemKind>('function')
   const [statement, setStatement] = useState(
@@ -53,6 +54,7 @@ function App() {
   const [optimizationNotes, setOptimizationNotes] = useState('')
   const [benchmarksText, setBenchmarksText] = useState<Record<Language, string>>({ python: '[]', java: '[]' })
   const [generatedTests, setGeneratedTests] = useState(8)
+  const [mutationTests, setMutationTests] = useState(0)
   const [job, setJob] = useState<Job | null>(null)
   const [report, setReport] = useState<AnalysisReport | null>(null)
   const [proposals, setProposals] = useState<OptimizationProposal[]>([])
@@ -207,6 +209,7 @@ function App() {
         request.reference_code = reference || null
         request.independent_reference_code = reference ? independentReference || null : null
         request.generated_tests = reference ? generatedTests : 0
+        request.mutation_tests = reference ? mutationTests : 0
         request.optimization_code = optimization || null
         request.optimization_notes = optimizationNotes.trim() || null
         const benchmarks = JSON.parse(benchmarksText[language]) as unknown
@@ -258,7 +261,7 @@ function App() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <a className="brand" href="#main" aria-label="Axioma home">
+        <a className="brand" href="/" aria-label="Axioma home">
           <span className="brand-mark">A.</span><span>axioma</span><sup>®</sup>
         </a>
           <div className="workspace-label">LOCAL WORKSPACE <i>/</i> MODE 1</div>
@@ -299,7 +302,7 @@ function App() {
               </>}
               <label className="field-block"><span className="field-label">SAMPLES · JSON ARRAY</span><textarea className="text-input json-input samples-input" value={samplesText} onChange={(event) => problemKind === 'function' ? setFunctionSamplesText(event.target.value) : setStdinSamplesText(event.target.value)} rows={7} spellCheck={false} /></label>
               {problemKind === 'function' && <>
-                <details className="reference-settings"><summary>REFERENCE CHECKS <span>OPTIONAL</span></summary><label className="field-block"><span className="field-label">REFERENCE IMPLEMENTATION</span><textarea className="text-input code-input compact-code" value={referenceCode[language]} onChange={(event) => setReferenceCode((previous) => ({ ...previous, [language]: event.target.value }))} rows={5} spellCheck={false} placeholder={language === 'python' ? 'def solve(values):\n    return sum(values)' : 'class Reference { /* implement solve */ }'} /></label><label className="field-block"><span className="field-label">INDEPENDENT REFERENCE · OPTIONAL</span><textarea className="text-input code-input compact-code" value={independentReferenceCode[language]} onChange={(event) => setIndependentReferenceCode((previous) => ({ ...previous, [language]: event.target.value }))} rows={5} spellCheck={false} disabled={!referenceCode[language].trim()} placeholder={language === 'python' ? 'def solve(values):\n    total = 0\n    for value in values:\n        total += value\n    return total' : 'class ReferenceIndependent { /* implement solve */ }'} /></label><p className="field-hint">Both user-supplied references must match the examples and each other before differential checks run. Agreement is corroboration, not proof.</p><label className="field-block generated-count"><span className="field-label">GENERATED CASES</span><input type="number" min={0} max={50} value={generatedTests} onChange={(event) => setGeneratedTests(Math.max(0, Math.min(50, Number(event.target.value))))} disabled={!referenceCode[language].trim()} /></label><p className="field-hint">Generated differential checks use the reference only after it passes the declared samples.</p></details>
+                <details className="reference-settings"><summary>REFERENCE CHECKS <span>OPTIONAL</span></summary><label className="field-block"><span className="field-label">REFERENCE IMPLEMENTATION</span><textarea className="text-input code-input compact-code" value={referenceCode[language]} onChange={(event) => setReferenceCode((previous) => ({ ...previous, [language]: event.target.value }))} rows={5} spellCheck={false} placeholder={language === 'python' ? 'def solve(values):\n    return sum(values)' : 'class Reference { /* implement solve */ }'} /></label><label className="field-block"><span className="field-label">INDEPENDENT REFERENCE · OPTIONAL</span><textarea className="text-input code-input compact-code" value={independentReferenceCode[language]} onChange={(event) => setIndependentReferenceCode((previous) => ({ ...previous, [language]: event.target.value }))} rows={5} spellCheck={false} disabled={!referenceCode[language].trim()} placeholder={language === 'python' ? 'def solve(values):\n    total = 0\n    for value in values:\n        total += value\n    return total' : 'class ReferenceIndependent { /* implement solve */ }'} /></label><p className="field-hint">Both user-supplied references must match the examples and each other before differential checks run. Agreement is corroboration, not proof.</p><label className="field-block generated-count"><span className="field-label">GENERATED CASES</span><input type="number" min={0} max={50} value={generatedTests} onChange={(event) => setGeneratedTests(Math.max(0, Math.min(50, Number(event.target.value))))} disabled={!referenceCode[language].trim()} /></label><label className="field-block generated-count"><span className="field-label">MUTATION TESTS</span><input type="number" min={0} max={20} value={mutationTests} onChange={(event) => setMutationTests(Math.max(0, Math.min(20, Number(event.target.value))))} disabled={!referenceCode[language].trim()} /></label><p className="field-hint">Mutants are generated from simple operators in the selected reference method. A score is low-confidence and only describes these finite checks.</p><p className="field-hint">Generated differential checks use the reference only after it passes the declared samples.</p></details>
                 <details className="reference-settings optimization-settings"><summary>OPTIMIZATION CANDIDATE <span>OPTIONAL</span></summary><p className="field-hint">A candidate you provide is checked against declared outputs before Axioma reports its measurements. This does not generate or silently apply a rewrite.</p><label className="field-block"><span className="field-label">ALTERNATE SOURCE</span><textarea className="text-input code-input compact-code" value={optimizationCode[language]} onChange={(event) => setOptimizationCode((previous) => ({ ...previous, [language]: event.target.value }))} rows={7} spellCheck={false} placeholder={language === 'python' ? 'def solve(values):\n    return sum(values)' : 'class AxiomaOptimized {\n    public int solve(int[] values) {\n        // alternate implementation\n    }\n}'} /></label><label className="field-block"><span className="field-label">WHY THIS CHANGE? · OPTIONAL</span><textarea className="text-input" value={optimizationNotes} onChange={(event) => setOptimizationNotes(event.target.value)} rows={2} maxLength={2000} /></label><label className="field-block"><span className="field-label">BENCHMARK INPUTS · JSON ARRAY · 4–6 INCREASING SIZES</span><textarea className="text-input json-input" value={benchmarksText[language]} onChange={(event) => setBenchmarksText((previous) => ({ ...previous, [language]: event.target.value }))} rows={5} spellCheck={false} placeholder={'[{"size": 10, "args": [[1,2,3,4,5,6,7,8,9,10]]}, ...]'} /></label><p className="field-hint">Use inputs that match your function signature and declared constraints. Measurements run only after correctness checks pass and remain low-confidence evidence.</p></details>
               </>}
               <div className="input-note"><span>i</span><p>Submissions are sent to the local API. Code executes only when the worker and sandbox are available.</p></div>
@@ -395,6 +398,12 @@ function Complexity({ result }: { result: AnalysisReport['complexity'] }) {
 function GateList({ gates }: { gates: AnalysisReport['verification_gates'] }) {
   const labels = { passed: 'PASSED', failed: 'FAILED', not_run: 'NOT RUN' }
   return <div className="gate-list"><h3>VERIFICATION GATES</h3>{gates.map((gate) => <div className="gate-row" key={`${gate.order}-${gate.name}`}><span className="gate-order">{String(gate.order + 1).padStart(2, '0')}</span><span>{gate.name}</span><b className={`gate-state gate-${gate.state}`}>{labels[gate.state]}</b></div>)}</div>
+}
+
+function App() {
+  return window.location.pathname === '/analyzer'
+    ? <AnalyzerApp />
+    : <LandingPage />
 }
 
 export default App

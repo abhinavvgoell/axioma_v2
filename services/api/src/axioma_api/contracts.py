@@ -287,10 +287,8 @@ class Mode1JobCreate(BaseModel):
                 raise ValueError(
                     "Java submission class name cannot be AxiomaOptimized when using an optimization"
                 )
-        if self.mutation_tests and (
-            self.language != "python" or self.problem.interface.kind != "function"
-        ):
-            raise ValueError("mutation_tests currently require a Python function job")
+        if self.mutation_tests and self.problem.interface.kind != "function":
+            raise ValueError("mutation_tests currently require a function job")
         if self.language == "java" and self.reference_code:
             entrypoint_class = self.problem.interface.entrypoint.split(".", maxsplit=1)[0]
             if entrypoint_class == "Reference":
