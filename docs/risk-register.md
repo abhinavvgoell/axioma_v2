@@ -5,7 +5,7 @@ Updated: 2026-10-20
 | Risk | Likelihood | Impact | Mitigation | Status |
 |---|---|---|---|---|
 | The available build window is about six hours and must use free tools | High | High | Keep the deliverable local and free; finish a narrow Mode 1 slice, prioritize verification and honest evaluation, and defer Mode 2, paid LLM calls, hosted arbitrary-code execution, and integrations | Active |
-| Docker is not installed in the current development environment | High | High | Worker and sandbox are implemented; install Docker Desktop before verifying container execution or running submissions | Active |
+| Docker Desktop is not installed in the current Windows development environment | High | High | Docker abuse suite passes on GitHub's Ubuntu runner; install Docker Desktop and repeat the suite before running local submissions | Partially mitigated |
 | Free hosting cannot safely support a public arbitrary-code sandbox | High | High | Keep execution local; use precomputed reports in any public demo unless a suitable isolated host is available | Active |
 | Defects4J and BugsInPy setup, licensing, and leakage constraints reduce time for ML | Medium | Medium | Verify setup and licenses before committing to Track A; make ML a gated phase | Open |
 | Mode 1 evaluation has no independently curated gold set yet | High | High | Keep scoring tools ready, but report no accuracy or detection rates until at least 50 reviewed solutions and known-correct controls/mutants are labeled | Active |
