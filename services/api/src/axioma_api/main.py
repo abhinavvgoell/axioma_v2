@@ -16,6 +16,8 @@ from axioma_api.contracts import (
     Confidence,
     ProblemInputGenerationRequest,
     ProblemInputGenerationResult,
+    ComplexityBenchmarkGenerationRequest,
+    ComplexityBenchmarkGenerationResult,
     OptimizationProposalRequest,
     OptimizationProposalResponse,
     GateState,
@@ -41,7 +43,10 @@ from axioma_api.models import (
     VerificationGateRecord,
 )
 from axioma_api.problem_validation import validate_problem_spec
-from axioma_api.problem_generation import generate_problem_inputs
+from axioma_api.problem_generation import (
+    generate_complexity_benchmarks,
+    generate_problem_inputs,
+)
 from axioma_api.optimization_proposals import propose_optimizations
 
 
@@ -63,6 +68,22 @@ def generate_problem_input_cases(
     payload: ProblemInputGenerationRequest,
 ) -> ProblemInputGenerationResult:
     return generate_problem_inputs(payload)
+
+
+@app.post(
+    "/v1/problem-specs/generate-complexity-benchmarks",
+    response_model=ComplexityBenchmarkGenerationResult,
+)
+def generate_complexity_benchmark_inputs(
+    payload: ComplexityBenchmarkGenerationRequest,
+) -> ComplexityBenchmarkGenerationResult:
+    validation = validate_problem_spec(payload.problem)
+    if not validation.valid:
+        raise HTTPException(status_code=422, detail=validation.model_dump(mode="json"))
+    try:
+        return generate_complexity_benchmarks(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @app.post(

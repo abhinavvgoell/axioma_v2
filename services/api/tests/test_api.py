@@ -671,6 +671,72 @@ def test_generated_inputs_include_adversarial_numeric_array_patterns(
     assert all(3 <= len(case["args"][0]) <= 5 for case in cases)
 
 
+def test_complexity_benchmark_generator_returns_copyable_patterned_inputs(
+    client: TestClient,
+) -> None:
+    payload = {
+        "problem": {
+            "statement": "Sort or search a bounded numeric list.",
+            "interface": {"kind": "function", "entrypoint": "solve"},
+            "constraints": [{"path": "args[0].length", "minimum": 2, "maximum": 32}],
+            "samples": [
+                {"kind": "function", "name": "base", "args": [[3, 1, 2]], "expected": 6}
+            ],
+        },
+        "size_path": "args[0].length",
+        "sizes": [4, 8, 16, 32],
+        "pattern": "descending",
+        "seed": 7,
+    }
+
+    first = client.post("/v1/problem-specs/generate-complexity-benchmarks", json=payload)
+    second = client.post("/v1/problem-specs/generate-complexity-benchmarks", json=payload)
+
+    assert first.status_code == second.status_code == 200
+    assert first.json() == second.json()
+    result = first.json()
+    assert result["pattern"] == "descending"
+    benchmarks = result["benchmarks"]
+    assert [item["size"] for item in benchmarks] == [4, 8, 16, 32]
+    assert all(len(item["args"][0]) == item["size"] for item in benchmarks)
+    assert all(item["args"][0] == sorted(item["args"][0], reverse=True) for item in benchmarks)
+    assert "does not prove a worst case" in " ".join(result["limitations"])
+    accepted = client.post(
+        "/v1/jobs/mode1/python-function",
+        json={
+            "language": "python",
+            "code": "def solve(values): return sum(values)",
+            "problem": payload["problem"],
+            "complexity_benchmarks": benchmarks,
+        },
+    )
+    assert accepted.status_code == 202
+
+
+def test_complexity_benchmark_generator_rejects_unsupported_sample_pattern(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/v1/problem-specs/generate-complexity-benchmarks",
+        json={
+            "problem": {
+                "statement": "Return a numeric list.",
+                "interface": {"kind": "function", "entrypoint": "solve"},
+                "constraints": [{"path": "args[0].length", "minimum": 2, "maximum": 10}],
+                "samples": [
+                    {"kind": "function", "name": "base", "args": [[1, 1, 1]], "expected": [1, 1, 1]}
+                ],
+            },
+            "size_path": "args[0].length",
+            "sizes": [2, 3, 4, 5],
+            "pattern": "nearly_sorted",
+        },
+    )
+
+    assert response.status_code == 422
+    assert "could not generate the nearly_sorted pattern" in response.json()["detail"]
+
+
 def test_optimization_proposal_route_returns_static_unverified_candidate(
     client: TestClient,
 ) -> None:

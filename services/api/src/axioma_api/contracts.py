@@ -369,3 +369,56 @@ class ProblemInputGenerationResult(BaseModel):
     requested: int = Field(ge=1)
     generated: int = Field(ge=0)
     cases: list[GeneratedInputCase] = Field(default_factory=list)
+
+
+class ComplexityBenchmarkGenerationRequest(BaseModel):
+    problem: ProblemSpec
+    size_path: str = Field(pattern=r"^(args|kwargs)(\.[A-Za-z_]\w*|\[\d+\])*\.length$", max_length=120)
+    sizes: list[int] = Field(min_length=4, max_length=6)
+    pattern: Literal[
+        "ascending",
+        "descending",
+        "all_equal",
+        "duplicate_heavy",
+        "alternating_low_high",
+        "nearly_sorted",
+    ]
+    seed: int = Field(default=0, ge=0, le=4_294_967_295)
+
+    @model_validator(mode="after")
+    def validate_benchmark_request(self) -> "ComplexityBenchmarkGenerationRequest":
+        if not isinstance(self.problem.interface, FunctionInterface):
+            raise ValueError("complexity benchmark generation requires a function interface")
+        if self.sizes != sorted(set(self.sizes)):
+            raise ValueError("benchmark sizes must be unique and strictly increasing")
+        if any(size < 1 or size > 10_000 for size in self.sizes):
+            raise ValueError("generated benchmark sizes must be between 1 and 10000")
+        length_constraints = [
+            constraint
+            for constraint in self.problem.constraints
+            if constraint.path == self.size_path
+        ]
+        if len(length_constraints) != 1:
+            raise ValueError("size_path must have exactly one matching collection-length constraint")
+        constraint = length_constraints[0]
+        if any(
+            type(bound) is not int
+            for bound in (constraint.minimum, constraint.maximum)
+            if bound is not None
+        ):
+            raise ValueError("generated benchmark sizes require integer length bounds")
+        if any(
+            (constraint.minimum is not None and size < constraint.minimum)
+            or (constraint.maximum is not None and size > constraint.maximum)
+            for size in self.sizes
+        ):
+            raise ValueError("every benchmark size must fit the declared length constraint")
+        return self
+
+
+class ComplexityBenchmarkGenerationResult(BaseModel):
+    seed: int
+    size_path: str
+    pattern: str
+    benchmarks: list[ComplexityBenchmarkSample]
+    limitations: list[str]

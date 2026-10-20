@@ -10,6 +10,9 @@ from typing import Any
 
 from axioma_api.contracts import (
     ConstraintRange,
+    ComplexityBenchmarkGenerationRequest,
+    ComplexityBenchmarkGenerationResult,
+    ComplexityBenchmarkSample,
     FunctionSample,
     GeneratedInputCase,
     ProblemInputGenerationRequest,
@@ -371,6 +374,67 @@ def generate_problem_inputs(
         requested=request.count,
         generated=len(cases),
         cases=cases,
+    )
+
+
+def generate_complexity_benchmarks(
+    request: ComplexityBenchmarkGenerationRequest,
+) -> ComplexityBenchmarkGenerationResult:
+    """Create repeatable, adversarial function inputs at declared collection sizes."""
+    sample = request.problem.samples[0]
+    if not isinstance(sample, FunctionSample):
+        raise ValueError("complexity benchmark generation requires function samples")
+    sample_data = sample.model_dump(mode="json")
+    collection = _collection_for_length_path(sample_data, request.size_path)
+    if not isinstance(collection, list) or any(
+        isinstance(value, bool) or not isinstance(value, (int, float))
+        for value in collection
+    ):
+        raise ValueError("size_path must point to a numeric array in the first example")
+
+    rng = random.Random(request.seed)
+    constraints = sorted(
+        request.problem.constraints,
+        key=lambda item: ("length" not in item.path, len(item.path)),
+    )
+    benchmarks: list[ComplexityBenchmarkSample] = []
+    for size in request.sizes:
+        case = _candidate_case(
+            request.problem,
+            sample,
+            constraints,
+            rng,
+            focus=(request.size_path, size),
+            pattern=(request.size_path, request.pattern),
+        )
+        if case is None:
+            raise ValueError(
+                f"could not generate the {request.pattern} pattern at size {size}; "
+                "check the sample values and constraints"
+            )
+        args = case.get("args")
+        kwargs = case.get("kwargs")
+        generated_collection = _collection_for_length_path(case, request.size_path)
+        if not isinstance(generated_collection, list) or len(generated_collection) != size:
+            raise ValueError("generated benchmark did not match its declared size")
+        benchmarks.append(
+            ComplexityBenchmarkSample(
+                size=size,
+                args=args,
+                kwargs=kwargs,
+            )
+        )
+
+    return ComplexityBenchmarkGenerationResult(
+        seed=request.seed,
+        size_path=request.size_path,
+        pattern=request.pattern,
+        benchmarks=benchmarks,
+        limitations=[
+            "Inputs are generated from the first example and declared constraints; inspect them before execution.",
+            "The selected pattern may expose some input-sensitive cases but does not prove a worst case for the submitted algorithm.",
+            "Generated sizes are user-selected and results remain low-confidence empirical observations.",
+        ],
     )
 
 

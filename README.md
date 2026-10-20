@@ -24,7 +24,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 - FastAPI job API with durable states, idempotency keys, cancellation, persisted status events, and Server-Sent Events.
 - SQLite development setup and Alembic migrations; PostgreSQL is configured through `DATABASE_URL`.
 - Separate worker process with queue leases, recovery for expired work, and Java/Python execution adapters.
-- Mode 1 problem validation, constraint-aware generated inputs, and Java/Python sample harnesses for function and stdin/stdout problems.
+- Mode 1 problem validation, constraint-aware generated inputs, repeatable adversarial complexity benchmarks, and Java/Python sample harnesses for function and stdin/stdout problems.
 - Evidence claims, reconciled test counts, categorical confidence, complexity result structure, and ordered verification-gate schema.
 - Low-confidence static complexity heuristics for Python and Java; optional Python line-event/opcode-count and Java JVM wall-time growth fitting with constraint-scale context.
 - Reproducible Mode 1 evaluators for complexity-class estimates, test detection, optimization preservation/paired measurements, and observed job latency. Complexity and detection reports include uncertainty intervals; confidence calibration requires solution-ID-separated partitions. No gold data or measured latency/performance claim is included yet.
