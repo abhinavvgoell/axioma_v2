@@ -43,26 +43,68 @@ interface HistoryEntry {
   id: string
   language: Language
   created_at: string
+  topics: string[]
+  summary?: HistorySummary
+}
+
+interface HistorySummary {
+  passed: number
+  failed: number
+  skipped: number
+  complexity: string | null
 }
 
 function readHistory(): HistoryEntry[] {
   try {
     const value = JSON.parse(localStorage.getItem(historyStorageKey) ?? '[]') as unknown
     if (!Array.isArray(value)) return []
-    return value.filter((item): item is HistoryEntry => (
-      typeof item === 'object'
-      && item !== null
-      && 'id' in item
-      && typeof item.id === 'string'
-      && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item.id)
-      && 'language' in item
-      && (item.language === 'python' || item.language === 'java')
-      && 'created_at' in item
-      && typeof item.created_at === 'string'
-    )).slice(0, historyLimit)
+    const entries: HistoryEntry[] = []
+    for (const item of value) {
+      if (typeof item !== 'object' || item === null) continue
+      const stored = item as Record<string, unknown>
+      if (
+        typeof stored.id !== 'string'
+        || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stored.id)
+        || (stored.language !== 'python' && stored.language !== 'java')
+        || typeof stored.created_at !== 'string'
+      ) continue
+      const topics = Array.isArray(stored.topics)
+        ? stored.topics.filter((topic): topic is string => typeof topic === 'string').slice(0, 8)
+        : []
+      const summaryValue = stored.summary
+      const summary = typeof summaryValue === 'object' && summaryValue !== null
+        ? summaryValue as Record<string, unknown>
+        : null
+      const validSummary = summary
+        && Number.isInteger(summary.passed) && Number(summary.passed) >= 0
+        && Number.isInteger(summary.failed) && Number(summary.failed) >= 0
+        && Number.isInteger(summary.skipped) && Number(summary.skipped) >= 0
+        && (summary.complexity === null || typeof summary.complexity === 'string')
+        ? {
+            passed: Number(summary.passed),
+            failed: Number(summary.failed),
+            skipped: Number(summary.skipped),
+            complexity: summary.complexity as string | null,
+          }
+        : undefined
+      entries.push({
+        id: stored.id,
+        language: stored.language,
+        created_at: stored.created_at,
+        topics,
+        ...(validSummary ? { summary: validSummary } : {}),
+      })
+    }
+    return entries.slice(0, historyLimit)
   } catch {
     return []
   }
+}
+
+function parseTopics(value: string): string[] {
+  return [...new Set(value.split(',')
+    .map((topic) => topic.trim().toLowerCase().replace(/\s+/g, ' '))
+    .filter((topic) => topic.length > 0 && topic.length <= 32))].slice(0, 8)
 }
 
 function AnalyzerApp() {
@@ -83,6 +125,7 @@ function AnalyzerApp() {
   const [benchmarksText, setBenchmarksText] = useState<Record<Language, string>>({ python: '[]', java: '[]' })
   const [generatedTests, setGeneratedTests] = useState(8)
   const [mutationTests, setMutationTests] = useState(0)
+  const [topicTags, setTopicTags] = useState('')
   const [history, setHistory] = useState<HistoryEntry[]>(readHistory)
   const [job, setJob] = useState<Job | null>(null)
   const [report, setReport] = useState<AnalysisReport | null>(null)
@@ -101,6 +144,20 @@ function AnalyzerApp() {
   const samplesText = problemKind === 'function' ? functionSamplesText : stdinSamplesText
   const activeJobId = job?.id
   const activeJobStatus = job?.status
+
+  function rememberReportSummary(jobId: string, nextReport: AnalysisReport) {
+    setHistory((current) => current.map((item) => item.id === jobId
+      ? {
+          ...item,
+          summary: {
+            passed: nextReport.tests.passed,
+            failed: nextReport.tests.failed,
+            skipped: nextReport.tests.skipped,
+            complexity: nextReport.complexity?.estimate ?? null,
+          },
+        }
+      : item))
+  }
 
   useEffect(() => () => eventSource.current?.close(), [])
 
@@ -128,7 +185,11 @@ function AnalyzerApp() {
         setJob(updated)
         if (terminalStatuses.has(updated.status)) {
           source.close()
-          if (updated.status === 'completed') setReport(await getReport(activeJobId))
+          if (updated.status === 'completed') {
+            const completedReport = await getReport(activeJobId)
+            setReport(completedReport)
+            rememberReportSummary(activeJobId, completedReport)
+          }
         }
       } catch (reason) {
         setError(reason instanceof Error ? reason.message : 'Could not refresh the job status.')
@@ -271,7 +332,7 @@ function AnalyzerApp() {
       const created = await submitJob(path, request)
       setJob(created)
       setHistory((current) => [
-        { id: created.id, language: created.language, created_at: created.created_at },
+        { id: created.id, language: created.language, created_at: created.created_at, topics: parseTopics(topicTags) },
         ...current.filter((item) => item.id !== created.id),
       ].slice(0, historyLimit))
     } catch (reason) {
@@ -303,7 +364,11 @@ function AnalyzerApp() {
     try {
       const selected = await getJob(jobId)
       setJob(selected)
-      if (selected.status === 'completed') setReport(await getReport(jobId))
+      if (selected.status === 'completed') {
+        const loadedReport = await getReport(jobId)
+        setReport(loadedReport)
+        rememberReportSummary(jobId, loadedReport)
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Could not load this saved run.')
       if (reason instanceof ApiError && reason.status === 404) {
@@ -317,6 +382,7 @@ function AnalyzerApp() {
     const payload = {
       exported_at: new Date().toISOString(),
       job,
+      topics: history.find((item) => item.id === job.id)?.topics ?? [],
       report,
     }
     const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: 'application/json' })
@@ -330,6 +396,21 @@ function AnalyzerApp() {
 
   const isRunning = job !== null && !terminalStatuses.has(job.status)
   const canCancel = job?.status === 'queued' || job?.status === 'running'
+  const topicSignals = history.reduce<Record<string, { failed: number; checked: number }>>((signals, item) => {
+    if (!item.summary) return signals
+    const checked = item.summary.passed + item.summary.failed
+    for (const topic of item.topics) {
+      signals[topic] ??= { failed: 0, checked: 0 }
+      signals[topic].failed += item.summary.failed
+      signals[topic].checked += checked
+    }
+    return signals
+  }, {})
+  const weakestTopicSignals = Object.entries(topicSignals)
+    .filter(([, counts]) => counts.checked >= 3)
+    .sort((left, right) => (right[1].failed / right[1].checked) - (left[1].failed / left[1].checked))
+    .slice(0, 4)
+  const recentComplexity = history.filter((item) => item.summary?.complexity).slice(0, 5)
 
   return (
     <main className="app-shell">
@@ -348,6 +429,7 @@ function AnalyzerApp() {
           <button className="rail-item" disabled title="Repository review is not implemented yet"><span className="rail-icon">⌂</span><span>Repository review</span><small>SOON</small></button>
           <div className="rail-divider" />
           <div className="rail-section-label">RECENT RUNS <span>{history.length}</span></div>
+          {history.length > 0 && <button className="rail-clear" onClick={() => setHistory([])}>CLEAR LOCAL HISTORY</button>}
           <div className="rail-history" aria-label="Recent analyses">
             {history.length === 0
               ? <p className="rail-history-empty">Completed and submitted runs will appear here. This browser stores job IDs only.</p>
@@ -362,9 +444,32 @@ function AnalyzerApp() {
                   <span>{item.language.toUpperCase()}</span>
                   <code>{item.id.slice(0, 8)}</code>
                   <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString()}</time>
+                  {item.topics.length > 0 && <small className="rail-history-topics">{item.topics.join(' · ')}</small>}
+                  {item.summary?.complexity && <small className="rail-history-estimate">{item.summary.complexity}</small>}
                 </button>
               ))}
           </div>
+          <div className="rail-divider" />
+          <div className="rail-section-label">TOPIC SIGNALS</div>
+          <p className="rail-insight-note">Self-tagged topics, summarized from completed runs. This is not a skill score.</p>
+          {weakestTopicSignals.length === 0
+            ? <p className="rail-history-empty">Add topic tags and collect at least three executed checks per topic.</p>
+            : <div className="rail-topic-list">{weakestTopicSignals.map(([topic, counts]) => (
+              <div className="rail-topic-row" key={topic}>
+                <span>{topic}</span>
+                <b>{Math.round((counts.failed / counts.checked) * 100)}% fail</b>
+                <small>{counts.failed}/{counts.checked} checks</small>
+              </div>
+            ))}</div>}
+          <div className="rail-section-label complexity-history-label">RECENT COMPLEXITY</div>
+          {recentComplexity.length === 0
+            ? <p className="rail-history-empty">No estimates in saved reports yet.</p>
+            : <div className="rail-topic-list">{recentComplexity.map((item) => (
+              <div className="rail-complexity-row" key={item.id}>
+                <code>{item.summary?.complexity}</code>
+                <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleDateString()}</time>
+              </div>
+            ))}</div>}
           <div className="rail-bottom"><div className="rail-section-label">RUNTIME</div><div className="runtime-state"><span className="runtime-pip" /> API checked on run</div></div>
         </aside>
 
@@ -381,6 +486,7 @@ function AnalyzerApp() {
               <div className="panel-heading"><span>01</span><h2>Problem</h2><span className="panel-meta">SPECIFICATION</span></div>
               <label className="field-label" htmlFor="problem-statement">STATEMENT</label>
               <textarea id="problem-statement" className="text-input statement-input" value={statement} onChange={(event) => setStatement(event.target.value)} rows={3} />
+              <label className="field-block"><span className="field-label">TOPIC TAGS · COMMA SEPARATED</span><input className="text-input" value={topicTags} onChange={(event) => setTopicTags(event.target.value.slice(0, 256))} maxLength={256} placeholder="arrays, two pointers" /><span className="field-hint">Up to 8 tags, 32 characters each. Tags stay in this browser and help group your local history.</span></label>
               <div className="field-row">
                 <label className="field-block"><span className="field-label">LANGUAGE</span><select value={language} onChange={(event) => changeLanguage(event.target.value as Language)}><option value="python">Python</option><option value="java">Java</option></select></label>
                 <label className="field-block"><span className="field-label">INTERFACE</span><select value={problemKind} onChange={(event) => changeProblemKind(event.target.value as ProblemKind)}><option value="function">Function</option><option value="stdin_stdout">stdin / stdout</option></select></label>
