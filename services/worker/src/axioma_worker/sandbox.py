@@ -76,10 +76,10 @@ class DockerSandbox:
             if not container_id:
                 raise SandboxUnavailable("Docker did not return a container ID")
 
-            # Start the empty sleep container first so Docker mounts /work before docker cp.
+            # Start the empty container so /work is mounted, then extract directly into its tmpfs.
             self._docker(["start", container_id], timeout=10)
             self._docker(
-                [self.docker_binary, "cp", "-", f"{container_id}:/work"],
+                [self.docker_binary, "exec", "-i", container_id, "tar", "-x", "-C", "/work"],
                 timeout=10,
                 input=self._source_archive_files(files),
             )
