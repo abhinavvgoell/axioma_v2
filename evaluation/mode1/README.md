@@ -6,6 +6,8 @@ It also contains a detection evaluator for known-correct controls and intentiona
 
 The optimization evaluator scores output-preservation separately from paired performance measurements. It reports Java wall-time speedup only when the candidate passes every requested equivalence check, has at least four paired increasing input sizes, and its median wall time is lower at every size. Python source-line and opcode reductions are reported as work-count changes, never as wall-clock speedup.
 
+The latency evaluator summarizes completed-job timing from the API database's persisted `jobs` and `job_events` timestamps. It reports queue-to-first-start, latest worker lifecycle, and end-to-end distributions by language. It does not select source code or report payloads, run a load test, or claim an SLO. Failed jobs are included in status counts but excluded from success-latency distributions.
+
 ## Record format
 
 Create a UTF-8 JSON Lines file, one record per expected/predicted comparison:
@@ -51,6 +53,17 @@ services/api/.venv/Scripts/python evaluation/mode1/evaluate_detection.py path/to
 ```
 
 Do not label a solution as correct merely because its configured tests passed. The labels must come from the curated evaluation set, and the results apply only to that set.
+
+## Observed job latency
+
+Run from the repository root after installing the API dependencies and generating local job history:
+
+```powershell
+$env:DATABASE_URL = "sqlite:///services/api/axioma.db"
+services/api/.venv/Scripts/python evaluation/mode1/evaluate_latency.py --output evaluation/mode1/latency-report.json
+```
+
+The report hashes its canonical input records and includes sample counts, nearest-rank p50/p95, minimum and maximum, plus limitations. Queue time ends at the first `running` event. The worker lifecycle starts at the latest `running` event before the current terminal state, which may include recovery time after a retry; it is not CPU time. End-to-end uses job creation through the current terminal event. Only completed jobs with all valid timestamps enter the distributions. Do not interpret a small local sample as a service guarantee. The command reports no measured latency unless the database contains jobs.
 
 ## Optimization evaluation
 
