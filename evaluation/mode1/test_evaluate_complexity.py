@@ -33,6 +33,10 @@ def test_score_reports_exact_within_one_method_and_confidence_metrics(tmp_path) 
     report = _score(load_records(records_path))
 
     assert report["n"] == 2
+    assert report["distinct_solutions"] == 2
+    assert report["minimum_distinct_solutions"] == 50
+    assert report["minimum_solution_count_met"] is False
+    assert report["evaluation_readiness"] == "below_minimum"
     assert report["exact_accuracy"] == 0.5
     assert report["exact_accuracy_95_ci"]["lower"] < 0.5
     assert report["exact_accuracy_95_ci"]["upper"] > 0.5
@@ -87,6 +91,27 @@ def test_held_out_confidence_mapping_uses_separate_solution_partitions() -> None
     assert calibration["per_method_confidence"]["static"]["high"]["evaluation_accuracy"] == 0.5
     assert calibration["brier_score"] == 0.25
     assert calibration["expected_calibration_error"] == 0.0
+
+
+def test_minimum_dataset_gate_counts_distinct_solutions_not_method_rows() -> None:
+    records = [
+        {
+            "id": f"solution-{solution}",
+            "method": method,
+            "expected": "O(n)",
+            "predicted": "O(n)",
+            "partition": "evaluation",
+        }
+        for solution in range(50)
+        for method in ("static", "measured")
+    ]
+
+    report = _score(records)
+
+    assert report["n"] == 100
+    assert report["distinct_solutions"] == 50
+    assert report["minimum_solution_count_met"] is True
+    assert report["evaluation_readiness"] == "minimum_met"
 
 
 def test_load_records_rejects_duplicate_id_and_method(tmp_path) -> None:

@@ -89,6 +89,8 @@ def load_records(path: Path) -> list[dict[str, Any]]:
 
 
 def _score(records: list[dict[str, Any]]) -> dict[str, Any]:
+    distinct_solutions = len({record["id"] for record in records})
+    minimum_solutions = 50
     exact = 0
     within_one = 0
     confusion: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
@@ -216,6 +218,12 @@ def _score(records: list[dict[str, Any]]) -> dict[str, Any]:
 
     return {
         "n": len(records),
+        "distinct_solutions": distinct_solutions,
+        "minimum_distinct_solutions": minimum_solutions,
+        "minimum_solution_count_met": distinct_solutions >= minimum_solutions,
+        "evaluation_readiness": (
+            "minimum_met" if distinct_solutions >= minimum_solutions else "below_minimum"
+        ),
         "interval_method": "two-sided 95% Wilson score interval (z=1.95996)",
         "class_order": list(CLASSES),
         "exact_accuracy": exact / len(records),
