@@ -76,12 +76,13 @@ class DockerSandbox:
             if not container_id:
                 raise SandboxUnavailable("Docker did not return a container ID")
 
+            # Start the empty sleep container first so Docker mounts /work before docker cp.
+            self._docker(["start", container_id], timeout=10)
             self._docker(
                 [self.docker_binary, "cp", "-", f"{container_id}:/work"],
                 timeout=10,
                 input=self._source_archive_files(files),
             )
-            self._docker(["start", container_id], timeout=10)
             try:
                 execution = self._run_user_code(
                     container_id,

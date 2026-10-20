@@ -75,6 +75,9 @@ def test_run_lifecycle_uses_prebuilt_image_and_cleans_up(monkeypatch: pytest.Mon
     assert any("image" in args and "inspect" in args for args, _ in docker_calls)
     assert any(args[1:3] == ["cp", "-"] and archive for args, archive in docker_calls)
     assert any(args[0:2] == ["rm", "-f"] for args, _ in docker_calls)
+    start_index = next(i for i, (args, _) in enumerate(docker_calls) if args[:2] == ["start", "container-1"])
+    copy_index = next(i for i, (args, _) in enumerate(docker_calls) if args[1:3] == ["cp", "-"])
+    assert start_index < copy_index
     assert all(not any("print('done')" in arg for arg in command) for command, _ in docker_calls)
 
 
