@@ -41,7 +41,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 
 ### Not built or not verified yet
 
-- The Docker sandbox has not been run in this Windows development environment because Docker is unavailable here. The [hosted Linux CI run](https://github.com/abhinavvgoell/axioma/actions/runs/39401567952) passed the Docker-backed checks for Python network access, read-only root, timeout, output truncation, runtime memory/process limits, Java execution, and adversarial benchmark provenance. Local execution still needs Docker Desktop and the preloaded images.
+- The Docker sandbox has not been run in this Windows development environment because Docker is unavailable here. The [latest hosted Linux CI run](https://github.com/abhinavvgoell/axioma/actions/runs/39402169513) passed the API, worker, evaluator, migration, frontend, and Docker-backed checks for Python network access, read-only root, timeout, output truncation, runtime memory/process limits, Java execution, and adversarial benchmark provenance. Local execution still needs Docker Desktop and the preloaded images.
 - Authentication, user accounts, hosted deployment, GitHub App, and VS Code extension do not exist yet.
 - No Mode 2 repository ingestion/repair engine, trained defect-risk model, or benchmark evaluation report exists yet.
 - Mode 1 does not have a general trusted oracle, broad optimization-proposal coverage, or a curated golden evaluation set. The proposal rules currently cover one pattern only. Property checks use user-supplied predicates over generated inputs, not a shrinking property-testing framework.
