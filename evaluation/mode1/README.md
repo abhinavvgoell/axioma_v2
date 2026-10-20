@@ -30,10 +30,25 @@ The evaluator reports exact accuracy, within-one-class accuracy, per-method and 
 From the repository root:
 
 ```powershell
-services/api/.venv/Scripts/python evaluation/mode1/evaluate_complexity.py path/to/gold.jsonl --output evaluation/mode1/report.json
+services/api/.venv/Scripts/python evaluation/mode1/prepare_complexity_evaluation.py path/to/reviewed-gold.jsonl path/to/predictions.jsonl --output path/to/joined-evaluation.jsonl
+services/api/.venv/Scripts/python evaluation/mode1/evaluate_complexity.py path/to/joined-evaluation.jsonl --output path/to/report.json
 ```
 
-The JSON output includes record count, input SHA-256, evaluator version, point estimates, and uncertainty intervals. Preserve the gold JSONL, review notes, partition assignment, and report together for reproducibility. Do not present results from a small or selectively labeled set as general performance.
+Keep reviewed labels and Axioma predictions in separate files until review is complete. The gold file has one record per unique solution:
+
+```json
+{"id":"python-merge-01","expected":"O(n log n)","partition":"calibration","reviewer":"reviewer-1","rationale":"Merge sort divides and merges each level.","source_sha256":"<64 lowercase hex characters>"}
+```
+
+The predictions file has one record per solution and method, using values from saved Axioma reports:
+
+```json
+{"id":"python-merge-01","method":"static_ast_loop_depth","predicted":"O(n log n)","confidence":"medium","report_sha256":"<64 lowercase hex characters>"}
+```
+
+Compute `source_sha256` from the exact source file reviewed, and `report_sha256` from the saved report file. The preparation script rejects duplicate gold IDs, duplicate solution/method rows, unknown IDs, missing predictions, unsupported classes, invalid hashes, and incomplete coverage. It sorts the joined JSONL deterministically and includes hashes of both input files on every joined row. Then the evaluator's JSON report includes the joined file SHA-256 and evaluator version. These hashes make the artifacts traceable; they do not establish that a reviewer was independent or that a label is correct.
+
+The JSON output includes record count, input SHA-256, evaluator version, point estimates, and uncertainty intervals. Preserve the original gold and prediction files, review notes, partition assignment, joined file, and report together for reproducibility. Do not present results from a small or selectively labeled set as general performance.
 
 ## Test-detection evaluation
 
