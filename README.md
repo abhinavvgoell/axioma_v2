@@ -27,7 +27,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 - Mode 1 problem validation, constraint-aware generated inputs, and Java/Python sample harnesses for function and stdin/stdout problems.
 - Evidence claims, reconciled test counts, categorical confidence, complexity result structure, and ordered verification-gate schema.
 - Low-confidence static complexity heuristics for Python and Java; optional Python line-event/opcode-count and Java JVM wall-time growth fitting with constraint-scale context.
-- Reproducible Mode 1 evaluators for complexity-class estimates and test detection, with Wilson uncertainty intervals and held-out confidence calibration when solution-ID-separated partitions are provided; no gold data or performance claim is included yet.
+- Reproducible Mode 1 evaluators for complexity-class estimates, test detection, and optimization preservation/paired measurements, with Wilson uncertainty intervals and held-out confidence calibration when solution-ID-separated partitions are provided; no gold data or performance claim is included yet.
 - Optional Python and Java reference-guided differential checks, with an optional second independent implementation to catch disagreement, capped exhaustive checks for small positional integer domains, and bounded Python AST or Java operator mutation testing. References are checked against the examples first, but agreement does not prove correctness.
 - User-provided Python and Java optimization candidates are checked against declared outputs and, when available, user-reference generated cases. Optional measurements are kept separate: Python compares source-line and opcode events and reports a Python-traced peak-allocation estimate; Java compares warmed JVM reflective wall time and heap-pool peak-increase estimates. All measurements are low confidence and have documented limitations.
 - User-supplied Python and Java property predicates run against examples and seeded generated inputs in the sandbox; predicates are gated on example checks and labeled low confidence.
@@ -44,6 +44,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 - Authentication, user accounts, hosted deployment, GitHub App, and VS Code extension do not exist yet.
 - No Mode 2 repository ingestion/repair engine, trained defect-risk model, or benchmark evaluation report exists yet.
 - Mode 1 does not have a general trusted oracle, broad optimization-proposal coverage, or a curated golden evaluation set. The proposal rules currently cover one pattern only. Property checks use user-supplied predicates over generated inputs, not a shrinking property-testing framework.
+- There are no independently selected optimization-evaluation runs or measured component-latency report yet; the optimization evaluator is ready to score saved paired evidence without inventing results.
 - The Mode 1 dashboard is still incomplete: local topic summaries are descriptive and are not a validated skill model; there is no cross-device history, account-level data deletion, or cross-user complexity trend analysis. Recent history is local to one browser and does not add accounts or server-side user ownership.
 
 See [docs/risk-register.md](docs/risk-register.md) and [docs/threat-model-v1.md](docs/threat-model-v1.md) for known limitations and security assumptions.

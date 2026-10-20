@@ -4,6 +4,8 @@ This folder contains a small, dependency-free evaluator for a human-reviewed com
 
 It also contains a detection evaluator for known-correct controls and intentionally mutated solutions. It consumes Axioma's stored test counts after the evaluator owner joins each report with an independently assigned `correct` or `mutant` label.
 
+The optimization evaluator scores output-preservation separately from paired performance measurements. It reports Java wall-time speedup only when the candidate passes every requested equivalence check, has at least four paired increasing input sizes, and its median wall time is lower at every size. Python source-line and opcode reductions are reported as work-count changes, never as wall-clock speedup.
+
 ## Record format
 
 Create a UTF-8 JSON Lines file, one record per expected/predicted comparison:
@@ -49,6 +51,26 @@ services/api/.venv/Scripts/python evaluation/mode1/evaluate_detection.py path/to
 ```
 
 Do not label a solution as correct merely because its configured tests passed. The labels must come from the curated evaluation set, and the results apply only to that set.
+
+## Optimization evaluation
+
+Create a JSON Lines file with one record per proposed optimization candidate. Join the independent candidate identity, equivalence-check counts, and paired measurements from the saved optimization evidence claims:
+
+```json
+{"id":"candidate-001","checks":{"requested":8,"checked":8,"passed":8,"failed":0,"skipped":0},"measurements":{"jvm_reflective_wall_time":[{"size":10,"before":10000,"after":9000},{"size":20,"before":20000,"after":18000},{"size":40,"before":40000,"after":36000},{"size":80,"before":80000,"after":72000}]}}
+```
+
+`checks` must reconcile (`passed + failed + skipped = checked`). A candidate is preserved only when all requested checks were checked and passed, with no failures or skips. A failure is a counterexample; incomplete records without a failure are excluded from the preservation denominator. Measurements use `{size, before, after}` values from the same report and must have positive finite values and increasing unique sizes. Candidate reports need at least four sizes to contribute to a paired-measurement rate.
+
+Supported measurement keys are `jvm_reflective_wall_time`, `executed_source_line_events`, and `executed_cpython_opcode_events`. For Java, map `elapsed_ns` to `before` and `optimized_elapsed_ns` to `after`. For Python, map `line_events`/`optimized_line_events` or `opcode_events`/`optimized_opcode_events`. Preserve the original report and record its hash alongside the evaluation artifact; the evaluator hashes the joined JSONL input.
+
+Run it from the repository root:
+
+```powershell
+services/api/.venv/Scripts/python evaluation/mode1/evaluate_optimization.py path/to/optimization.jsonl --output evaluation/mode1/optimization-report.json
+```
+
+The evaluator does not create labels, declare a candidate useful, or prove general speedup. Its all-sizes rule is deliberately conservative. Python operation-count reductions are not wall-time evidence, and Java wall-time results remain host- and harness-dependent. No performance claim is available until real candidate runs are independently selected and evaluated.
 
 ## Labeling and evaluation limits
 
