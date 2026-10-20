@@ -32,7 +32,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 - User-provided Python and Java optimization candidates are checked against declared outputs and, when available, user-reference generated cases. Optional measurements are kept separate: Python compares source-line and opcode events and reports a Python-traced peak-allocation estimate; Java compares warmed JVM reflective wall time and heap-pool peak-increase estimates. All measurements are low confidence and have documented limitations.
 - User-supplied Python and Java property predicates run against examples and seeded generated inputs in the sandbox; predicates are gated on example checks and labeled low confidence.
 - Threat model, API contract, architecture decision records, and risk register under `docs/`.
-- GitHub Actions CI runs the API, worker, and evaluator tests, Python lint, frontend lint, and production build on pushes and pull requests. Docker runtime isolation still requires separate local verification.
+- GitHub Actions CI runs the API, worker, and evaluator tests, Python lint, frontend lint/build, and Docker sandbox checks on pushes and pull requests. Local Docker Desktop verification is still required for this Windows development machine.
 - Mode 1 React workspace for Python and Java function or stdin/stdout submissions, live job status, evidence claims, test counts, complexity estimates, and verification gates.
 - Browser-local recent run history stores job IDs, self-assigned topic tags, and report summaries (never source code); users can reopen server-side reports, export the displayed job and report as JSON, clear local history, and review descriptive topic failure counts and recent complexity estimates.
 - Function jobs can provide one reference and an independent second reference; both must match samples and each other before their outputs are used for differential checks. The UI describes this as corroboration, not proof.
@@ -41,7 +41,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 
 ### Not built or not verified yet
 
-- The Docker sandbox has not been run in this development environment because Docker is unavailable here. Docker-backed checks cover Python network access, read-only root, timeout, output truncation, and runtime memory/process limits, plus a Java JDK-container smoke test. They skip until Docker and the preloaded images are available. The security settings still need validation on a machine with Docker Desktop and Linux containers.
+- The Docker sandbox has not been run in this development environment because Docker is unavailable here. GitHub Actions pulls the prebuilt images and runs Docker-backed checks for Python network access, read-only root, timeout, output truncation, runtime memory/process limits, plus Java execution and adversarial benchmark provenance. They skip locally until Docker and the preloaded images are available. The security settings still need validation on a machine with Docker Desktop and Linux containers.
 - Authentication, user accounts, hosted deployment, GitHub App, and VS Code extension do not exist yet.
 - No Mode 2 repository ingestion/repair engine, trained defect-risk model, or benchmark evaluation report exists yet.
 - Mode 1 does not have a general trusted oracle, broad optimization-proposal coverage, or a curated golden evaluation set. The proposal rules currently cover one pattern only. Property checks use user-supplied predicates over generated inputs, not a shrinking property-testing framework.

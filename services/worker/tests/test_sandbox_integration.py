@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import json
 
 import pytest
 
 from axioma_worker.adapters import get_adapter
+from axioma_worker.java_harness import build_java_function_harness
 from axioma_worker.sandbox import DockerSandbox
 
 
@@ -108,3 +110,48 @@ def test_java_adapter_runs_inside_the_prebuilt_jdk_container():
 
     assert result.exit_code == 0
     assert result.stdout == "axioma-java-sandbox-ok\n"
+
+
+@pytest.mark.skipif(not _JAVA_READY, reason=_JAVA_REASON)
+def test_java_complexity_harness_preserves_adversarial_input_strategy():
+    benchmarks = [
+        {
+            "size": size,
+            "args": [list(range(size, 0, -1))],
+            "strategy": "descending",
+        }
+        for size in (4, 8, 16, 32)
+    ]
+    harness = build_java_function_harness(
+        "Solution.solve",
+        [{"name": "sample", "args": [[3, 1, 2]], "expected": 6}],
+        complexity_benchmarks=benchmarks,
+    )
+    solution = """class Solution {
+    int solve(int[] values) {
+        int total = 0;
+        for (int value : values) total += value;
+        return total;
+    }
+}
+"""
+    script = (
+        "umask 077; javac -d /work /work/Harness.java /work/Solution.java > /tmp/stdout 2> /tmp/stderr; "
+        'code=$?; if [ "$code" -eq 0 ]; then java -cp /work Harness >> /tmp/stdout 2>> /tmp/stderr; code=$?; fi; '
+        "printf '%s' \"$code\" > /tmp/exit-code; exit 0"
+    )
+
+    result = DockerSandbox().run(
+        get_adapter("java"),
+        harness,
+        source_filename="Harness.java",
+        extra_files={"Solution.java": solution.encode("utf-8")},
+        execute_script=script,
+    )
+
+    assert result.exit_code == 0, result.stderr
+    marker = "AXIOMA_COMPLEXITY:"
+    line = next(line for line in result.stdout.splitlines() if line.startswith(marker))
+    report = json.loads(line[len(marker) :])
+    assert [point["size"] for point in report["measurements"]] == [4, 8, 16, 32]
+    assert all(point["input_strategy"] == "descending" for point in report["measurements"])

@@ -438,6 +438,7 @@ if spec["complexity_benchmarks"]:
                     memory_samples.append(peak_bytes)
                 measurement = {{
                     "size": benchmark["size"],
+                    "input_strategy": benchmark.get("strategy") or "user_supplied",
                     "line_events": int(median([item["line_events"] for item in counts])),
                     "opcode_events": int(median([item["opcode_events"] for item in counts])),
                 }}

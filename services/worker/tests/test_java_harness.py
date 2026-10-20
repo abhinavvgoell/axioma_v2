@@ -29,12 +29,15 @@ def test_java_complexity_harness_reports_heap_pool_peak_increases() -> None:
         "Solution.solve",
         [{"name": "sample", "args": [2], "expected": 2}],
         complexity_benchmarks=[
-            {"size": size, "args": [size]} for size in (10, 20, 40, 80)
+            {"size": size, "args": [size], "strategy": "descending"}
+            for size in (10, 20, 40, 80)
         ],
         optimization_enabled=True,
     )
 
     assert "ManagementFactory.getMemoryPoolMXBeans()" in source
+    assert 'new Benchmark(10, "descending", new Object[]{Long.valueOf("10")})' in source
+    assert '\\"input_strategy\\"' in source
     assert "pool.resetPeakUsage()" in source
     assert '\\"heap_pool_peak_increase_bytes\\"' in source
     assert '\\"optimized_heap_pool_peak_increase_bytes\\"' in source

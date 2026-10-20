@@ -172,7 +172,8 @@ def test_harness_measures_line_and_opcode_events_for_increasing_inputs(tmp_path)
             "solve",
             [{"name": "sample", "args": [3], "kwargs": {}, "expected": 3}],
             complexity_benchmarks=[
-                {"size": size, "args": [size], "kwargs": {}} for size in (8, 16, 32, 64)
+                {"size": size, "args": [size], "kwargs": {}, "strategy": "descending"}
+                for size in (8, 16, 32, 64)
             ],
         ),
         encoding="utf-8",
@@ -189,6 +190,7 @@ def test_harness_measures_line_and_opcode_events_for_increasing_inputs(tmp_path)
     assert completed.returncode == 0
     assert report["skipped_reason"] is None
     assert [point["size"] for point in points] == [8, 16, 32, 64]
+    assert all(point["input_strategy"] == "descending" for point in points)
     assert all(
         left["line_events"] < right["line_events"] for left, right in zip(points, points[1:])
     )

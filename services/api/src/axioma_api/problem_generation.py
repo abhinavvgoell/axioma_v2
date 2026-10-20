@@ -422,6 +422,7 @@ def generate_complexity_benchmarks(
                 size=size,
                 args=args,
                 kwargs=kwargs,
+                strategy=request.pattern,
             )
         )
 

@@ -133,6 +133,14 @@ class ComplexityBenchmarkSample(BaseModel):
     size: int = Field(ge=1, le=1_000_000_000)
     args: list[Any] = Field(default_factory=list, max_length=64)
     kwargs: dict[str, Any] = Field(default_factory=dict, max_length=64)
+    strategy: Literal[
+        "ascending",
+        "descending",
+        "all_equal",
+        "duplicate_heavy",
+        "alternating_low_high",
+        "nearly_sorted",
+    ] | None = None
 
 
 class StdinStdoutSample(BaseModel):

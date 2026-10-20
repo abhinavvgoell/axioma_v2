@@ -697,6 +697,7 @@ def test_complexity_benchmark_generator_returns_copyable_patterned_inputs(
     result = first.json()
     assert result["pattern"] == "descending"
     benchmarks = result["benchmarks"]
+    assert all(item["strategy"] == "descending" for item in benchmarks)
     assert [item["size"] for item in benchmarks] == [4, 8, 16, 32]
     assert all(len(item["args"][0]) == item["size"] for item in benchmarks)
     assert all(item["args"][0] == sorted(item["args"][0], reverse=True) for item in benchmarks)

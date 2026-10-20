@@ -94,7 +94,8 @@ def build_java_function_harness(
     )
     benchmark_cases = complexity_benchmarks or []
     benchmark_cases_source = ",\n            ".join(
-        "new Benchmark(" + str(sample["size"]) + ", new Object[]{"
+        "new Benchmark(" + str(sample["size"]) + ", "
+        + _java_string(sample.get("strategy") or "user_supplied") + ", new Object[]{"
         + ", ".join(_java_value(value) for value in sample.get("args", []))
         + "})"
         for sample in benchmark_cases
@@ -133,7 +134,7 @@ import javax.tools.ToolProvider;
 
 public class Harness {{
     record Case(String name, Object[] args, Object expected, String strategy) {{}}
-    record Benchmark(int size, Object[] args) {{}}
+    record Benchmark(int size, String strategy, Object[] args) {{}}
     record Mutation(String id, String label, String className) {{}}
     record MutationResult(String state, int casesChecked) {{}}
 
@@ -423,8 +424,8 @@ public class Harness {{
         return value + "}}}}";
     }}
 
-    static String benchmarkResult(int size, long elapsed, Long heapPoolPeakIncrease, Long optimizedElapsed, Long optimizedHeapPoolPeakIncrease) {{
-        String value = "{{\\\"size\\\":" + size + ",\\\"elapsed_ns\\\":" + elapsed
+    static String benchmarkResult(int size, String strategy, long elapsed, Long heapPoolPeakIncrease, Long optimizedElapsed, Long optimizedHeapPoolPeakIncrease) {{
+        String value = "{{\\\"size\\\":" + size + ",\\\"input_strategy\\\":" + quote(strategy) + ",\\\"elapsed_ns\\\":" + elapsed
             + ",\\\"warmups\\\":5,\\\"trials\\\":9";
         if (heapPoolPeakIncrease != null) value += ",\\\"heap_pool_peak_increase_bytes\\\":" + heapPoolPeakIncrease;
         if (optimizedElapsed != null) value += ",\\\"optimized_elapsed_ns\\\":" + optimizedElapsed;
@@ -636,11 +637,11 @@ public class Harness {{
                 for (Benchmark benchmark : benchmarkCases) {{
                     long elapsed = medianElapsed({_java_string(class_name)}, {_java_string(method_name)}, benchmark.args());
                     Long heapPoolPeakIncrease = medianHeapPoolPeakIncrease({_java_string(class_name)}, {_java_string(method_name)}, benchmark.args());
-                    measurements.add(benchmarkResult(benchmark.size(), elapsed, heapPoolPeakIncrease, null, null));
+                    measurements.add(benchmarkResult(benchmark.size(), benchmark.strategy(), elapsed, heapPoolPeakIncrease, null, null));
                     if (optimizationValid) {{
                         long optimizedElapsed = medianElapsed("AxiomaOptimized", {_java_string(method_name)}, benchmark.args());
                         Long optimizedHeapPoolPeakIncrease = medianHeapPoolPeakIncrease("AxiomaOptimized", {_java_string(method_name)}, benchmark.args());
-                        optimizedMeasurements.add(benchmarkResult(benchmark.size(), elapsed, heapPoolPeakIncrease, optimizedElapsed, optimizedHeapPoolPeakIncrease));
+                        optimizedMeasurements.add(benchmarkResult(benchmark.size(), benchmark.strategy(), elapsed, heapPoolPeakIncrease, optimizedElapsed, optimizedHeapPoolPeakIncrease));
                     }}
                 }}
                 skippedReason = "none";
