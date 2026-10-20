@@ -33,6 +33,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 - User-supplied Python and Java property predicates run against examples and seeded generated inputs in the sandbox; predicates are gated on example checks and labeled low confidence.
 - Threat model, API contract, architecture decision records, and risk register under `docs/`.
 - Mode 1 React workspace for Python and Java function or stdin/stdout submissions, live job status, evidence claims, test counts, complexity estimates, and verification gates.
+- Browser-local recent run history stores job IDs only, lets users reopen server-side reports, and exports the displayed job and report as JSON.
 - Function jobs can provide one reference and an independent second reference; both must match samples and each other before their outputs are used for differential checks. The UI describes this as corroboration, not proof.
 - Function-problem UI can submit a user-provided optimization candidate and optional benchmark inputs; it shows equivalence counts, before/after estimates, measurements, and their limits. It does not generate or silently apply code changes.
 - A rule-based proposal endpoint recognizes one narrow integer-array accumulation pattern in Python and Java. Proposals are static, low-confidence, and unverified until the user chooses to run them through normal checks; no LLM provider is called.
@@ -43,6 +44,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 - Authentication, user accounts, hosted deployment, GitHub App, and VS Code extension do not exist yet.
 - No Mode 2 repository ingestion/repair engine, trained defect-risk model, or benchmark evaluation report exists yet.
 - Mode 1 does not have a general trusted oracle, broad optimization-proposal coverage, or a curated golden evaluation set. The proposal rules currently cover one pattern only. Property checks use user-supplied predicates over generated inputs, not a shrinking property-testing framework.
+- The Mode 1 dashboard is still incomplete: topic tags, weak-topic summaries, complexity trends, and account-level data deletion are not implemented. Recent history is local to one browser and does not add accounts or server-side user ownership.
 
 See [docs/risk-register.md](docs/risk-register.md) and [docs/threat-model-v1.md](docs/threat-model-v1.md) for known limitations and security assumptions.
 

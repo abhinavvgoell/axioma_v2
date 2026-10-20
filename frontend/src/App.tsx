@@ -36,6 +36,34 @@ const starterEntrypoint: Record<Language, string> = {
 }
 
 const terminalStatuses = new Set<JobStatus>(['completed', 'failed', 'cancelled'])
+const historyStorageKey = 'axioma.mode1.recent-jobs.v1'
+const historyLimit = 20
+
+interface HistoryEntry {
+  id: string
+  language: Language
+  created_at: string
+}
+
+function readHistory(): HistoryEntry[] {
+  try {
+    const value = JSON.parse(localStorage.getItem(historyStorageKey) ?? '[]') as unknown
+    if (!Array.isArray(value)) return []
+    return value.filter((item): item is HistoryEntry => (
+      typeof item === 'object'
+      && item !== null
+      && 'id' in item
+      && typeof item.id === 'string'
+      && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item.id)
+      && 'language' in item
+      && (item.language === 'python' || item.language === 'java')
+      && 'created_at' in item
+      && typeof item.created_at === 'string'
+    )).slice(0, historyLimit)
+  } catch {
+    return []
+  }
+}
 
 function AnalyzerApp() {
   const [language, setLanguage] = useState<Language>('python')
@@ -55,6 +83,7 @@ function AnalyzerApp() {
   const [benchmarksText, setBenchmarksText] = useState<Record<Language, string>>({ python: '[]', java: '[]' })
   const [generatedTests, setGeneratedTests] = useState(8)
   const [mutationTests, setMutationTests] = useState(0)
+  const [history, setHistory] = useState<HistoryEntry[]>(readHistory)
   const [job, setJob] = useState<Job | null>(null)
   const [report, setReport] = useState<AnalysisReport | null>(null)
   const [proposals, setProposals] = useState<OptimizationProposal[]>([])
@@ -74,6 +103,14 @@ function AnalyzerApp() {
   const activeJobStatus = job?.status
 
   useEffect(() => () => eventSource.current?.close(), [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(historyStorageKey, JSON.stringify(history))
+    } catch {
+      // The current analysis still works when browser storage is unavailable.
+    }
+  }, [history])
 
   useEffect(() => {
     if (!activeJobId || !activeJobStatus || terminalStatuses.has(activeJobStatus)) return
@@ -233,6 +270,10 @@ function AnalyzerApp() {
       }
       const created = await submitJob(path, request)
       setJob(created)
+      setHistory((current) => [
+        { id: created.id, language: created.language, created_at: created.created_at },
+        ...current.filter((item) => item.id !== created.id),
+      ].slice(0, historyLimit))
     } catch (reason) {
       setError(
         reason instanceof ApiError
@@ -255,6 +296,38 @@ function AnalyzerApp() {
     }
   }
 
+  async function openHistoryJob(jobId: string) {
+    setError(null)
+    setReport(null)
+    setJob(null)
+    try {
+      const selected = await getJob(jobId)
+      setJob(selected)
+      if (selected.status === 'completed') setReport(await getReport(jobId))
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Could not load this saved run.')
+      if (reason instanceof ApiError && reason.status === 404) {
+        setHistory((current) => current.filter((item) => item.id !== jobId))
+      }
+    }
+  }
+
+  function exportReport() {
+    if (!job || !report) return
+    const payload = {
+      exported_at: new Date().toISOString(),
+      job,
+      report,
+    }
+    const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `axioma-report-${job.id.slice(0, 8)}.json`
+    anchor.click()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
   const isRunning = job !== null && !terminalStatuses.has(job.status)
   const canCancel = job?.status === 'queued' || job?.status === 'running'
 
@@ -274,15 +347,31 @@ function AnalyzerApp() {
           <button className="rail-item selected" aria-current="page"><span className="rail-icon">⌘</span><span>Analyzer</span></button>
           <button className="rail-item" disabled title="Repository review is not implemented yet"><span className="rail-icon">⌂</span><span>Repository review</span><small>SOON</small></button>
           <div className="rail-divider" />
-          <div className="rail-section-label">PROJECT</div>
-          <div className="rail-context"><span className="context-dot" /> Unsaved analysis</div>
+          <div className="rail-section-label">RECENT RUNS <span>{history.length}</span></div>
+          <div className="rail-history" aria-label="Recent analyses">
+            {history.length === 0
+              ? <p className="rail-history-empty">Completed and submitted runs will appear here. This browser stores job IDs only.</p>
+              : history.map((item) => (
+                <button
+                  className={`rail-history-item${job?.id === item.id ? ' active' : ''}`}
+                  key={item.id}
+                  onClick={() => void openHistoryJob(item.id)}
+                  aria-current={job?.id === item.id ? 'true' : undefined}
+                  title={`Open ${item.language} run ${item.id}`}
+                >
+                  <span>{item.language.toUpperCase()}</span>
+                  <code>{item.id.slice(0, 8)}</code>
+                  <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString()}</time>
+                </button>
+              ))}
+          </div>
           <div className="rail-bottom"><div className="rail-section-label">RUNTIME</div><div className="runtime-state"><span className="runtime-pip" /> API checked on run</div></div>
         </aside>
 
         <section className="main-panel">
           <div className="page-heading">
             <div><div className="eyebrow">MODE 1 <span>/</span> DSA SOLUTION ANALYZER</div><h1>Code, with receipts.</h1><p>Run a candidate against your problem definition. Every result comes from the configured checks.</p></div>
-            <div className="page-actions">{canCancel && <button className="quiet-button" onClick={() => void stopJob()}>Cancel job</button>}{problemKind === 'function' && <button className="quiet-button" onClick={() => void checkForOptimizationProposal()} disabled={proposalsBusy || busy || isRunning}>{proposalsBusy ? 'CHECKING RULES' : 'CHECK FOR PROPOSAL'}</button>}<button className="run-button" onClick={() => void runAnalysis()} disabled={busy || isRunning}><span>{busy || isRunning ? '◌' : '▶'}</span>{busy ? 'SUBMITTING' : isRunning ? 'ANALYZING' : 'RUN ANALYSIS'}</button></div>
+            <div className="page-actions">{report && <button className="quiet-button" onClick={exportReport}>EXPORT REPORT JSON</button>}{canCancel && <button className="quiet-button" onClick={() => void stopJob()}>Cancel job</button>}{problemKind === 'function' && <button className="quiet-button" onClick={() => void checkForOptimizationProposal()} disabled={proposalsBusy || busy || isRunning}>{proposalsBusy ? 'CHECKING RULES' : 'CHECK FOR PROPOSAL'}</button>}<button className="run-button" onClick={() => void runAnalysis()} disabled={busy || isRunning}><span>{busy || isRunning ? '◌' : '▶'}</span>{busy ? 'SUBMITTING' : isRunning ? 'ANALYZING' : 'RUN ANALYSIS'}</button></div>
           </div>
 
           {error && <div className="error-banner" role="alert"><span>!</span>{error}<button onClick={() => setError(null)} aria-label="Dismiss error">×</button></div>}
