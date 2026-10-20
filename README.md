@@ -50,6 +50,8 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 
 See [docs/risk-register.md](docs/risk-register.md) and [docs/threat-model-v1.md](docs/threat-model-v1.md) for known limitations and security assumptions.
 
+Track Mode 1 requirements and Gate 1 evidence in [docs/mode1-readiness.md](docs/mode1-readiness.md). Mode 2 remains deferred until that gate is met.
+
 ## Run locally on Windows
 
 Use Python 3.13 or 3.14 and Git. Docker Desktop with Linux containers is needed to run the worker's sandbox. The API and its tests can run with SQLite without Docker.
