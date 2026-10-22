@@ -57,6 +57,124 @@ def test_recognizes_binary_search_as_logarithmic() -> None:
     assert any(signal["kind"] == "binary_search" for signal in estimate.details["code_analysis"]["signals"])
 
 
+def test_recognizes_lower_bound_binary_search_and_bisect() -> None:
+    lower_bound = analyze_python_complexity(
+        "def solve(values, target):\n"
+        "    left, right = 0, len(values)\n"
+        "    while left < right:\n"
+        "        mid = (left + right) // 2\n"
+        "        if values[mid] < target: left = mid + 1\n"
+        "        else: right = mid\n"
+        "    return left\n",
+        "solve",
+    )
+    bisect = analyze_python_complexity(
+        "from bisect import bisect_left\n"
+        "def solve(values, target): return bisect_left(values, target)\n",
+        "solve",
+    )
+
+    assert lower_bound.estimate == "O(log n)"
+    assert bisect.estimate == "O(log n)"
+    assert any(
+        signal["kind"] == "binary_search"
+        for signal in bisect.details["code_analysis"]["signals"]
+    )
+
+
+def test_fixed_bound_loops_do_not_inflate_input_growth() -> None:
+    fixed = analyze_python_complexity(
+        "def solve():\n"
+        "    for hour in range(12):\n"
+        "        for minute in range(60):\n"
+        "            pass\n",
+        "solve",
+    )
+    mixed = analyze_python_complexity(
+        "def solve(values):\n"
+        "    for value in values:\n"
+        "        for option in range(4):\n"
+        "            pass\n",
+        "solve",
+    )
+
+    assert fixed.estimate.startswith("O(1)")
+    assert fixed.details["code_analysis"]["maximum_data_dependent_loop_nesting"] == 0
+    assert mixed.estimate == "O(n)"
+
+
+def test_recognizes_amortized_monotonic_stack_scan() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(values):\n"
+        "    stack = []\n"
+        "    for value in values:\n"
+        "        while stack and stack[-1] < value:\n"
+        "            stack.pop()\n"
+        "        stack.append(value)\n"
+        "    return stack\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(n)"
+    assert any(
+        signal["kind"] == "amortized_stack_scan"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_recognizes_kahn_topological_sort() -> None:
+    estimate = analyze_python_complexity(
+        "from collections import deque\n"
+        "def solve(graph, indegree):\n"
+        "    queue = deque(i for i, degree in enumerate(indegree) if degree == 0)\n"
+        "    while queue:\n"
+        "        node = queue.popleft()\n"
+        "        for neighbor in graph[node]:\n"
+        "            indegree[neighbor] -= 1\n"
+        "            if indegree[neighbor] == 0: queue.append(neighbor)\n"
+        "    return []\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(V + E)"
+    assert any(
+        signal["kind"] == "topological_sort"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_memoized_recursive_state_is_estimated_by_state_dimensions() -> None:
+    estimate = analyze_python_complexity(
+        "from functools import cache\n"
+        "def solve(rows, cols):\n"
+        "    @cache\n"
+        "    def dfs(i, j):\n"
+        "        if i == rows or j == cols: return 0\n"
+        "        return 1 + dfs(i + 1, j) + dfs(i, j + 1)\n"
+        "    return dfs(0, 0)\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(n^2)"
+    assert any(
+        signal["kind"] == "memoized_recursion"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_unrecognized_nested_recursive_helper_is_not_called_constant() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(first, second):\n"
+        "    def compare(i, j):\n"
+        "        if i == len(first) or j == len(second): return 0\n"
+        "        return compare(i + 1, j + 1)\n"
+        "    return compare(0, 0)\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "unknown (recursion detected)"
+
+
 def test_unrecognized_data_dependent_loop_remains_unknown() -> None:
     estimate = analyze_python_complexity(
         "def solve(value):\n    while value > 0:\n        value -= 3\n", "solve"

@@ -401,6 +401,37 @@ def _initialized_to_zero_before(function: ast.FunctionDef | ast.AsyncFunctionDef
     return False
 
 
+def _fixed_iterable(node: ast.AST) -> bool:
+    """Return whether an iterable has a source-level fixed number of elements."""
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+        if node.func.id == "range":
+            return bool(node.args) and all(isinstance(arg, ast.Constant) for arg in node.args)
+        if node.func.id == "pairwise" and len(node.args) == 1:
+            node = node.args[0]
+    return isinstance(node, (ast.Tuple, ast.List, ast.Set)) and all(
+        isinstance(item, ast.Constant) for item in node.elts
+    )
+
+
+def _dynamic_loop_nesting(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
+    """Count only loops whose iteration count can grow with the input."""
+    maximum_depth = 0
+    stack: list[tuple[ast.AST, int]] = [(node, 0) for node in function.body]
+    while stack:
+        node, depth = stack.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            continue
+        if isinstance(node, (ast.For, ast.AsyncFor)) and not _fixed_iterable(node.iter):
+            depth += 1
+        elif isinstance(node, ast.While):
+            depth += 1
+        elif isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+            depth += sum(not _fixed_iterable(generator.iter) for generator in node.generators)
+        maximum_depth = max(maximum_depth, depth)
+        stack.extend((child, depth) for child in ast.iter_child_nodes(node))
+    return maximum_depth
+
+
 def _amortized_forward_scan(function: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     """Recognize a for-loop with an outer-initialized pointer advanced only forward in a while."""
     for outer in ast.walk(function):
@@ -456,7 +487,7 @@ def _amortized_forward_scan(function: ast.FunctionDef | ast.AsyncFunctionDef) ->
 
 
 def _is_binary_search_loop(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
-    """Recognize a common closed-interval binary search that updates both bounds by mid ± 1."""
+    """Recognize common interval-halving searches, including lower-bound variants."""
     for loop in (node for node in ast.walk(function) if isinstance(node, ast.While)):
         bounds = None
         for comparison in ast.walk(loop.test):
@@ -504,24 +535,130 @@ def _is_binary_search_loop(function: ast.FunctionDef | ast.AsyncFunctionDef) -> 
 
         assignments = [
             node for node in ast.walk(loop)
-            if isinstance(node, ast.Assign) and len(node.targets) == 1
-            and isinstance(node.targets[0], ast.Name)
+            if isinstance(node, (ast.Assign, ast.AnnAssign))
+            and len(node.targets if isinstance(node, ast.Assign) else [node.target]) == 1
+            and isinstance((node.targets if isinstance(node, ast.Assign) else [node.target])[0], ast.Name)
         ]
         advanced: set[str] = set()
         for assignment in assignments:
-            bound = assignment.targets[0].id
-            if bound not in bounds or not isinstance(assignment.value, ast.BinOp):
+            targets = assignment.targets if isinstance(assignment, ast.Assign) else [assignment.target]
+            bound = targets[0].id
+            if bound not in bounds:
                 continue
             value = assignment.value
-            if not isinstance(value.right, ast.Constant) or value.right.value != 1:
-                continue
-            expected_op = ast.Add if bound == bounds[0] else ast.Sub
-            if not isinstance(value.op, expected_op):
-                continue
-            if isinstance(value.left, ast.Name) and value.left.id in midpoint_names:
+            is_midpoint = isinstance(value, ast.Name) and value.id in midpoint_names
+            is_midpoint_step = (
+                isinstance(value, ast.BinOp)
+                and isinstance(value.left, ast.Name)
+                and value.left.id in midpoint_names
+                and isinstance(value.right, ast.Constant)
+                and value.right.value == 1
+                and (
+                    (bound == bounds[0] and isinstance(value.op, ast.Add))
+                    or (bound == bounds[1] and isinstance(value.op, ast.Sub))
+                )
+            )
+            if is_midpoint or is_midpoint_step:
                 advanced.add(bound)
         if len(advanced) == 2:
             return getattr(loop, "lineno", 0)
+    return None
+
+
+def _has_bisect_call(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    for node in ast.walk(function):
+        if not isinstance(node, ast.Call):
+            continue
+        name = (
+            node.func.id if isinstance(node.func, ast.Name)
+            else node.func.attr if isinstance(node.func, ast.Attribute)
+            else ""
+        )
+        if name in {"bisect", "bisect_left", "bisect_right"}:
+            return getattr(node, "lineno", 0)
+    return None
+
+
+def _amortized_stack_scan(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize one push-per-item stacks with pop-only inner while loops."""
+    for outer in (node for node in ast.walk(function) if isinstance(node, (ast.For, ast.AsyncFor))):
+        for inner in (node for node in ast.walk(outer) if isinstance(node, ast.While)):
+            stack_names = {
+                node.id for node in ast.walk(inner.test)
+                if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)
+            }
+            for stack_name in stack_names:
+                pops = [
+                    node for node in ast.walk(inner)
+                    if isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Attribute)
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == stack_name
+                    and node.func.attr == "pop"
+                ]
+                pushes = [
+                    node for node in ast.walk(outer)
+                    if isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Attribute)
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == stack_name
+                    and node.func.attr == "append"
+                ]
+                if pops and pushes:
+                    return getattr(inner, "lineno", 0)
+    return None
+
+
+def _is_kahn_topological_sort(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize an indegree queue that scans each adjacency list once."""
+    for assignment in (node for node in ast.walk(function) if isinstance(node, (ast.Assign, ast.AnnAssign))):
+        targets = assignment.targets if isinstance(assignment, ast.Assign) else [assignment.target]
+        if len(targets) != 1 or not isinstance(targets[0], ast.Name):
+            continue
+        queue_name = targets[0].id
+        value = assignment.value
+        generator = None
+        if isinstance(value, ast.ListComp):
+            generator = value.generators[0] if value.generators else None
+        elif isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id == "deque":
+            generator = next((arg.generators[0] for arg in value.args if isinstance(arg, ast.GeneratorExp) and arg.generators), None)
+        if generator is None or not isinstance(generator.iter, ast.Call):
+            continue
+        if not isinstance(generator.iter.func, ast.Name) or generator.iter.func.id != "enumerate":
+            continue
+        if not any(
+            isinstance(node, ast.Compare)
+            and any(isinstance(item, ast.Constant) and item.value == 0 for item in node.comparators)
+            for node in ast.walk(value)
+        ):
+            continue
+        for loop in (node for node in ast.walk(function) if isinstance(node, (ast.For, ast.While))):
+            consumes_queue = (
+                isinstance(loop, ast.For) and isinstance(loop.iter, ast.Name) and loop.iter.id == queue_name
+            ) or (
+                isinstance(loop, ast.While) and isinstance(loop.test, ast.Name) and loop.test.id == queue_name
+            )
+            if not consumes_queue:
+                continue
+            body = list(ast.walk(loop))
+            scans_adjacency = any(
+                isinstance(node, ast.For) and isinstance(node.iter, ast.Subscript)
+                and isinstance(node.iter.value, ast.Name)
+                for node in body
+            )
+            decrements_indegree = any(
+                isinstance(node, ast.AugAssign) and isinstance(node.op, ast.Sub)
+                and isinstance(node.target, ast.Subscript)
+                for node in body
+            )
+            appends_queue = any(
+                isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                and isinstance(node.func.value, ast.Name) and node.func.value.id == queue_name
+                and node.func.attr == "append"
+                for node in body
+            )
+            if scans_adjacency and decrements_indegree and appends_queue:
+                return getattr(loop, "lineno", 0)
     return None
 
 
@@ -632,6 +769,115 @@ def _recursive_call_nodes(function: ast.FunctionDef | ast.AsyncFunctionDef) -> l
             or (isinstance(node.func, ast.Attribute) and node.func.attr == function.name)
         )
     ]
+
+
+def _local_recursive_helpers(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> list[ast.FunctionDef | ast.AsyncFunctionDef]:
+    helpers = [
+        node for node in ast.walk(function)
+        if node is not function
+        and isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and _recursive_call_nodes(node)
+    ]
+    return helpers
+
+
+def _has_unbounded_cache(function: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    for decorator in function.decorator_list:
+        name = (
+            decorator.id if isinstance(decorator, ast.Name)
+            else decorator.func.id if isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Name)
+            else decorator.attr if isinstance(decorator, ast.Attribute)
+            else None
+        )
+        if name == "cache":
+            return True
+        if name == "lru_cache" and isinstance(decorator, ast.Call):
+            if any(keyword.arg == "maxsize" and isinstance(keyword.value, ast.Constant)
+                   and keyword.value.value is None for keyword in decorator.keywords):
+                return True
+            if decorator.args and isinstance(decorator.args[0], ast.Constant) and decorator.args[0].value is None:
+                return True
+    return False
+
+
+def _memoized_helper_dimensions(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+    helpers: list[ast.FunctionDef | ast.AsyncFunctionDef],
+) -> tuple[int, int] | None:
+    """Estimate bounded memoized index-state space for simple local recursive helpers."""
+    for helper in helpers:
+        parameters = [*helper.args.posonlyargs, *helper.args.args]
+        if not _has_unbounded_cache(helper) or not 1 <= len(parameters) <= 3:
+            continue
+        if _dynamic_loop_nesting(helper) > 0:
+            continue
+        recursive_calls = _recursive_call_nodes(helper)
+        if not any(
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == helper.name
+            for statement in function.body
+            for node in ast.walk(statement)
+            if not any(node is nested for nested in ast.walk(helper))
+        ):
+            continue
+        referenced_names = {
+            node.id for node in ast.walk(helper)
+            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)
+        }
+        if not all(parameter.arg in referenced_names for parameter in parameters):
+            continue
+        if not all(len(call.args) >= len(parameters) for call in recursive_calls):
+            continue
+        return len(parameters), min(call.lineno for call in recursive_calls)
+    return None
+
+
+def _progresses_recursive_state(
+    helper: ast.FunctionDef | ast.AsyncFunctionDef, call: ast.Call
+) -> bool:
+    parameter_names = {
+        argument.arg for argument in [*helper.args.posonlyargs, *helper.args.args]
+    }
+    for argument in call.args:
+        if (
+            isinstance(argument, ast.BinOp)
+            and isinstance(argument.left, ast.Name)
+            and argument.left.id in parameter_names
+            and isinstance(argument.op, (ast.Add, ast.Sub))
+            and isinstance(argument.right, ast.Constant)
+        ):
+            return True
+        if (
+            isinstance(argument, ast.Subscript)
+            and isinstance(argument.value, ast.Name)
+            and argument.value.id in parameter_names
+            and isinstance(argument.slice, ast.Slice)
+        ):
+            return True
+    return False
+
+
+def _backtracking_helper_line(
+    helpers: list[ast.FunctionDef | ast.AsyncFunctionDef],
+) -> int | None:
+    """Recognize recursive state advancement performed inside a candidate loop."""
+    for helper in helpers:
+        if _has_unbounded_cache(helper):
+            continue
+        calls = _recursive_call_nodes(helper)
+        for loop in (
+            node for node in ast.walk(helper) if isinstance(node, (ast.For, ast.While))
+        ):
+            if any(
+                any(node is call for node in ast.walk(loop))
+                and _progresses_recursive_state(helper, call)
+                for call in calls
+            ):
+                return min(call.lineno for call in calls)
+    return None
 
 
 def _is_tree_recursive_walk(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
@@ -788,6 +1034,7 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
                 isinstance(node.func, ast.Name)
                 and node.func.id in {"sum", "min", "max", "any", "all"}
                 and len(node.args) == 1
+                and not _fixed_iterable(node.args[0])
             ):
                 iterable_consumers.append((node.func.id, getattr(node, "lineno", 0)))
                 # These built-ins consume their iterable, even when the submission
@@ -839,10 +1086,19 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
 
     amortized_forward_scan = _amortized_forward_scan(function)
+    amortized_stack_line = _amortized_stack_scan(function)
     binary_search_line = _is_binary_search_loop(function)
+    bisect_line = _has_bisect_call(function)
+    kahn_line = _is_kahn_topological_sort(function)
     graph_bfs_line = _is_adjacency_list_bfs(function)
     graph_dfs_line = _is_adjacency_list_dfs(function)
     tree_recursion_line = _is_tree_recursive_walk(function)
+    local_recursive_helpers = _local_recursive_helpers(function)
+    memoized_state = _memoized_helper_dimensions(function, local_recursive_helpers)
+    backtracking_line = _backtracking_helper_line(local_recursive_helpers)
+    data_dependent_loop_nesting = max(
+        _dynamic_loop_nesting(function), 1 if iterable_consumers else 0
+    )
     if graph_bfs_line is not None:
         method = "static_ast_graph_bfs"
         signals.append({
@@ -874,7 +1130,42 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "line": binary_search_line,
         })
         signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
-    if graph_bfs_line is not None or graph_dfs_line is not None:
+    if memoized_state is not None:
+        signals.append({
+            "kind": "memoized_recursion",
+            "label": f"Memoized recursive helper with {memoized_state[0]} state indices",
+            "line": memoized_state[1],
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if backtracking_line is not None:
+        signals.append({
+            "kind": "recursive_backtracking",
+            "label": "Recursive state advancement inside a candidate loop",
+            "line": backtracking_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if bisect_line is not None:
+        signals.append({
+            "kind": "binary_search",
+            "label": "Standard-library bisect call performs binary search",
+            "line": bisect_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if amortized_stack_line is not None:
+        signals.append({
+            "kind": "amortized_stack_scan",
+            "label": "Stack items are pushed in a scan and popped at most once",
+            "line": amortized_stack_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if kahn_line is not None:
+        signals.append({
+            "kind": "topological_sort",
+            "label": "Indegree queue scans each adjacency list",
+            "line": kahn_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if graph_bfs_line is not None or graph_dfs_line is not None or kahn_line is not None:
         estimate = "O(V + E)"
         explanation = (
             "Recognized a graph traversal over adjacency lists with a visited guard. Assuming "
@@ -889,17 +1180,26 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "tree with no cycles or shared subtrees, each node is processed once, for O(n) work. "
             "The syntax check cannot establish that input structure."
         )
-    elif recursive:
-        estimate = "unknown (recursion detected)"
-        explanation += " Recurrence behavior is not inferred by this analyzer."
-    elif graph_bfs_line is not None:
-        estimate = "O(V + E)"
+    elif memoized_state is not None:
+        dimensions, _ = memoized_state
+        estimate = "O(n)" if dimensions == 1 else f"O(n^{dimensions})"
+        method = "static_ast_memoized_recursion"
         explanation = (
-            "Recognized a queue traversal over adjacency lists with a visited guard. Assuming "
-            "each vertex is enqueued once and each adjacency entry is scanned once, the work is "
-            "O(V + E). This assumes amortized constant-time queue and visited-set operations; "
-            "the syntax check is a heuristic."
+            f"Recognized a cached recursive helper with {dimensions} state indices and no detected "
+            f"input-sized loop inside the helper. Assuming each index ranges over at most n values, "
+            f"the state space is {estimate}. This low-confidence pattern does not analyze helper "
+            "calls, state bounds, or cache behavior beyond the decorator."
         )
+    elif backtracking_line is not None:
+        estimate = "O(2^n) (recursive search heuristic)"
+        method = "static_ast_recursive_backtracking"
+        explanation = (
+            "Recognized recursive state advancement inside a candidate loop. Search paths may grow "
+            "exponentially; this low-confidence pattern does not prove the branching factor or bound."
+        )
+    elif recursive or local_recursive_helpers:
+        estimate = "unknown (recursion detected)"
+        explanation += " Recursive helper behavior is not inferred by this analyzer."
     elif amortized_forward_scan:
         method = "static_ast_amortized_pointer_scan"
         estimate = "O(n)"
@@ -908,12 +1208,20 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "the input while an index initialized before it only moves forward. Each pointer "
             "advances at most n times, so their combined work is linear."
         )
-    elif binary_search_line is not None:
+    elif binary_search_line is not None or bisect_line is not None:
+        method = "static_ast_binary_search"
         estimate = "O(log n)"
         explanation = (
-            "Recognized a closed-interval search pattern: the midpoint is computed from both "
-            "bounds and each bound is updated to midpoint ± 1. The remaining interval shrinks "
-            "by a constant factor per iteration. This syntax-based recognition is a heuristic."
+            "Recognized an interval-halving search loop or standard-library bisect call. "
+            "The search range shrinks by a constant factor per step, giving O(log n) work. "
+            "This syntax-based recognition is a heuristic."
+        )
+    elif amortized_stack_line is not None:
+        method = "static_ast_amortized_stack_scan"
+        estimate = "O(n)"
+        explanation = (
+            "Recognized a monotonic-stack pattern: items are pushed during a scan and removed "
+            "at most once. The total stack work is linear in the input length."
         )
     elif has_while:
         estimate = "unknown (data-dependent loop bound)"
@@ -921,15 +1229,19 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             " A while-loop was detected, but its iteration count cannot be bounded by the "
             "current static rules. It may be linear, logarithmic, or depend on other input values."
         )
-    elif maximum_depth >= 2:
-        estimate = f"O(n^{maximum_depth})"
-        explanation += f" Maximum detected loop or comprehension nesting depth: {maximum_depth}."
-    elif maximum_depth == 1 and has_sort:
+    elif data_dependent_loop_nesting >= 2:
+        estimate = f"O(n^{data_dependent_loop_nesting})"
+        explanation += (
+            " Maximum data-dependent loop or comprehension nesting depth: "
+            f"{data_dependent_loop_nesting}. Loops with source-level constant bounds are not "
+            "counted as input growth."
+        )
+    elif data_dependent_loop_nesting == 1 and has_sort:
         estimate = "O(n log n)"
         explanation += (
             " One loop level and a built-in sort were detected; sort cost is treated as O(n log n)."
         )
-    elif maximum_depth == 1:
+    elif data_dependent_loop_nesting == 1:
         estimate = "O(n)"
         explanation += (
             " One loop/comprehension level or an iterable-consuming built-in was detected."
@@ -942,7 +1254,7 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         explanation += " No loops or built-in sorting calls were detected in the target function."
 
     explanation += " Called helper functions are not included; this estimate is not a proof."
-    confidence = "medium" if amortized_forward_scan else "low"
+    confidence = "medium" if amortized_forward_scan or amortized_stack_line is not None else "low"
     return ComplexityEstimate(
         method,
         estimate,
@@ -956,6 +1268,7 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
                 "signals": signals,
                 "loop_count": loop_count,
                 "maximum_loop_nesting": maximum_depth,
+                "maximum_data_dependent_loop_nesting": data_dependent_loop_nesting,
                 "limitations": [
                     "A detected syntax pattern is evidence, not a full algorithmic proof.",
                     "Collection operation costs depend on the concrete type and implementation.",
