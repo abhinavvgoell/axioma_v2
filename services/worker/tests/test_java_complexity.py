@@ -76,6 +76,24 @@ def test_reports_recursion_as_unknown_and_missing_method() -> None:
     assert missing.estimate == "unknown (method not found)"
 
 
+def test_recognizes_java_recursive_binary_tree_walk() -> None:
+    estimate = analyze_java_complexity(
+        "class TreeNode { TreeNode left; TreeNode right; } "
+        "class Solution { int solve(TreeNode node) { "
+        "if (node == null) return 0; "
+        "return 1 + Math.max(solve(node.left), solve(node.right)); } }",
+        "Solution.solve",
+    )
+
+    assert estimate.method == "static_java_tree_recursion"
+    assert estimate.estimate == "O(n)"
+    assert estimate.confidence == "low"
+    assert any(
+        signal["kind"] == "tree_recursion"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
 def test_heap_pool_peak_increase_fit_estimates_space_separately() -> None:
     points = [
         {"size": size, "heap_pool_peak_increase_bytes": size * 24}

@@ -284,6 +284,35 @@ def _is_binary_search_loop(tokens: list[str], spans: list[tuple[int, int]]) -> b
     return False
 
 
+def _is_tree_recursive_walk(tokens: list[str], method_name: str) -> bool:
+    """Recognize direct recursion over one or both child links of a tree node."""
+    recursive_children: list[tuple[str, str]] = []
+    for index in range(len(tokens) - 1):
+        if tokens[index] != method_name or tokens[index + 1] != "(":
+            continue
+        closing = _matching(tokens, index + 1, "(", ")")
+        if closing is None or index + 2 >= closing:
+            return False
+        argument = tokens[index + 2 : closing]
+        if (
+            len(argument) != 3
+            or not re.fullmatch(r"[A-Za-z_$][\w$]*", argument[0])
+            or argument[1] != "."
+            or argument[2] not in {"left", "right"}
+        ):
+            return False
+        recursive_children.append((argument[0], argument[2]))
+
+    if len(recursive_children) not in {1, 2}:
+        return False
+    if len(recursive_children) == 2:
+        return (
+            recursive_children[0][0] == recursive_children[1][0]
+            and recursive_children[0][1] != recursive_children[1][1]
+        )
+    return True
+
+
 def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     method = "static_java_token_loop_depth"
     explanation = "Heuristic from Java loop nesting, direct recursion, and common sorting calls."
@@ -332,6 +361,7 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     )
     has_while = any(token == "while" for token in body)
     binary_search = _is_binary_search_loop(body, spans)
+    tree_recursion = not spans and recursive and _is_tree_recursive_walk(body, parts[1])
     signals: list[dict] = []
     for start, _ in spans:
         signals.append({"kind": "loop", "label": f"{body[start]} loop", "line": None})
@@ -362,9 +392,23 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "label": "Interval-halving loop updates both search bounds from the midpoint",
             "line": None,
         })
+    if tree_recursion:
+        signals.append({
+            "kind": "tree_recursion",
+            "label": "Recursion follows a left or right tree-child link",
+            "line": None,
+        })
 
     amortized_forward_scan = _amortized_forward_scan(body, spans)
-    if recursive:
+    if tree_recursion:
+        method = "static_java_tree_recursion"
+        estimate = "O(n)"
+        explanation = (
+            "Recognized direct recursion over a tree node's left/right child link. Assuming the "
+            "input is a tree with no cycles or shared subtrees, each visited node is processed "
+            "once, for O(n) work. The syntax check cannot establish that input structure."
+        )
+    elif recursive:
         estimate = "unknown (recursion detected)"
         explanation += " Recurrence behavior is not inferred by this analyzer."
     elif amortized_forward_scan:
