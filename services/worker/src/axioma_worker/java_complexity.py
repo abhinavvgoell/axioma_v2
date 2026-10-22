@@ -313,6 +313,107 @@ def _is_tree_recursive_walk(tokens: list[str], method_name: str) -> bool:
     return True
 
 
+def _has_method_call(tokens: list[str], receiver: str, methods: set[str], argument: str) -> bool:
+    return any(
+        tokens[index] == receiver
+        and tokens[index + 1] == "."
+        and tokens[index + 2] in methods
+        and tokens[index + 3 : index + 5] == ["(", argument]
+        for index in range(len(tokens) - 4)
+    )
+
+
+def _is_adjacency_list_bfs(tokens: list[str], spans: list[tuple[int, int]]) -> bool:
+    """Recognize queue-based BFS over adjacency lists with a visited-set guard."""
+    for outer_start, outer_end in spans:
+        if tokens[outer_start] != "while":
+            continue
+        header = _loop_header(tokens, outer_start)
+        if header is None:
+            continue
+        opening, closing = header
+        condition = tokens[opening + 1 : closing]
+        queue_name = next(
+            (
+                condition[index - 1]
+                for index in range(1, len(condition) - 1)
+                if condition[index : index + 2] == [".", "isEmpty"]
+                and "!" in condition[:index]
+            ),
+            None,
+        )
+        if queue_name is None:
+            continue
+        current_node = next(
+            (
+                tokens[index - 2]
+                for index in range(outer_start + 3, outer_end - 3)
+                if tokens[index] == queue_name
+                and tokens[index + 1 : index + 4]
+                in ([".", "poll", "("], [".", "remove", "("], [".", "pollFirst", "("], [".", "removeFirst", "("])
+                and tokens[index - 1] == "="
+            ),
+            None,
+        )
+        if current_node is None:
+            continue
+
+        for inner_start, inner_end in spans:
+            if not (
+                outer_start < inner_start < inner_end <= outer_end
+                and tokens[inner_start] == "for"
+            ):
+                continue
+            inner_header = _loop_header(tokens, inner_start)
+            if inner_header is None:
+                continue
+            inner_open, inner_close = inner_header
+            for_header = tokens[inner_open + 1 : inner_close]
+            if ":" not in for_header:
+                continue
+            colon = for_header.index(":")
+            if colon < 1:
+                continue
+            neighbor = for_header[colon - 1]
+            adjacency = for_header[colon + 1 :]
+            if not any(
+                adjacency[index : index + 4] == [".", "get", "(", current_node]
+                for index in range(len(adjacency) - 3)
+            ):
+                continue
+
+            for guard_start in range(inner_start + 1, inner_end):
+                if tokens[guard_start] != "if":
+                    continue
+                guard_header = _loop_header(tokens, guard_start)
+                if guard_header is None:
+                    continue
+                guard_open, guard_close = guard_header
+                guard_body = guard_close + 1
+                if guard_body >= inner_end or tokens[guard_body] != "{":
+                    continue
+                guard_end = _matching(tokens, guard_body, "{", "}")
+                if guard_end is None or guard_end > inner_end:
+                    continue
+                guard = tokens[guard_open + 1 : guard_close]
+                body = tokens[guard_body + 1 : guard_end]
+                visited_name = next(
+                    (
+                        guard[index - 1]
+                        for index in range(1, len(guard) - 3)
+                        if guard[index : index + 3] == [".", "add", "("]
+                        and guard[index + 3] == neighbor
+                    ),
+                    None,
+                )
+                if (
+                    visited_name is not None
+                    and _has_method_call(body, queue_name, {"add", "offer", "addLast"}, neighbor)
+                ):
+                    return True
+    return False
+
+
 def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     method = "static_java_token_loop_depth"
     explanation = "Heuristic from Java loop nesting, direct recursion, and common sorting calls."
@@ -362,6 +463,7 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     has_while = any(token == "while" for token in body)
     binary_search = _is_binary_search_loop(body, spans)
     tree_recursion = not spans and recursive and _is_tree_recursive_walk(body, parts[1])
+    graph_bfs = not recursive and _is_adjacency_list_bfs(body, spans)
     signals: list[dict] = []
     for start, _ in spans:
         signals.append({"kind": "loop", "label": f"{body[start]} loop", "line": None})
@@ -398,9 +500,24 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "label": "Recursion follows a left or right tree-child link",
             "line": None,
         })
+    if graph_bfs:
+        signals.append({
+            "kind": "graph_bfs",
+            "label": "Queue traversal over adjacency lists with a visited guard",
+            "line": None,
+        })
 
     amortized_forward_scan = _amortized_forward_scan(body, spans)
-    if tree_recursion:
+    if graph_bfs:
+        method = "static_java_graph_bfs"
+        estimate = "O(V + E)"
+        explanation = (
+            "Recognized queue-based traversal over adjacency lists with a visited-set guard. "
+            "Assuming each vertex is enqueued once and each adjacency entry is scanned once, "
+            "the work is O(V + E). This assumes constant-time queue and visited-set operations; "
+            "the syntax check is a heuristic."
+        )
+    elif tree_recursion:
         method = "static_java_tree_recursion"
         estimate = "O(n)"
         explanation = (

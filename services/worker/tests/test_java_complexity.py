@@ -94,6 +94,37 @@ def test_recognizes_java_recursive_binary_tree_walk() -> None:
     )
 
 
+def test_recognizes_java_adjacency_list_bfs_with_visited_guard() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { void solve(Map<Integer,List<Integer>> graph, int start) { "
+        "Set<Integer> visited = new HashSet<>(); Queue<Integer> queue = new ArrayDeque<>(); "
+        "visited.add(start); queue.add(start); while (!queue.isEmpty()) { "
+        "int node = queue.poll(); for (int neighbor : graph.get(node)) { "
+        "if (visited.add(neighbor)) { queue.offer(neighbor); } } } } }",
+        "Solution.solve",
+    )
+
+    assert estimate.method == "static_java_graph_bfs"
+    assert estimate.estimate == "O(V + E)"
+    assert estimate.confidence == "low"
+    assert any(
+        signal["kind"] == "graph_bfs"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_unvisited_java_adjacency_queue_loop_remains_unknown() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { void solve(Map<Integer,List<Integer>> graph, int start) { "
+        "Queue<Integer> queue = new ArrayDeque<>(); queue.add(start); "
+        "while (!queue.isEmpty()) { int node = queue.poll(); "
+        "for (int neighbor : graph.get(node)) { queue.offer(neighbor); } } } }",
+        "Solution.solve",
+    )
+
+    assert estimate.estimate == "unknown (data-dependent or incomplete loop)"
+
+
 def test_heap_pool_peak_increase_fit_estimates_space_separately() -> None:
     points = [
         {"size": size, "heap_pool_peak_increase_bytes": size * 24}
