@@ -32,7 +32,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 - User-provided Python and Java optimization candidates are checked against declared outputs and, when available, user-reference generated cases. Optional measurements are kept separate: Python compares source-line and opcode events and reports a Python-traced peak-allocation estimate; Java compares warmed JVM reflective wall time and heap-pool peak-increase estimates. All measurements are low confidence and have documented limitations.
 - User-supplied Python and Java property predicates run against examples and seeded generated inputs in the sandbox; predicates are gated on example checks and labeled low confidence.
 - Threat model, API contract, architecture decision records, and risk register under `docs/`.
-- GitHub Actions CI runs the API, worker, and evaluator tests, Python lint, frontend lint/build, and Docker sandbox checks on pushes and pull requests. Local Docker Desktop verification passed for the Mode 1 checks on 2026-10-20; hosted CI still needs a run for the current uncommitted changes.
+- GitHub Actions CI runs the API, worker, and evaluator tests, Python lint, frontend lint/build, and Docker sandbox checks on pushes and pull requests. The latest hosted run for commit `9a35e24` passed all jobs. Local Docker Desktop verification passed for the Mode 1 checks on 2026-10-20.
 - Mode 1 React workspace for Python and Java function or stdin/stdout submissions, live job status, evidence claims, test counts, complexity estimates, and verification gates.
 - Browser-local recent run history stores job IDs, self-assigned topic tags, and report summaries (never source code); users can reopen server-side reports, export the displayed job and report as JSON, clear local history, and review descriptive topic failure counts and recent complexity estimates.
 - Function jobs can provide one reference and an independent second reference; both must match samples and each other before their outputs are used for differential checks. The UI describes this as corroboration, not proof.
@@ -41,7 +41,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 
 ### Not built or not verified yet
 
-- The Docker sandbox now runs locally on Windows Docker Desktop's Linux backend. All six Docker integration checks passed on 2026-10-20. The [latest hosted Linux CI run](https://github.com/abhinavvgoell/axioma/actions/runs/39402169513) predates the current uncommitted changes.
+- The Docker sandbox runs locally on Windows Docker Desktop's Linux backend. All six Docker integration checks passed on 2026-10-20; the [latest hosted Linux CI run](https://github.com/abhinavvgoell/axioma/actions/runs/39781195804) passed for commit `9a35e24`.
 - Authentication, user accounts, hosted deployment, GitHub App, and VS Code extension do not exist yet.
 - No Mode 2 repository ingestion/repair engine, trained defect-risk model, or benchmark evaluation report exists yet.
 - Mode 1 does not have a general trusted oracle, broad optimization-proposal coverage, or a curated golden evaluation set. Proposal rules cover only a few exact patterns, not arbitrary code. Property checks use user-supplied predicates over generated inputs, not a shrinking property-testing framework.
