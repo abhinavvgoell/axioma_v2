@@ -1,0 +1,35 @@
+{
+  "confidence": "low",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 2,
+      "maximum_loop_nesting": 2,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 3
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 4
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.longestCommonPrefix",
+  "estimate": "O(n^2)",
+  "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum detected loop or comprehension nesting depth: 2. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-14-longest-common-prefix",
+  "method": "static_ast_loop_depth",
+  "methods_disagree": false,
+  "source_sha256": "7887d2f27fd2e3481ec13cd05a49a89095d57dab94c8996ade73814e0d6283e2"
+}

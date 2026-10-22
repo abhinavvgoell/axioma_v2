@@ -1,0 +1,30 @@
+{
+  "confidence": "low",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 1,
+      "maximum_loop_nesting": 1,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "while loop",
+          "line": 4
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.mySqrt",
+  "estimate": "unknown (data-dependent loop bound)",
+  "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-69-sqrtx",
+  "method": "static_ast_loop_depth",
+  "methods_disagree": false,
+  "source_sha256": "9874badf309c4da3fd6cf5728fe7d1a6d4fbb1183ad6a22759430351618579bf"
+}

@@ -1,0 +1,45 @@
+{
+  "confidence": "low",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 2,
+      "maximum_loop_nesting": 1,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "comprehension",
+          "label": "1-level comprehension",
+          "line": 12
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 13
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 14
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 15
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.validPath",
+  "estimate": "O(n)",
+  "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-1971-find-if-path-exists-in-graph",
+  "method": "static_ast_loop_depth",
+  "methods_disagree": false,
+  "source_sha256": "872a842211d42fafeec7bbd34ee8c7fa109ad26b20dd78d1ce32a89990cbd7ef"
+}

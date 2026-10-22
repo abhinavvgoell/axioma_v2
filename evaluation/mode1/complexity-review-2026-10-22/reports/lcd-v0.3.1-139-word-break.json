@@ -1,0 +1,45 @@
+{
+  "confidence": "low",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 2,
+      "maximum_loop_nesting": 2,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 6
+        },
+        {
+          "kind": "comprehension",
+          "label": "1-level comprehension",
+          "line": 7
+        },
+        {
+          "kind": "iterable_consumer",
+          "label": "any() consumes an iterable",
+          "line": 7
+        },
+        {
+          "kind": "membership",
+          "label": "Membership check; cost depends on the container",
+          "line": 7
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.wordBreak",
+  "estimate": "O(n^2)",
+  "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum detected loop or comprehension nesting depth: 2. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-139-word-break",
+  "method": "static_ast_loop_depth",
+  "methods_disagree": false,
+  "source_sha256": "d12f88f03135e4dceafd9a03011d86cdd807f801503b046fcda74fde2a0a0a4a"
+}

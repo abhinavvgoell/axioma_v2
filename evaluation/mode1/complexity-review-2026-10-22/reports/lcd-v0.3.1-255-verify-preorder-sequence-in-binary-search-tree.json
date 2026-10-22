@@ -1,0 +1,45 @@
+{
+  "confidence": "low",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 2,
+      "maximum_loop_nesting": 2,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 5
+        },
+        {
+          "kind": "loop",
+          "label": "while loop",
+          "line": 8
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 9
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 10
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.verifyPreorder",
+  "estimate": "unknown (data-dependent loop bound)",
+  "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-255-verify-preorder-sequence-in-binary-search-tree",
+  "method": "static_ast_loop_depth",
+  "methods_disagree": false,
+  "source_sha256": "a9a4530f83feba9473a6fd811b89b2beea07f81ec9eb60b4f15ce7008f373080"
+}

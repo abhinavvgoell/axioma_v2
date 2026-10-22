@@ -1,0 +1,35 @@
+{
+  "confidence": "low",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 3,
+      "maximum_loop_nesting": 3,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 7
+        },
+        {
+          "kind": "comprehension",
+          "label": "2-level comprehension",
+          "line": 9
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.letterCombinations",
+  "estimate": "O(n^3)",
+  "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum detected loop or comprehension nesting depth: 3. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-17-letter-combinations-of-a-phone-number",
+  "method": "static_ast_loop_depth",
+  "methods_disagree": false,
+  "source_sha256": "7bd8d86d95e38a2594ec75b50e8b17d8981464cd14f99d6455e0c5b2abe3e727"
+}

@@ -1,0 +1,50 @@
+{
+  "confidence": "low",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 3,
+      "maximum_loop_nesting": 2,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "comprehension",
+          "label": "1-level comprehension",
+          "line": 27
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 31
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 33
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 37
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 46
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.numIslands2",
+  "estimate": "O(n^2)",
+  "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum detected loop or comprehension nesting depth: 2. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-305-number-of-islands-ii",
+  "method": "static_ast_loop_depth",
+  "methods_disagree": false,
+  "source_sha256": "e96c3b9b38443f12a6e8810fdc7e9261e91005c2fec9a7c808ea94f72b3ab3cb"
+}

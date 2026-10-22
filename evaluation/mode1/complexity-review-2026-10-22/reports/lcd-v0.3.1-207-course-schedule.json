@@ -1,0 +1,60 @@
+{
+  "confidence": "low",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 5,
+      "maximum_loop_nesting": 2,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "comprehension",
+          "label": "1-level comprehension",
+          "line": 3
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 5
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 6
+        },
+        {
+          "kind": "comprehension",
+          "label": "1-level comprehension",
+          "line": 8
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 9
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 11
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 14
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.canFinish",
+  "estimate": "O(n^2)",
+  "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum detected loop or comprehension nesting depth: 2. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-207-course-schedule",
+  "method": "static_ast_loop_depth",
+  "methods_disagree": false,
+  "source_sha256": "46a8c91ee43625588ececb651d352338c5cd37ee4ade3f6eb98f9b10ac5739b5"
+}

@@ -1,0 +1,40 @@
+{
+  "confidence": "low",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 1,
+      "maximum_loop_nesting": 1,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 4
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 9
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 11
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.simplifyPath",
+  "estimate": "O(n)",
+  "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-71-simplify-path",
+  "method": "static_ast_loop_depth",
+  "methods_disagree": false,
+  "source_sha256": "fc682b88c4a7fe7531b305a09cbdb9c39f94ae7577a37d051e96eda96c44d2da"
+}

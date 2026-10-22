@@ -1,0 +1,55 @@
+{
+  "confidence": "low",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 3,
+      "maximum_loop_nesting": 2,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 5
+        },
+        {
+          "kind": "loop",
+          "label": "while loop",
+          "line": 6
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 7
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 10
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 11
+        },
+        {
+          "kind": "comprehension",
+          "label": "1-level comprehension",
+          "line": 11
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.nextGreaterElement",
+  "estimate": "unknown (data-dependent loop bound)",
+  "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-496-next-greater-element-i",
+  "method": "static_ast_loop_depth",
+  "methods_disagree": false,
+  "source_sha256": "d715ad4203ae5f52d06b96593abdd7291019bc545d60cd6363504bf36830fb88"
+}

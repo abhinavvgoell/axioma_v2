@@ -1,0 +1,35 @@
+{
+  "confidence": "low",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 1,
+      "maximum_loop_nesting": 1,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "comprehension",
+          "label": "1-level comprehension",
+          "line": 4
+        },
+        {
+          "kind": "iterable_consumer",
+          "label": "max() consumes an iterable",
+          "line": 4
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.findLHS",
+  "estimate": "O(n)",
+  "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-594-longest-harmonious-subsequence",
+  "method": "static_ast_loop_depth",
+  "methods_disagree": false,
+  "source_sha256": "fc734eae499a90e5a2bcca4248f388d42175f0dc64bdac43b42d9f582fbd1738"
+}

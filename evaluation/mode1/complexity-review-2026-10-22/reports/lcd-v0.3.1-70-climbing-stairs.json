@@ -1,0 +1,30 @@
+{
+  "confidence": "low",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 1,
+      "maximum_loop_nesting": 1,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 4
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.climbStairs",
+  "estimate": "O(n)",
+  "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-70-climbing-stairs",
+  "method": "static_ast_loop_depth",
+  "methods_disagree": false,
+  "source_sha256": "c5bd0e85abe7dbdd6ee8f20f5e5065be5a1fe6765861c0ba9c68f42d85c7dd0f"
+}

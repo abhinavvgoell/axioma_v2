@@ -1,0 +1,50 @@
+{
+  "confidence": "medium",
+  "details": {
+    "code_analysis": {
+      "language": "python",
+      "limitations": [
+        "A detected syntax pattern is evidence, not a full algorithmic proof.",
+        "Collection operation costs depend on the concrete type and implementation.",
+        "Recurrence relations and called helper functions are not analyzed."
+      ],
+      "loop_count": 2,
+      "maximum_loop_nesting": 2,
+      "scope": "selected entrypoint; called helpers are not expanded",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 5
+        },
+        {
+          "kind": "loop",
+          "label": "while loop",
+          "line": 6
+        },
+        {
+          "kind": "membership",
+          "label": "Membership check; cost depends on the container",
+          "line": 6
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 7
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 9
+        }
+      ]
+    }
+  },
+  "entrypoint": "Solution.lengthOfLongestSubstring",
+  "estimate": "O(n)",
+  "explanation": "Recognized a forward-only sliding-window scan: the outer loop advances through the input while an index initialized before it only moves forward. Each pointer advances at most n times, so their combined work is linear. Called helper functions are not included; this estimate is not a proof.",
+  "id": "lcd-v0.3.1-3-longest-substring-without-repeating-characters",
+  "method": "static_ast_amortized_pointer_scan",
+  "methods_disagree": false,
+  "source_sha256": "a68b239ff2a89cd9c457c2917d2ba0f2c2fc922756c59ae5625dc1b086708761"
+}
