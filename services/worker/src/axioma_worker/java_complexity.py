@@ -414,6 +414,74 @@ def _is_adjacency_list_bfs(tokens: list[str], spans: list[tuple[int, int]]) -> b
     return False
 
 
+def _is_adjacency_list_dfs(
+    tokens: list[str], spans: list[tuple[int, int]], method_name: str
+) -> bool:
+    """Recognize recursive DFS over adjacency lists with a visited-set guard."""
+    recursive_calls = [
+        index
+        for index in range(len(tokens) - 1)
+        if tokens[index] == method_name and tokens[index + 1] == "("
+    ]
+    if len(recursive_calls) != 1:
+        return False
+
+    for loop_start, loop_end in spans:
+        if tokens[loop_start] != "for":
+            continue
+        header = _loop_header(tokens, loop_start)
+        if header is None:
+            continue
+        opening, closing = header
+        loop_header = tokens[opening + 1 : closing]
+        if ":" not in loop_header:
+            continue
+        colon = loop_header.index(":")
+        if colon < 1:
+            continue
+        neighbor = loop_header[colon - 1]
+        adjacency = loop_header[colon + 1 :]
+        if not any(
+            adjacency[index : index + 3] == [".", "get", "("]
+            for index in range(len(adjacency) - 2)
+        ):
+            continue
+
+        for guard_start in range(loop_start + 1, loop_end):
+            if tokens[guard_start] != "if":
+                continue
+            guard_header = _loop_header(tokens, guard_start)
+            if guard_header is None:
+                continue
+            guard_open, guard_close = guard_header
+            guard_body = guard_close + 1
+            if guard_body >= loop_end or tokens[guard_body] != "{":
+                continue
+            guard_end = _matching(tokens, guard_body, "{", "}")
+            if guard_end is None or guard_end > loop_end:
+                continue
+            guard = tokens[guard_open + 1 : guard_close]
+            body = tokens[guard_body + 1 : guard_end]
+            visited_name = next(
+                (
+                    guard[index - 1]
+                    for index in range(1, len(guard) - 3)
+                    if guard[index : index + 3] == [".", "add", "("]
+                    and guard[index + 3] == neighbor
+                ),
+                None,
+            )
+            call_index = recursive_calls[0] - (guard_body + 1)
+            if (
+                visited_name is not None
+                and 0 <= call_index < len(body) - 2
+                and body[call_index + 2] == neighbor
+                and _has_method_call(guard, visited_name, {"add"}, neighbor)
+            ):
+                return True
+    return False
+
+
 def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     method = "static_java_token_loop_depth"
     explanation = "Heuristic from Java loop nesting, direct recursion, and common sorting calls."
@@ -464,13 +532,20 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     binary_search = _is_binary_search_loop(body, spans)
     tree_recursion = not spans and recursive and _is_tree_recursive_walk(body, parts[1])
     graph_bfs = not recursive and _is_adjacency_list_bfs(body, spans)
+    graph_dfs = recursive and _is_adjacency_list_dfs(body, spans, parts[1])
     signals: list[dict] = []
     for start, _ in spans:
         signals.append({"kind": "loop", "label": f"{body[start]} loop", "line": None})
     if recursive:
         signals.append({
             "kind": "recursion",
-            "label": "Direct self-call; recurrence is not solved",
+            "label": (
+                "Direct self-call; guarded graph traversal recognized"
+                if graph_dfs
+                else "Direct self-call; tree-child traversal recognized"
+                if tree_recursion
+                else "Direct self-call; recurrence is not solved"
+            ),
             "line": None,
         })
     for index, token in enumerate(body[:-1]):
@@ -500,6 +575,12 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "label": "Recursion follows a left or right tree-child link",
             "line": None,
         })
+    if graph_dfs:
+        signals.append({
+            "kind": "graph_dfs",
+            "label": "Recursive adjacency-list traversal with a visited-set guard",
+            "line": None,
+        })
     if graph_bfs:
         signals.append({
             "kind": "graph_bfs",
@@ -508,14 +589,15 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         })
 
     amortized_forward_scan = _amortized_forward_scan(body, spans)
-    if graph_bfs:
-        method = "static_java_graph_bfs"
+    if graph_bfs or graph_dfs:
         estimate = "O(V + E)"
+        method = "static_java_graph_dfs" if graph_dfs else "static_java_graph_bfs"
+        traversal = "recursive traversal" if graph_dfs else "queue-based traversal"
+        work_unit = "visited once" if graph_dfs else "enqueued once"
         explanation = (
-            "Recognized queue-based traversal over adjacency lists with a visited-set guard. "
-            "Assuming each vertex is enqueued once and each adjacency entry is scanned once, "
-            "the work is O(V + E). This assumes constant-time queue and visited-set operations; "
-            "the syntax check is a heuristic."
+            f"Recognized {traversal} over adjacency lists with a visited-set guard. Assuming "
+            f"each vertex is {work_unit} and each adjacency entry is scanned once, the work is "
+            "O(V + E). This assumes constant-time visited-set operations; the syntax check is a heuristic."
         )
     elif tree_recursion:
         method = "static_java_tree_recursion"

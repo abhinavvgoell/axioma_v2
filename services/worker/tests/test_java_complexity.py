@@ -125,6 +125,34 @@ def test_unvisited_java_adjacency_queue_loop_remains_unknown() -> None:
     assert estimate.estimate == "unknown (data-dependent or incomplete loop)"
 
 
+def test_recognizes_java_recursive_adjacency_list_dfs() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { void dfs(int node, Map<Integer,List<Integer>> graph, "
+        "Set<Integer> visited) { for (int neighbor : graph.get(node)) { "
+        "if (visited.add(neighbor)) { dfs(neighbor, graph, visited); } } } }",
+        "Solution.dfs",
+    )
+
+    assert estimate.method == "static_java_graph_dfs"
+    assert estimate.estimate == "O(V + E)"
+    assert estimate.confidence == "low"
+    assert any(
+        signal["kind"] == "graph_dfs"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_unguarded_java_graph_recursion_remains_unknown() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { void dfs(int node, Map<Integer,List<Integer>> graph, "
+        "Set<Integer> visited) { for (int neighbor : graph.get(node)) { "
+        "dfs(neighbor, graph, visited); } } }",
+        "Solution.dfs",
+    )
+
+    assert estimate.estimate == "unknown (recursion detected)"
+
+
 def test_heap_pool_peak_increase_fit_estimates_space_separately() -> None:
     points = [
         {"size": size, "heap_pool_peak_increase_bytes": size * 24}
