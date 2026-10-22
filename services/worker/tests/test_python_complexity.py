@@ -175,6 +175,102 @@ def test_unrecognized_nested_recursive_helper_is_not_called_constant() -> None:
     assert estimate.estimate == "unknown (recursion detected)"
 
 
+def test_recognizes_sort_then_two_pointer_scan() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(nums):\n"
+        "    nums.sort()\n"
+        "    left, right = 0, len(nums) - 1\n"
+        "    while left < right:\n"
+        "        total = nums[left] + nums[right]\n"
+        "        if total < 0: left += 1\n"
+        "        else: right -= 1\n"
+        "    return False\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(n log n)"
+    assert estimate.method == "static_ast_sort_two_pointer_scan"
+
+
+def test_recognizes_floyd_cycle_detection() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(head):\n"
+        "    slow = fast = head\n"
+        "    while fast and fast.next:\n"
+        "        slow = slow.next\n"
+        "        fast = fast.next.next\n"
+        "        if slow is fast: return True\n"
+        "    return False\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(n)"
+    assert estimate.method == "static_ast_floyd_cycle_detection"
+
+
+def test_recognizes_local_recursive_graph_dfs() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(graph, start):\n"
+        "    seen = set()\n"
+        "    def visit(node):\n"
+        "        if node in seen: return\n"
+        "        seen.add(node)\n"
+        "        for neighbor in graph[node]:\n"
+        "            visit(neighbor)\n"
+        "    visit(start)\n"
+        "    return seen\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(V + E)"
+    assert any(
+        signal["kind"] == "graph_dfs"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_recognizes_matrix_staircase_search() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(matrix, target):\n"
+        "    row, col = 0, len(matrix[0]) - 1\n"
+        "    while row < len(matrix) and col >= 0:\n"
+        "        value = matrix[row][col]\n"
+        "        if value > target: col -= 1\n"
+        "        else: row += 1\n"
+        "    return False\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(m + n)"
+    assert estimate.method == "static_ast_matrix_staircase_search"
+
+
+def test_recognizes_heap_pops_and_character_trie_build() -> None:
+    heap_case = analyze_python_complexity(
+        "import heapq\n"
+        "def solve(nums, k):\n"
+        "    heap = nums[:]\n"
+        "    heapq.heapify(heap)\n"
+        "    for _ in range(min(k, len(heap))):\n"
+        "        heapq.heappop(heap)\n"
+        "    return heap\n",
+        "solve",
+    )
+    trie_case = analyze_python_complexity(
+        "def solve(words):\n"
+        "    root = {}\n"
+        "    for word in words:\n"
+        "        node = root\n"
+        "        for char in word:\n"
+        "            node = node.setdefault(char, {})\n"
+        "    return root\n",
+        "solve",
+    )
+
+    assert heap_case.estimate == "O(n log n)"
+    assert trie_case.estimate == "O(n)"
+
+
 def test_unrecognized_data_dependent_loop_remains_unknown() -> None:
     estimate = analyze_python_complexity(
         "def solve(value):\n    while value > 0:\n        value -= 3\n", "solve"

@@ -662,6 +662,121 @@ def _is_kahn_topological_sort(function: ast.FunctionDef | ast.AsyncFunctionDef) 
     return None
 
 
+def _is_sort_then_two_pointer_scan(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize a two-ended scan after an in-place or built-in sort."""
+    has_sort = any(
+        isinstance(node, ast.Call)
+        and ((isinstance(node.func, ast.Name) and node.func.id == "sorted")
+             or (isinstance(node.func, ast.Attribute) and node.func.attr == "sort"))
+        for node in ast.walk(function)
+    )
+    if not has_sort:
+        return None
+    for loop in (node for node in ast.walk(function) if isinstance(node, ast.While)):
+        names = {
+            node.id for node in ast.walk(loop.test) if isinstance(node, ast.Name)
+        }
+        updates = {
+            node.target.id
+            for node in ast.walk(loop)
+            if isinstance(node, ast.AugAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id in names
+            and isinstance(node.op, (ast.Add, ast.Sub))
+            and isinstance(node.value, ast.Constant)
+            and node.value.value == 1
+        }
+        if len(updates) >= 2:
+            return loop.lineno
+    return None
+
+
+def _is_floyd_cycle_detection(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize slow/fast pointer traversal over a linked-list next link."""
+    for loop in (node for node in ast.walk(function) if isinstance(node, ast.While)):
+        next_assignments: dict[str, int] = {}
+        for node in ast.walk(loop):
+            if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+                continue
+            if not isinstance(node.targets[0], ast.Name):
+                continue
+            depth = 0
+            value = node.value
+            while isinstance(value, ast.Attribute) and value.attr == "next":
+                depth += 1
+                value = value.value
+            if depth:
+                next_assignments[node.targets[0].id] = depth
+        if sorted(next_assignments.values())[-2:] == [1, 2]:
+            return loop.lineno
+    return None
+
+
+def _is_matrix_staircase_search(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize top-right/bottom-left matrix searches that move one axis per step."""
+    for loop in (node for node in ast.walk(function) if isinstance(node, ast.While)):
+        updates = {
+            (node.target.id, node.op)
+            for node in ast.walk(loop)
+            if isinstance(node, ast.AugAssign)
+            and isinstance(node.target, ast.Name)
+            and isinstance(node.op, (ast.Add, ast.Sub))
+            and isinstance(node.value, ast.Constant)
+            and node.value.value == 1
+        }
+        has_row_and_column_motion = any(isinstance(op, ast.Add) for _, op in updates) and any(
+            isinstance(op, ast.Sub) for _, op in updates
+        )
+        nested_subscript = any(
+            isinstance(node, ast.Subscript) and isinstance(node.value, ast.Subscript)
+            for node in ast.walk(loop)
+        )
+        if has_row_and_column_motion and nested_subscript:
+            return loop.lineno
+    return None
+
+
+def _is_heap_pop_scan(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize heap construction followed by an input-sized sequence of pops."""
+    has_heapify = any(
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "heapify"
+        for node in ast.walk(function)
+    )
+    if not has_heapify:
+        return None
+    for loop in (node for node in ast.walk(function) if isinstance(node, (ast.For, ast.AsyncFor))):
+        if _fixed_iterable(loop.iter):
+            continue
+        if any(
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr in {"heappop", "heappush"}
+            for node in ast.walk(loop)
+        ):
+            return loop.lineno
+    return None
+
+
+def _is_character_trie_build(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize nested word/character loops that build a trie node by node."""
+    for outer in (node for node in ast.walk(function) if isinstance(node, ast.For)):
+        if not isinstance(outer.target, ast.Name):
+            continue
+        for inner in (node for node in ast.walk(outer) if isinstance(node, ast.For)):
+            if not isinstance(inner.iter, ast.Name) or inner.iter.id != outer.target.id:
+                continue
+            if any(
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "setdefault"
+                for node in ast.walk(inner)
+            ):
+                return inner.lineno
+    return None
+
+
 def _is_adjacency_list_bfs(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
     """Recognize a queue traversal over adjacency lists with a visited guard."""
     for outer in ast.walk(function):
@@ -967,6 +1082,57 @@ def _is_adjacency_list_dfs(function: ast.FunctionDef | ast.AsyncFunctionDef) -> 
     return None
 
 
+def _is_local_adjacency_list_dfs(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize the same guarded DFS pattern when it is a local helper."""
+    for helper in _local_recursive_helpers(function):
+        line = _is_adjacency_list_dfs(helper)
+        if line is not None:
+            return line
+        calls = _recursive_call_nodes(helper)
+        parameters = [*helper.args.posonlyargs, *helper.args.args]
+        if len(parameters) != 1 or len(calls) != 1:
+            continue
+        node_name = parameters[0].arg
+        guard_names = {
+            comparator.id
+            for node in ast.walk(helper)
+            if isinstance(node, ast.Compare)
+            and isinstance(node.left, ast.Name)
+            and node.left.id == node_name
+            and len(node.ops) == 1
+            and isinstance(node.ops[0], ast.In)
+            and len(node.comparators) == 1
+            and isinstance(node.comparators[0], ast.Name)
+            for comparator in node.comparators
+        }
+        marks_visited = any(
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id in guard_names
+            and node.func.attr == "add"
+            and node.args
+            and isinstance(node.args[0], ast.Name)
+            and node.args[0].id == node_name
+            for node in ast.walk(helper)
+        )
+        recursive_neighbor_loop = any(
+            isinstance(loop.target, ast.Name)
+            and isinstance(loop.iter, ast.Subscript)
+            and isinstance(loop.iter.value, ast.Name)
+            and isinstance(loop.iter.slice, ast.Name)
+            and any(
+                isinstance(argument, ast.Name) and argument.id == loop.target.id
+                for argument in calls[0].args
+            )
+            for loop in ast.walk(helper)
+            if isinstance(loop, ast.For)
+        )
+        if marks_visited and recursive_neighbor_loop:
+            return calls[0].lineno
+    return None
+
+
 def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     method = "static_ast_loop_depth"
     explanation = "Heuristic from the target function's loop nesting and built-in sorting calls."
@@ -1092,7 +1258,13 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     kahn_line = _is_kahn_topological_sort(function)
     graph_bfs_line = _is_adjacency_list_bfs(function)
     graph_dfs_line = _is_adjacency_list_dfs(function)
+    local_graph_dfs_line = _is_local_adjacency_list_dfs(function)
     tree_recursion_line = _is_tree_recursive_walk(function)
+    sort_two_pointer_line = _is_sort_then_two_pointer_scan(function)
+    floyd_line = _is_floyd_cycle_detection(function)
+    matrix_staircase_line = _is_matrix_staircase_search(function)
+    heap_pop_line = _is_heap_pop_scan(function)
+    trie_build_line = _is_character_trie_build(function)
     local_recursive_helpers = _local_recursive_helpers(function)
     memoized_state = _memoized_helper_dimensions(function, local_recursive_helpers)
     backtracking_line = _backtracking_helper_line(local_recursive_helpers)
@@ -1113,6 +1285,14 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "kind": "graph_dfs",
             "label": "Recursive adjacency-list traversal with a visited guard",
             "line": graph_dfs_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if local_graph_dfs_line is not None:
+        method = "static_ast_graph_dfs"
+        signals.append({
+            "kind": "graph_dfs",
+            "label": "Local recursive helper traverses adjacency lists with a visited guard",
+            "line": local_graph_dfs_line,
         })
         signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
     if tree_recursion_line is not None:
@@ -1165,7 +1345,17 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "line": kahn_line,
         })
         signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
-    if graph_bfs_line is not None or graph_dfs_line is not None or kahn_line is not None:
+    for kind, label, line in (
+        ("sort_two_pointer_scan", "Sort followed by two pointer motion", sort_two_pointer_line),
+        ("floyd_cycle_detection", "Slow and fast linked-list pointers", floyd_line),
+        ("matrix_staircase_search", "Matrix search moves one row or column per step", matrix_staircase_line),
+        ("heap_pop_scan", "Heap construction followed by heap operations", heap_pop_line),
+        ("trie_build", "Word and character loops build trie nodes", trie_build_line),
+    ):
+        if line is not None:
+            signals.append({"kind": kind, "label": label, "line": line})
+    signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if graph_bfs_line is not None or graph_dfs_line is not None or local_graph_dfs_line is not None or kahn_line is not None:
         estimate = "O(V + E)"
         explanation = (
             "Recognized a graph traversal over adjacency lists with a visited guard. Assuming "
@@ -1222,6 +1412,43 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         explanation = (
             "Recognized a monotonic-stack pattern: items are pushed during a scan and removed "
             "at most once. The total stack work is linear in the input length."
+        )
+    elif sort_two_pointer_line is not None:
+        method = "static_ast_sort_two_pointer_scan"
+        estimate = "O(n log n)"
+        explanation = (
+            "Recognized a sort followed by a two-ended scan. The scan is linear, and the sort "
+            "dominates the total work at O(n log n)."
+        )
+    elif floyd_line is not None:
+        method = "static_ast_floyd_cycle_detection"
+        estimate = "O(n)"
+        explanation = (
+            "Recognized slow and fast pointers advancing through a linked-list next link. "
+            "Both pointers take at most a linear number of steps before termination or meeting."
+        )
+    elif matrix_staircase_line is not None:
+        method = "static_ast_matrix_staircase_search"
+        estimate = "O(m + n)"
+        explanation = (
+            "Recognized a matrix staircase search: each step advances one row or one column. "
+            "At most m + n positions are visited, assuming the matrix ordering required by this "
+            "search is valid."
+        )
+    elif heap_pop_line is not None:
+        method = "static_ast_heap_pop_scan"
+        estimate = "O(n log n)"
+        explanation = (
+            "Recognized heap construction followed by an input-sized sequence of heap operations. "
+            "Heapify is linear and each pop or push costs logarithmic time, so this is conservatively "
+            "reported as O(n log n)."
+        )
+    elif trie_build_line is not None:
+        method = "static_ast_trie_build"
+        estimate = "O(n)"
+        explanation = (
+            "Recognized a trie build over words and their characters. Here n means the total number "
+            "of input characters, and each character creates or follows one trie edge."
         )
     elif has_while:
         estimate = "unknown (data-dependent loop bound)"

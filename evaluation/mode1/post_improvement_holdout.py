@@ -50,7 +50,7 @@ def bucket(estimate: str) -> str:
         return "constant"
     if estimate == "O(log n)":
         return "logarithmic"
-    if estimate == "O(n)":
+    if estimate in {"O(n)", "O(m + n)"}:
         return "linear"
     if estimate == "O(n log n)":
         return "n_log_n"
