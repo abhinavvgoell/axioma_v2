@@ -1,0 +1,116 @@
+{
+  "candidate_id": "python-sum-loop-to-builtin-20261022-01",
+  "candidate_source_sha256": "c751f774d33c07dc9c12fc1b03df72ddfe74717e2ed56771869efd79ef654f0a",
+  "complexity_report": {
+    "measurements": [
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 203,
+        "opcode_events": 608,
+        "peak_traced_bytes": 133633,
+        "size": 100
+      },
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 403,
+        "opcode_events": 1208,
+        "peak_traced_bytes": 133409,
+        "size": 200
+      },
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 803,
+        "opcode_events": 2408,
+        "peak_traced_bytes": 133409,
+        "size": 400
+      },
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 1603,
+        "opcode_events": 4808,
+        "peak_traced_bytes": 133409,
+        "size": 800
+      }
+    ],
+    "optimized_measurements": [
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 203,
+        "opcode_events": 608,
+        "optimized_line_events": 1,
+        "optimized_opcode_events": 4,
+        "optimized_peak_traced_bytes": 133433,
+        "peak_traced_bytes": 133633,
+        "size": 100
+      },
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 403,
+        "opcode_events": 1208,
+        "optimized_line_events": 1,
+        "optimized_opcode_events": 4,
+        "optimized_peak_traced_bytes": 133377,
+        "peak_traced_bytes": 133409,
+        "size": 200
+      },
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 803,
+        "opcode_events": 2408,
+        "optimized_line_events": 1,
+        "optimized_opcode_events": 4,
+        "optimized_peak_traced_bytes": 133377,
+        "peak_traced_bytes": 133409,
+        "size": 400
+      },
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 1603,
+        "opcode_events": 4808,
+        "optimized_line_events": 1,
+        "optimized_opcode_events": 4,
+        "optimized_peak_traced_bytes": 133377,
+        "peak_traced_bytes": 133409,
+        "size": 800
+      }
+    ],
+    "skipped_reason": null
+  },
+  "harness": {
+    "return_code": 0,
+    "stderr": ""
+  },
+  "optimization_report": {
+    "checked": 4,
+    "checks": [
+      {
+        "details": {},
+        "name": "optimization/positive-values",
+        "outcome": "passed"
+      },
+      {
+        "details": {},
+        "name": "optimization/empty-array",
+        "outcome": "passed"
+      },
+      {
+        "details": {},
+        "name": "optimization/negative-and-positive-values",
+        "outcome": "passed"
+      },
+      {
+        "details": {},
+        "name": "optimization/large-integers",
+        "outcome": "passed"
+      }
+    ],
+    "requested": 4
+  },
+  "original_source_sha256": "15756a2c174b3ef5c9f3a734e1f5fb72a5bf31e1f6cece6ec044bde5a46d5f38",
+  "preselection_file": "optimization-preselection-2026-10-22.json",
+  "preselection_sha256": "d2be6f23d912accb8186c41b6aca429227ae74e9851194cd91da1c2d9658af75",
+  "runtime": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.3 (tags/v3.14.3:323c59a, Feb  3 2026, 16:04:56) [MSC v.1944 64 bit (AMD64)]"
+  }
+}

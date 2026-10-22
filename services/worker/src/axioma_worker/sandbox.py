@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import io
+import os
+import shutil
 import subprocess
 import tarfile
 import time
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from pathlib import PurePosixPath
 
 from axioma_worker.adapters import LanguageAdapter
@@ -41,7 +44,22 @@ class DockerSandbox:
         self.timeout_seconds = timeout_seconds
         self.source_limit_bytes = source_limit_bytes
         self.output_limit_bytes = output_limit_bytes
-        self.docker_binary = docker_binary
+        self.docker_binary = self._resolve_docker_binary(docker_binary)
+
+    @staticmethod
+    def _resolve_docker_binary(docker_binary: str) -> str:
+        """Find Docker Desktop on Windows even when its CLI directory is not on PATH."""
+        resolved = shutil.which(docker_binary)
+        if resolved:
+            return resolved
+        if docker_binary != "docker" or os.name != "nt":
+            return docker_binary
+
+        program_files = os.environ.get("ProgramFiles", r"C:\Program Files")
+        desktop_cli = Path(program_files) / "Docker" / "Docker" / "resources" / "bin" / "docker.exe"
+        if desktop_cli.is_file():
+            return str(desktop_cli)
+        return docker_binary
 
     def run(
         self,

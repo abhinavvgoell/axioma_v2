@@ -1,0 +1,39 @@
+{
+  "selection_time": "before local Axioma evaluation",
+  "selection_rule": "Use one simple integer-array sum control and three single-change faulty implementations whose intended output errors are evident from source review; do not choose variants based on Axioma outcomes.",
+  "problem": "Given an integer array, return the sum of its elements.",
+  "cases": [
+    {"name": "empty", "args": [[]], "kwargs": {}, "expected": 0},
+    {"name": "positive", "args": [[1, 2, 3]], "kwargs": {}, "expected": 6},
+    {"name": "mixed-sign", "args": [[-8, 3, 2]], "kwargs": {}, "expected": -3},
+    {"name": "large-integers", "args": [[1000000000000, 7, -2]], "kwargs": {}, "expected": 1000000000005},
+    {"name": "zero", "args": [[0]], "kwargs": {}, "expected": 0}
+  ],
+  "solutions": [
+    {
+      "id": "sum-control-01",
+      "label": "correct",
+      "label_rationale": "Initialize at zero and add each element exactly once; this matches the stated sum for empty and non-empty integer arrays.",
+      "source": "def solve(values):\n    total = 0\n    for value in values:\n        total += value\n    return total\n"
+    },
+    {
+      "id": "sum-mutant-constant-zero-01",
+      "label": "mutant",
+      "label_rationale": "Always returns zero, so the positive, mixed-sign, and large-integer examples contradict the required sum.",
+      "source": "def solve(values):\n    return 0\n"
+    },
+    {
+      "id": "sum-mutant-skips-last-01",
+      "label": "mutant",
+      "label_rationale": "Iterates over values[:-1] and omits the last array element for non-empty arrays with a non-zero final element.",
+      "source": "def solve(values):\n    total = 0\n    for value in values[:-1]:\n        total += value\n    return total\n"
+    },
+    {
+      "id": "sum-mutant-subtracts-01",
+      "label": "mutant",
+      "label_rationale": "Subtracts each value instead of adding it, producing the negated sum on non-zero totals.",
+      "source": "def solve(values):\n    total = 0\n    for value in values:\n        total -= value\n    return total\n"
+    }
+  ],
+  "claim_limit": "Five visible examples from one simple problem only; not hidden tests, broad bug-detection recall, or generalization to arbitrary faulty code."
+}

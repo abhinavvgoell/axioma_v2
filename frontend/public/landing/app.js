@@ -73,15 +73,15 @@ function drawVortex(time) {
   ctx.fillStyle = "#080808";
   ctx.fillRect(0, 0, width, height);
 
-  const centerX = width * 0.265;
-  const centerY = height * 0.57;
+  const centerX = width * 0.075;
+  const centerY = height * 0.56;
   const maxRadius = Math.hypot(width * 0.88, height * 0.72);
   const lineCount = width < 640 ? 92 : 166;
   const motion = reduceMotion ? 0 : time * 0.000025;
 
   const glow = ctx.createRadialGradient(centerX, centerY, 3, centerX, centerY, maxRadius * 0.86);
-  glow.addColorStop(0, "rgba(235,238,238,.13)");
-  glow.addColorStop(.22, "rgba(164,171,173,.075)");
+  glow.addColorStop(0, "rgba(235,238,238,.22)");
+  glow.addColorStop(.22, "rgba(164,171,173,.12)");
   glow.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, width, height);

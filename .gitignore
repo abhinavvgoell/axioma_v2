@@ -11,6 +11,7 @@ node_modules/
 dist/
 build/
 *.egg-info/
+/services/api/data/
 .DS_Store
 Thumbs.db
 

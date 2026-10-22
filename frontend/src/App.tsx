@@ -1,43 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
-import { ApiError, cancelJob, findOptimizationProposals, getJob, getReport, submitJob } from './api'
-import type { AnalysisReport, Job, JobStatus, Language, OptimizationProposal, ProblemKind } from './types'
+import { ApiError, cancelJob, findOptimizationProposals, getJob, getReport, matchProblem, submitJob } from './api'
+import type { AnalysisReport, Job, JobStatus, Language, OptimizationProposal, ProblemMatch } from './types'
 import LandingPage from './LandingPage'
 import './App.css'
-
-const starterSamples = JSON.stringify(
-  [{ name: 'example', args: [[1, 2, 3]], kwargs: {}, expected: 6 }],
-  null,
-  2,
-)
-const starterStdinSamples = JSON.stringify(
-  [{ name: 'example', stdin: '1 2 3\n', expected_stdout: '6\n' }],
-  null,
-  2,
-)
-
-const starterConstraints = JSON.stringify(
-  [{ path: 'args[0].length', minimum: 1, maximum: 100 }],
-  null,
-  2,
-)
-
-const starterCode: Record<Language, string> = {
-  python: 'def solve(values):\n    return sum(values)\n',
-  java: 'class Solution {\n    public int solve(int[] values) {\n        int total = 0;\n        for (int value : values) total += value;\n        return total;\n    }\n}\n',
-}
-const starterStdinCode: Record<Language, string> = {
-  python: 'import sys\n\nvalues = list(map(int, sys.stdin.read().split()))\nprint(sum(values))\n',
-  java: 'import java.util.*;\n\nclass Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        long total = 0;\n        while (scanner.hasNextLong()) total += scanner.nextLong();\n        System.out.println(total);\n    }\n}\n',
-}
-
-const starterEntrypoint: Record<Language, string> = {
-  python: 'solve',
-  java: 'Solution.solve',
-}
 
 const terminalStatuses = new Set<JobStatus>(['completed', 'failed', 'cancelled'])
 const historyStorageKey = 'axioma.mode1.recent-jobs.v1'
 const historyLimit = 20
+
+function twoSumBenchmarks() {
+  return [32, 64, 128, 256].map((size) => ({
+    size,
+    args: [Array<number>(size).fill(0), -1],
+    kwargs: {},
+  }))
+}
 
 interface HistoryEntry {
   id: string
@@ -101,47 +78,21 @@ function readHistory(): HistoryEntry[] {
   }
 }
 
-function parseTopics(value: string): string[] {
-  return [...new Set(value.split(',')
-    .map((topic) => topic.trim().toLowerCase().replace(/\s+/g, ' '))
-    .filter((topic) => topic.length > 0 && topic.length <= 32))].slice(0, 8)
-}
-
 function AnalyzerApp() {
   const [language, setLanguage] = useState<Language>('python')
-  const [problemKind, setProblemKind] = useState<ProblemKind>('function')
-  const [statement, setStatement] = useState(
-    'Given an integer array, return the sum of its values.',
-  )
-  const [entrypoint, setEntrypoint] = useState(starterEntrypoint.python)
-  const [constraintsText, setConstraintsText] = useState(starterConstraints)
-  const [functionSamplesText, setFunctionSamplesText] = useState(starterSamples)
-  const [stdinSamplesText, setStdinSamplesText] = useState(starterStdinSamples)
-  const [code, setCode] = useState(starterCode.python)
-  const [referenceCode, setReferenceCode] = useState<Record<Language, string>>({ python: '', java: '' })
-  const [independentReferenceCode, setIndependentReferenceCode] = useState<Record<Language, string>>({ python: '', java: '' })
-  const [optimizationCode, setOptimizationCode] = useState<Record<Language, string>>({ python: '', java: '' })
-  const [optimizationNotes, setOptimizationNotes] = useState('')
-  const [benchmarksText, setBenchmarksText] = useState<Record<Language, string>>({ python: '[]', java: '[]' })
-  const [generatedTests, setGeneratedTests] = useState(8)
-  const [mutationTests, setMutationTests] = useState(0)
-  const [topicTags, setTopicTags] = useState('')
+  const [statement, setStatement] = useState('')
+  const [code, setCode] = useState('')
+  const [problemMatch, setProblemMatch] = useState<ProblemMatch | null>(null)
+  const [matching, setMatching] = useState(false)
+  const [proposal, setProposal] = useState<OptimizationProposal | null>(null)
+  const [proposalMessage, setProposalMessage] = useState<string | null>(null)
+  const [proposalBusy, setProposalBusy] = useState(false)
   const [history, setHistory] = useState<HistoryEntry[]>(readHistory)
   const [job, setJob] = useState<Job | null>(null)
   const [report, setReport] = useState<AnalysisReport | null>(null)
-  const [proposals, setProposals] = useState<OptimizationProposal[]>([])
-  const [proposalMessage, setProposalMessage] = useState<string | null>(null)
-  const [proposalsBusy, setProposalsBusy] = useState(false)
-  const [activeTab, setActiveTab] = useState<'evidence' | 'checks'>('evidence')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const eventSource = useRef<EventSource | null>(null)
-  const rememberedCode = useRef({
-    function: { ...starterCode },
-    stdin_stdout: { ...starterStdinCode },
-  })
-
-  const samplesText = problemKind === 'function' ? functionSamplesText : stdinSamplesText
   const activeJobId = job?.id
   const activeJobStatus = job?.status
 
@@ -209,130 +160,75 @@ function AnalyzerApp() {
     return () => source.close()
   }, [activeJobId, activeJobStatus])
 
-  function changeLanguage(next: Language) {
-    setLanguage(next)
-    setEntrypoint(starterEntrypoint[next])
-    setCode(rememberedCode.current[problemKind][next])
-    setProposals([])
-    setProposalMessage(null)
-  }
-
   function updateCode(value: string) {
     setCode(value)
-    rememberedCode.current[problemKind][language] = value
-    setProposals([])
+    setProposal(null)
     setProposalMessage(null)
   }
 
-  function changeProblemKind(next: ProblemKind) {
-    rememberedCode.current[problemKind][language] = code
-    setProblemKind(next)
-    setCode(rememberedCode.current[next][language])
-    setProposals([])
+  async function findOptimization() {
+    setProposalBusy(true)
+    setProposal(null)
     setProposalMessage(null)
-  }
-
-  async function checkForOptimizationProposal() {
-    setProposalsBusy(true)
     setError(null)
-    setProposals([])
-    setProposalMessage(null)
     try {
-      const samples = JSON.parse(functionSamplesText) as Record<string, unknown>[]
-      if (!Array.isArray(samples) || samples.length === 0) {
-        throw new Error('Add at least one sample case before requesting a proposal.')
+      if (!code.trim()) throw new Error('Paste your solution code before asking for an improvement.')
+      const match = problemMatch?.recognized && problemMatch.problem
+        ? problemMatch
+        : await identifyStatement()
+      if (!match.recognized || !match.problem) {
+        throw new Error('Axioma needs to recognize the problem before suggesting an improvement.')
       }
-      const result = await findOptimizationProposals({
-        language,
-        code,
-        problem: {
-          statement,
-          interface: { kind: 'function', entrypoint },
-          constraints: JSON.parse(constraintsText),
-          samples: samples.map((sample) => ({ ...sample, kind: 'function' })),
-        },
-      })
-      setProposals(result.proposals)
+      const result = await findOptimizationProposals({ language, code, problem: match.problem })
+      setProposal(result.proposals[0] ?? null)
       setProposalMessage(result.message)
     } catch (reason) {
       setError(reason instanceof ApiError
         ? reason.message
         : reason instanceof Error
           ? reason.message
-          : 'Could not inspect this source for supported patterns.')
+          : 'Could not look for an optimization.')
     } finally {
-      setProposalsBusy(false)
+      setProposalBusy(false)
     }
   }
 
-  function selectOptimizationProposal(proposal: OptimizationProposal) {
-    setOptimizationCode((previous) => ({ ...previous, [language]: proposal.candidate_code }))
-    setOptimizationNotes(proposal.summary)
-    setProposalMessage('Candidate copied into the optimization panel. Run analysis to check it; this proposal has not been executed.')
+  async function identifyStatement(value = statement): Promise<ProblemMatch> {
+    setMatching(true)
+    try {
+      const result = await matchProblem(value)
+      setProblemMatch(result)
+      return result
+    } finally {
+      setMatching(false)
+    }
   }
 
-  async function runAnalysis() {
+  async function runAnalysis(optimization?: OptimizationProposal) {
     setBusy(true)
     setError(null)
     setReport(null)
     try {
-      const samples = JSON.parse(samplesText) as Record<string, unknown>[]
-      if (!Array.isArray(samples) || samples.length === 0) {
-        throw new Error('Add at least one sample case as a JSON array.')
+      if (!statement.trim()) throw new Error('Paste a problem statement first.')
+      if (!code.trim()) throw new Error('Paste your solution code first.')
+      const match = await identifyStatement()
+      if (!match.recognized || !match.problem) {
+        throw new Error('Axioma could not match this problem yet. The starter catalog currently supports Two Sum, Best Time to Buy and Sell Stock, Valid Parentheses, and Permutation in String.')
       }
-      const problem = problemKind === 'function'
-        ? {
-            statement,
-            interface: { kind: 'function' as const, entrypoint },
-            constraints: JSON.parse(constraintsText),
-            samples: samples.map((sample) => ({ ...sample, kind: 'function' as const })),
-          }
-        : {
-            statement,
-            interface: { kind: 'stdin_stdout' as const },
-            samples: samples.map((sample) => ({ ...sample, kind: 'stdin_stdout' as const })),
-          }
+      const problem = match.problem
       const request: Record<string, unknown> = { language, code, problem }
-      let path: string
-      if (problemKind === 'stdin_stdout') {
-        path = '/v1/jobs/mode1/stdin-stdout'
-      } else {
-        const reference = referenceCode[language].trim()
-        const independentReference = independentReferenceCode[language].trim()
-        const optimization = optimizationCode[language].trim()
-        if (optimizationNotes.trim() && !optimization) {
-          throw new Error('Add an optimization candidate before adding notes.')
+      if (optimization) {
+        request.optimization_code = optimization.candidate_code
+        request.optimization_notes = optimization.summary
+        if (optimization.rule_id === 'two_sum_pairwise_to_hash_map_v1') {
+          request.complexity_benchmarks = twoSumBenchmarks()
         }
-        path = `/v1/jobs/mode1/${language}-function`
-        request.reference_code = reference || null
-        request.independent_reference_code = reference ? independentReference || null : null
-        request.generated_tests = reference ? generatedTests : 0
-        request.mutation_tests = reference ? mutationTests : 0
-        request.optimization_code = optimization || null
-        request.optimization_notes = optimizationNotes.trim() || null
-        const benchmarks = JSON.parse(benchmarksText[language]) as unknown
-        if (!Array.isArray(benchmarks)) {
-          throw new Error('Complexity benchmarks must be a JSON array.')
-        }
-        if (benchmarks.length > 0) {
-          const sizes = benchmarks.map((benchmark) => (
-            typeof benchmark === 'object' && benchmark !== null && 'size' in benchmark
-              ? (benchmark as { size: unknown }).size
-              : null
-          ))
-          if (sizes.length < 4 || sizes.length > 6 || sizes.some((size) => !Number.isInteger(size))) {
-            throw new Error('Provide four to six benchmarks with integer sizes, or leave the array empty.')
-          }
-          if (sizes.some((size, index) => index > 0 && Number(size) <= Number(sizes[index - 1]))) {
-            throw new Error('Benchmark sizes must be unique and increase from first to last.')
-          }
-        }
-        request.complexity_benchmarks = benchmarks
       }
+      const path = `/v1/jobs/mode1/${language}-function`
       const created = await submitJob(path, request)
       setJob(created)
       setHistory((current) => [
-        { id: created.id, language: created.language, created_at: created.created_at, topics: parseTopics(topicTags) },
+        { id: created.id, language: created.language, created_at: created.created_at, topics: match.topics },
         ...current.filter((item) => item.id !== created.id),
       ].slice(0, historyLimit))
     } catch (reason) {
@@ -450,78 +346,84 @@ function AnalyzerApp() {
               ))}
           </div>
           <div className="rail-divider" />
-          <div className="rail-section-label">TOPIC SIGNALS</div>
-          <p className="rail-insight-note">Self-tagged topics, summarized from completed runs. This is not a skill score.</p>
-          {weakestTopicSignals.length === 0
-            ? <p className="rail-history-empty">Add topic tags and collect at least three executed checks per topic.</p>
-            : <div className="rail-topic-list">{weakestTopicSignals.map(([topic, counts]) => (
-              <div className="rail-topic-row" key={topic}>
-                <span>{topic}</span>
-                <b>{Math.round((counts.failed / counts.checked) * 100)}% fail</b>
-                <small>{counts.failed}/{counts.checked} checks</small>
-              </div>
-            ))}</div>}
-          <div className="rail-section-label complexity-history-label">RECENT COMPLEXITY</div>
-          {recentComplexity.length === 0
-            ? <p className="rail-history-empty">No estimates in saved reports yet.</p>
-            : <div className="rail-topic-list">{recentComplexity.map((item) => (
-              <div className="rail-complexity-row" key={item.id}>
-                <code>{item.summary?.complexity}</code>
-                <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleDateString()}</time>
-              </div>
-            ))}</div>}
+          <details className="rail-insights">
+            <summary>LEARNING INSIGHTS</summary>
+            <p className="rail-insight-note">Signals from your saved runs. They are not a skill score.</p>
+            <div className="rail-subheading">TOPIC SIGNALS</div>
+            {weakestTopicSignals.length === 0
+              ? <p className="rail-history-empty">Collect at least three executed checks per topic to see a signal.</p>
+              : <div className="rail-topic-list">{weakestTopicSignals.map(([topic, counts]) => (
+                <div className="rail-topic-row" key={topic}>
+                  <span>{topic}</span>
+                  <b>{Math.round((counts.failed / counts.checked) * 100)}% failed</b>
+                  <small>{counts.failed}/{counts.checked} checks</small>
+                </div>
+              ))}</div>}
+            <div className="rail-subheading complexity-history-label">RECENT COMPLEXITY</div>
+            {recentComplexity.length === 0
+              ? <p className="rail-history-empty">No estimates in saved reports yet.</p>
+              : <div className="rail-topic-list">{recentComplexity.map((item) => (
+                <div className="rail-complexity-row" key={item.id}>
+                  <code>{item.summary?.complexity}</code>
+                  <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleDateString()}</time>
+                </div>
+              ))}</div>}
+          </details>
           <div className="rail-bottom"><div className="rail-section-label">RUNTIME</div><div className="runtime-state"><span className="runtime-pip" /> API checked on run</div></div>
         </aside>
 
         <section className="main-panel">
           <div className="page-heading">
-            <div><div className="eyebrow">MODE 1 <span>/</span> DSA SOLUTION ANALYZER</div><h1>Code, with receipts.</h1><p>Run a candidate against your problem definition. Every result comes from the configured checks.</p></div>
-            <div className="page-actions">{report && <button className="quiet-button" onClick={exportReport}>EXPORT REPORT JSON</button>}{canCancel && <button className="quiet-button" onClick={() => void stopJob()}>Cancel job</button>}{problemKind === 'function' && <button className="quiet-button" onClick={() => void checkForOptimizationProposal()} disabled={proposalsBusy || busy || isRunning}>{proposalsBusy ? 'CHECKING RULES' : 'CHECK FOR PROPOSAL'}</button>}<button className="run-button" onClick={() => void runAnalysis()} disabled={busy || isRunning}><span>{busy || isRunning ? '◌' : '▶'}</span>{busy ? 'SUBMITTING' : isRunning ? 'ANALYZING' : 'RUN ANALYSIS'}</button></div>
+            <div><div className="eyebrow">MODE 1 <span>/</span> DSA SOLUTION ANALYZER</div><h1>Check your solution.</h1><p>Paste a problem and your code. Axioma supplies the checks.</p></div>
+            <div className="page-actions">{report && <button className="quiet-button" onClick={exportReport}>EXPORT REPORT JSON</button>}{canCancel && <button className="quiet-button" onClick={() => void stopJob()}>Cancel job</button>}<button className="run-button" onClick={() => void runAnalysis()} disabled={busy || isRunning}><span>{busy || isRunning ? '◌' : '▶'}</span>{busy ? 'SUBMITTING' : isRunning ? 'ANALYZING' : 'RUN ANALYSIS'}</button></div>
           </div>
 
           {error && <div className="error-banner" role="alert"><span>!</span>{error}<button onClick={() => setError(null)} aria-label="Dismiss error">×</button></div>}
 
           <div className="workbench">
-            <section className="input-panel" aria-label="Problem and run settings">
-              <div className="panel-heading"><span>01</span><h2>Problem</h2><span className="panel-meta">SPECIFICATION</span></div>
-              <label className="field-label" htmlFor="problem-statement">STATEMENT</label>
-              <textarea id="problem-statement" className="text-input statement-input" value={statement} onChange={(event) => setStatement(event.target.value)} rows={3} />
-              <label className="field-block"><span className="field-label">TOPIC TAGS · COMMA SEPARATED</span><input className="text-input" value={topicTags} onChange={(event) => setTopicTags(event.target.value.slice(0, 256))} maxLength={256} placeholder="arrays, two pointers" /><span className="field-hint">Up to 8 tags, 32 characters each. Tags stay in this browser and help group your local history.</span></label>
-              <div className="field-row">
-                <label className="field-block"><span className="field-label">LANGUAGE</span><select value={language} onChange={(event) => changeLanguage(event.target.value as Language)}><option value="python">Python</option><option value="java">Java</option></select></label>
-                <label className="field-block"><span className="field-label">INTERFACE</span><select value={problemKind} onChange={(event) => changeProblemKind(event.target.value as ProblemKind)}><option value="function">Function</option><option value="stdin_stdout">stdin / stdout</option></select></label>
+            <section className="input-panel" aria-label="Problem statement">
+              <div className="panel-heading"><span>01</span><h2>Problem</h2><span className="panel-meta">PASTE STATEMENT</span></div>
+              <label className="field-label" htmlFor="problem-statement">PROBLEM STATEMENT</label>
+              <textarea id="problem-statement" className="text-input statement-input" value={statement} onChange={(event) => { setStatement(event.target.value); setProblemMatch(null); setProposal(null); setProposalMessage(null) }} onBlur={() => { if (statement.trim()) void identifyStatement(statement).catch(() => setProblemMatch(null)) }} rows={7} placeholder="Paste the full problem statement here. Axioma will look for a matching test pack." />
+              <div className={`problem-match${problemMatch?.recognized ? ' matched' : problemMatch ? ' unmatched' : ''}`} aria-live="polite">
+                {matching ? <><span className="match-pip" />Looking for a supported problem…</> : problemMatch?.recognized
+                  ? <><b>{problemMatch.title}</b><span>{problemMatch.test_count} Axioma checks ready</span><details><summary>TEST PACK SOURCE</summary><small>{problemMatch.test_source}</small></details></>
+                  : problemMatch ? <><b>Problem not recognized yet</b><span>Check that the problem title is included in the pasted statement.</span></>
+                    : <><span className="match-pip idle" />Test cases and problem details will be filled in when Axioma recognizes the statement.</>}
               </div>
-              {problemKind === 'function' && <>
-                <label className="field-block"><span className="field-label">ENTRYPOINT</span><input className="text-input mono-input" value={entrypoint} onChange={(event) => setEntrypoint(event.target.value)} /></label>
-                <label className="field-block"><span className="field-label">CONSTRAINTS · JSON</span><textarea className="text-input json-input" value={constraintsText} onChange={(event) => setConstraintsText(event.target.value)} rows={4} spellCheck={false} /></label>
-              </>}
-              <label className="field-block"><span className="field-label">SAMPLES · JSON ARRAY</span><textarea className="text-input json-input samples-input" value={samplesText} onChange={(event) => problemKind === 'function' ? setFunctionSamplesText(event.target.value) : setStdinSamplesText(event.target.value)} rows={7} spellCheck={false} /></label>
-              {problemKind === 'function' && <>
-                <details className="reference-settings"><summary>REFERENCE CHECKS <span>OPTIONAL</span></summary><label className="field-block"><span className="field-label">REFERENCE IMPLEMENTATION</span><textarea className="text-input code-input compact-code" value={referenceCode[language]} onChange={(event) => setReferenceCode((previous) => ({ ...previous, [language]: event.target.value }))} rows={5} spellCheck={false} placeholder={language === 'python' ? 'def solve(values):\n    return sum(values)' : 'class Reference { /* implement solve */ }'} /></label><label className="field-block"><span className="field-label">INDEPENDENT REFERENCE · OPTIONAL</span><textarea className="text-input code-input compact-code" value={independentReferenceCode[language]} onChange={(event) => setIndependentReferenceCode((previous) => ({ ...previous, [language]: event.target.value }))} rows={5} spellCheck={false} disabled={!referenceCode[language].trim()} placeholder={language === 'python' ? 'def solve(values):\n    total = 0\n    for value in values:\n        total += value\n    return total' : 'class ReferenceIndependent { /* implement solve */ }'} /></label><p className="field-hint">Both user-supplied references must match the examples and each other before differential checks run. Agreement is corroboration, not proof.</p><label className="field-block generated-count"><span className="field-label">GENERATED CASES</span><input type="number" min={0} max={50} value={generatedTests} onChange={(event) => setGeneratedTests(Math.max(0, Math.min(50, Number(event.target.value))))} disabled={!referenceCode[language].trim()} /></label><label className="field-block generated-count"><span className="field-label">MUTATION TESTS</span><input type="number" min={0} max={20} value={mutationTests} onChange={(event) => setMutationTests(Math.max(0, Math.min(20, Number(event.target.value))))} disabled={!referenceCode[language].trim()} /></label><p className="field-hint">Mutants are generated from simple operators in the selected reference method. A score is low-confidence and only describes these finite checks.</p><p className="field-hint">Generated differential checks use the reference only after it passes the declared samples.</p></details>
-                <details className="reference-settings optimization-settings"><summary>OPTIMIZATION CANDIDATE <span>OPTIONAL</span></summary><p className="field-hint">A candidate you provide is checked against declared outputs before Axioma reports its measurements. This does not generate or silently apply a rewrite.</p><label className="field-block"><span className="field-label">ALTERNATE SOURCE</span><textarea className="text-input code-input compact-code" value={optimizationCode[language]} onChange={(event) => setOptimizationCode((previous) => ({ ...previous, [language]: event.target.value }))} rows={7} spellCheck={false} placeholder={language === 'python' ? 'def solve(values):\n    return sum(values)' : 'class AxiomaOptimized {\n    public int solve(int[] values) {\n        // alternate implementation\n    }\n}'} /></label><label className="field-block"><span className="field-label">WHY THIS CHANGE? · OPTIONAL</span><textarea className="text-input" value={optimizationNotes} onChange={(event) => setOptimizationNotes(event.target.value)} rows={2} maxLength={2000} /></label><label className="field-block"><span className="field-label">BENCHMARK INPUTS · JSON ARRAY · 4–6 INCREASING SIZES</span><textarea className="text-input json-input" value={benchmarksText[language]} onChange={(event) => setBenchmarksText((previous) => ({ ...previous, [language]: event.target.value }))} rows={5} spellCheck={false} placeholder={'[{"size": 10, "args": [[1,2,3,4,5,6,7,8,9,10]]}, ...]'} /></label><p className="field-hint">Use inputs that match your function signature and declared constraints. Measurements run only after correctness checks pass and remain low-confidence evidence.</p></details>
-              </>}
-              <div className="input-note"><span>i</span><p>Submissions are sent to the local API. Code executes only when the worker and sandbox are available.</p></div>
+              <div className="input-note"><span>i</span><p>Only the statement and your solution are needed. Test cases are supplied by Axioma for supported problems.</p></div>
             </section>
 
             <section className="editor-panel" aria-label="Candidate source code">
-              <div className="panel-heading"><span>02</span><h2>Candidate</h2><span className="panel-meta">{language.toUpperCase()}</span></div>
-              <label className="field-label" htmlFor="candidate-code">SOURCE · EDITABLE</label>
-              <textarea id="candidate-code" className="text-input code-input source-editor" value={code} onChange={(event) => updateCode(event.target.value)} spellCheck={false} aria-label="Candidate source code" />
+              <div className="panel-heading"><span>02</span><h2>Your code</h2><label className="language-picker"><span className="field-label">LANGUAGE</span><select value={language} onChange={(event) => { setLanguage(event.target.value as Language); setProposal(null); setProposalMessage(null) }}><option value="python">Python</option><option value="java">Java</option></select></label></div>
+              <label className="field-label" htmlFor="candidate-code">SOLUTION · EDITABLE</label>
+              <textarea id="candidate-code" className="text-input code-input source-editor" value={code} onChange={(event) => updateCode(event.target.value)} spellCheck={false} aria-label="Candidate source code" placeholder={language === 'python' ? 'Paste your Python solution here…' : 'Paste your Java solution here…'} />
               <div className="editor-footer"><span><i className="editor-dot" /> UNSAVED SOURCE</span><span>UTF-8 <i>·</i> SPACES: 4</span></div>
-              <div className="editor-callout"><span>↳</span><p>Change the starter solution, then run it against the samples. A green result only means those configured checks passed.</p></div>
-              {proposalMessage && <div className="proposal-message" role="status">{proposalMessage}</div>}
-              {proposals.map((proposal) => <article className="proposal-card" key={proposal.rule_id}><div className="proposal-top"><span className="evidence-type type-static">STATIC</span><span className="confidence confidence-low">LOW CONFIDENCE</span><span className="proposal-unverified">NOT RUN</span></div><h3>{proposal.title}</h3><p>{proposal.summary}</p><pre>{proposal.candidate_code}</pre><ul>{proposal.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul><button className="quiet-button" onClick={() => selectOptimizationProposal(proposal)}>USE AS OPTIMIZATION CANDIDATE</button></article>)}
+              <div className="editor-callout"><span>↳</span><p>Axioma checks this code against the matched problem pack and reports which cases pass or fail.</p></div>
+              <section className="proposal-panel" aria-label="Optimization suggestions">
+                <div className="proposal-heading"><div><span className="field-label">OPTIONAL · RULE-BASED</span><h3>Look for an improvement</h3></div><button className="quiet-button" onClick={() => void findOptimization()} disabled={proposalBusy || busy || isRunning || !code.trim()}>{proposalBusy ? 'CHECKING…' : 'SUGGEST'}</button></div>
+                <p>For supported patterns, Axioma can offer a candidate. It never replaces your code automatically.</p>
+                {proposalMessage && <div className={`proposal-message${proposal ? ' proposal-found' : ''}`} role="status">{proposalMessage}</div>}
+                {proposal && <div className="proposal-result"><h4>{proposal.title}</h4><p>{proposal.summary}</p><details><summary>VIEW CANDIDATE AND LIMITATIONS</summary><pre>{proposal.candidate_code}</pre><ul>{proposal.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul></details><button className="run-button proposal-verify" onClick={() => void runAnalysis(proposal)} disabled={busy || isRunning}>{busy ? 'SUBMITTING…' : 'VERIFY WITH TESTS + BENCHMARKS'}</button><small>Runs the original and candidate against the same problem checks. Your editor code stays unchanged.</small></div>}
+              </section>
             </section>
-
             <section className="results-panel" aria-label="Analysis results" aria-live="polite">
-              <div className="panel-heading"><span>03</span><h2>Evidence</h2><span className="panel-meta">{report ? 'RESULT' : 'LIVE STATUS'}</span></div>
+              <div className="panel-heading"><span>03</span><h2>Analysis</h2><span className="panel-meta">{report ? 'RESULT' : 'LIVE STATUS'}</span></div>
               <JobStatusView job={job} />
               {report ? <>
-                <div className="summary-strip"><div><b>{report.tests.total}</b><span>CHECKS</span></div><div className="pass-value"><b>{report.tests.passed}</b><span>PASSED</span></div><div className="fail-value"><b>{report.tests.failed}</b><span>FAILED</span></div><div className="skip-value"><b>{report.tests.skipped}</b><span>SKIPPED</span></div></div>
-                <div className="result-tabs" role="tablist" aria-label="Report sections"><button className={activeTab === 'evidence' ? 'active' : ''} role="tab" aria-selected={activeTab === 'evidence'} onClick={() => setActiveTab('evidence')}>CLAIMS <span>{report.claims.length}</span></button><button className={activeTab === 'checks' ? 'active' : ''} role="tab" aria-selected={activeTab === 'checks'} onClick={() => setActiveTab('checks')}>METHODS <span>{report.complexity ? 1 : 0}</span></button></div>
-                <div className="result-content" role="tabpanel">{activeTab === 'evidence' ? <Claims claims={report.claims} /> : <Complexity result={report.complexity} />}</div>
-                {report.verification_gates.length > 0 && <GateList gates={report.verification_gates} />}
-                <div className="report-foot">RESULTS REFLECT THIS RUN'S CONFIGURED CHECKS</div>
+                <div className="report-results">
+                  <div className="summary-strip"><div><b>{report.tests.total}</b><span>CHECKS</span></div><div className="pass-value"><b>{report.tests.passed}</b><span>PASSED</span></div><div className="fail-value"><b>{report.tests.failed}</b><span>FAILED</span></div><div className="skip-value"><b>{report.tests.skipped}</b><span>SKIPPED</span></div></div>
+                  <section className="report-section complexity-section" aria-labelledby="complexity-heading">
+                    <div className="report-section-heading"><h3 id="complexity-heading">Time complexity</h3><span>ESTIMATE</span></div>
+                    <Complexity result={report.complexity} />
+                  </section>
+                  <section className="report-section" aria-labelledby="claims-heading">
+                    <div className="report-section-heading"><h3 id="claims-heading">Evidence</h3><span>{report.claims.length} {report.claims.length === 1 ? 'CLAIM' : 'CLAIMS'}</span></div>
+                    <Claims claims={report.claims} />
+                  </section>
+                  {report.verification_gates.length > 0 && <GateList gates={report.verification_gates} />}
+                  <div className="report-foot">RESULTS REFLECT THIS RUN'S CONFIGURED CHECKS</div>
+                </div>
               </> : <EmptyResults job={job} />}
             </section>
           </div>
@@ -586,8 +488,15 @@ function OptimizationReview({ details }: { details: OptimizationReviewDetails })
 }
 
 function Complexity({ result }: { result: AnalysisReport['complexity'] }) {
-  if (!result) return <div className="empty-claims">No complexity estimate was produced for this run.</div>
-  return <article className="complexity-card"><div className="complexity-head"><div><span className="field-label">ESTIMATE</span><h3>{result.estimate}</h3></div><span className={`confidence confidence-${result.confidence}`}>{result.confidence} confidence</span></div><div className="method-line"><span>METHOD</span><code>{result.method}</code></div>{result.methods_disagree && <div className="disagree-note"><b>METHODS DISAGREE</b><p>The available estimates did not agree. Review the measurements before relying on this class.</p></div>}{result.explanation && <p className="complexity-explanation">{result.explanation}</p>}<details><summary>MEASUREMENT DETAILS</summary><pre>{JSON.stringify(result.details, null, 2)}</pre></details></article>
+  if (!result) return <div className="complexity-unavailable">Axioma could not produce a complexity estimate for this solution.</div>
+  const analysis = result.details.code_analysis as {
+    signals?: { kind: string; label: string; line?: number | null }[]
+    loop_count?: number
+    maximum_loop_nesting?: number
+    scope?: string
+    limitations?: string[]
+  } | undefined
+  return <article className="complexity-card"><div className="complexity-head"><div><span className="field-label">ESTIMATE</span><h3>{result.estimate}</h3></div><span className={`confidence confidence-${result.confidence}`}>{result.confidence} confidence</span></div><div className="method-line"><span>METHOD</span><code>{result.method}</code></div>{result.methods_disagree && <div className="disagree-note"><b>METHODS DISAGREE</b><p>The available estimates did not agree. Review the measurements before relying on this class.</p></div>}{result.explanation && <p className="complexity-explanation">{result.explanation}</p>}{analysis && <section className="code-analysis-signals" aria-label="Detected code patterns"><div className="signals-heading"><b>WHAT AXIOMA FOUND</b><span>{analysis.loop_count ?? 0} loops · max nesting {analysis.maximum_loop_nesting ?? 0}</span></div>{analysis.signals?.length ? <ul>{analysis.signals.map((signal, index) => <li key={`${signal.kind}-${signal.line ?? 'na'}-${index}`}><span>{signal.label}</span>{signal.line ? <code>LINE {signal.line}</code> : null}</li>)}</ul> : <p>No listed patterns were detected in the selected function.</p>}{analysis.scope && <small>{analysis.scope}.</small>}{analysis.limitations?.length ? <details><summary>LIMITS OF THIS ANALYSIS</summary><ul>{analysis.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul></details> : null}</section>}<details><summary>MEASUREMENT DETAILS</summary><pre>{JSON.stringify(result.details, null, 2)}</pre></details></article>
 }
 
 function GateList({ gates }: { gates: AnalysisReport['verification_gates'] }) {

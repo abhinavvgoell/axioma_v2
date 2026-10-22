@@ -200,6 +200,20 @@ class ProblemSpec(BaseModel):
         return self
 
 
+class ProblemCatalogMatchRequest(BaseModel):
+    statement: str = Field(min_length=1, max_length=20000)
+
+
+class ProblemCatalogMatchResponse(BaseModel):
+    recognized: bool
+    slug: str | None = None
+    title: str | None = None
+    topics: list[str] = Field(default_factory=list)
+    test_count: int = Field(default=0, ge=0)
+    test_source: str | None = None
+    problem: ProblemSpec | None = None
+
+
 def exhaustive_argument_domains(problem: ProblemSpec, max_cases: int = 256) -> list[range]:
     """Validate and return bounded domains for exhaustive scalar positional checks."""
     if problem.interface.kind != "function" or not isinstance(problem.samples[0], FunctionSample):

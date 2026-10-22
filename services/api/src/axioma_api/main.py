@@ -16,6 +16,8 @@ from axioma_api.contracts import (
     Confidence,
     ProblemInputGenerationRequest,
     ProblemInputGenerationResult,
+    ProblemCatalogMatchRequest,
+    ProblemCatalogMatchResponse,
     ComplexityBenchmarkGenerationRequest,
     ComplexityBenchmarkGenerationResult,
     OptimizationProposalRequest,
@@ -47,6 +49,7 @@ from axioma_api.problem_generation import (
     generate_complexity_benchmarks,
     generate_problem_inputs,
 )
+from axioma_api.problem_catalog import match_problem_statement
 from axioma_api.optimization_proposals import propose_optimizations
 
 
@@ -56,6 +59,11 @@ app = FastAPI(title="Axioma API", version="0.1.0")
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/v1/problem-specs/match", response_model=ProblemCatalogMatchResponse)
+def match_problem(payload: ProblemCatalogMatchRequest) -> ProblemCatalogMatchResponse:
+    return match_problem_statement(payload.statement)
 
 
 @app.post("/v1/problem-specs/validate", response_model=ProblemSpecValidation)

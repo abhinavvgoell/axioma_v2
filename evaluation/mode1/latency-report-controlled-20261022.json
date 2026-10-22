@@ -1,0 +1,43 @@
+{
+  "by_language": {
+    "python": {
+      "end_to_end": {
+        "max_ms": 2818.525,
+        "min_ms": 2612.8619999999996,
+        "n": 20,
+        "p50_ms": 2677.3199999999997,
+        "p95_ms": 2720.67
+      },
+      "last_worker_lifecycle": {
+        "max_ms": 2698.537,
+        "min_ms": 2548.091,
+        "n": 20,
+        "p50_ms": 2609.121,
+        "p95_ms": 2694.4300000000003
+      },
+      "queue_to_first_start": {
+        "max_ms": 119.988,
+        "min_ms": 8.024999999999999,
+        "n": 20,
+        "p50_ms": 40.724000000000004,
+        "p95_ms": 116.839
+      }
+    }
+  },
+  "completed_jobs_excluded_for_missing_or_invalid_timing": 0,
+  "completed_jobs_with_valid_timing": 20,
+  "evaluator_version": "0.1.0",
+  "job_status_counts": {
+    "completed": 20
+  },
+  "jobs_seen": 20,
+  "limitations": [
+    "Only completed jobs with submitted, running, and terminal status events are included in latency distributions.",
+    "End-to-end latency uses persisted wall-clock event timestamps and includes queueing and retries.",
+    "Last worker lifecycle is the latest running-to-terminal span; it may include worker recovery time and is not CPU time.",
+    "Percentiles are descriptive. Small samples, host load, and wall-clock adjustments can make p95 unstable.",
+    "This summarizes observed local jobs; it is not a controlled load test or a public service SLO measurement."
+  ],
+  "percentile_method": "nearest-rank empirical percentile (ceil(p*n), one-based)",
+  "source_sha256": "ef5cc2e8c7a01db1cca74ecd1cce7f264514f33ca5c6f331b0b6debaccd4cb48"
+}

@@ -21,6 +21,35 @@ def integer_array_problem(entrypoint: str = "solve") -> ProblemSpec:
     )
 
 
+def two_sum_problem(entrypoint: str = "Solution.twoSum") -> ProblemSpec:
+    return ProblemSpec.model_validate(
+        {
+            "statement": (
+                "You are given an array of integers nums and an integer target, "
+                "return indices of the two numbers such that they add up to target."
+            ),
+            "interface": {"kind": "function", "entrypoint": entrypoint},
+            "constraints": [{"path": "args[0].length", "minimum": 2, "maximum": 10000}],
+            "samples": [
+                {
+                    "kind": "function",
+                    "name": "example",
+                    "args": [[2, 7, 11, 15], 9],
+                    "kwargs": {},
+                    "expected": [0, 1],
+                },
+                {
+                    "kind": "function",
+                    "name": "duplicate_values",
+                    "args": [[3, 3], 6],
+                    "kwargs": {},
+                    "expected": [0, 1],
+                },
+            ],
+        }
+    )
+
+
 def test_python_accumulation_loop_returns_a_static_candidate() -> None:
     source = "def solve(values):\n    total = 0\n    for value in values:\n        total += value\n    return total\n"
 
@@ -52,6 +81,51 @@ def test_java_accumulation_loop_returns_a_static_candidate() -> None:
     assert len(result.proposals) == 1
     assert "java.util.Arrays.stream(values).sum()" in result.proposals[0].candidate_code
     assert result.proposals[0].evidence_type == "static"
+
+
+def test_python_two_sum_pairwise_search_proposes_order_preserving_hash_map() -> None:
+    source = """class Solution:
+    def twoSum(self, nums, target):
+        for i in range(len(nums)):
+            for j in range(i + 1, len(nums)):
+                if nums[i] + nums[j] == target:
+                    return [i, j]
+        return []
+"""
+
+    result = propose_optimizations("python", source, two_sum_problem())
+
+    assert len(result.proposals) == 1
+    proposal = result.proposals[0]
+    assert proposal.rule_id == "two_sum_pairwise_to_hash_map_v1"
+    assert proposal.evidence_type == "static"
+    assert "expected O(n)" in proposal.summary
+    assert "seen = {}" in proposal.candidate_code
+    assert "for i in range(len(nums) - 1, -1, -1):" in proposal.candidate_code
+
+    namespace: dict[str, object] = {}
+    exec(proposal.candidate_code, namespace)
+    candidate = namespace["Solution"]().twoSum
+    assert candidate([2, 7, 11, 15], 9) == [0, 1]
+    assert candidate([3, 3], 6) == [0, 1]
+    assert candidate([1, 5, 4, 4], 9) == [1, 2]
+    assert candidate([1, 2, 3], 7) == []
+
+
+def test_two_sum_rule_requires_problem_match_and_exact_nested_pattern() -> None:
+    source = """def solve(nums, target):
+    seen = {}
+    for i, value in enumerate(nums):
+        if target - value in seen:
+            return [seen[target - value], i]
+        seen[value] = i
+    return []
+"""
+
+    assert not propose_optimizations("python", source, integer_array_problem()).proposals
+    unsupported = propose_optimizations("python", source, two_sum_problem("solve"))
+    assert unsupported.proposals == []
+    assert "No supported nested pair-search pattern" in unsupported.message
 
 
 def test_unrecognized_or_non_integer_patterns_do_not_get_a_candidate() -> None:

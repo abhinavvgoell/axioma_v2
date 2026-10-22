@@ -47,6 +47,65 @@ def test_score_reports_exact_within_one_method_and_confidence_metrics(tmp_path) 
     assert "Without separate partitions" in report["confidence_note"]
 
 
+def test_unknown_counts_as_abstention_and_reports_coverage_and_selective_accuracy() -> None:
+    records = [
+        {
+            "id": "correct",
+            "method": "static",
+            "expected": "O(n)",
+            "predicted": "O(n)",
+            "confidence": "low",
+            "partition": "evaluation",
+        },
+        {
+            "id": "abstained",
+            "method": "static",
+            "expected": "O(n^2)",
+            "predicted": "unknown",
+            "confidence": "low",
+            "partition": "evaluation",
+        },
+        {
+            "id": "wrong",
+            "method": "static",
+            "expected": "O(n^2)",
+            "predicted": "O(n)",
+            "confidence": "low",
+            "partition": "evaluation",
+        },
+    ]
+
+    report = _score(records)
+
+    assert report["answered"] == 2
+    assert report["abstentions"] == 1
+    assert report["coverage"] == pytest.approx(2 / 3)
+    assert report["exact_accuracy"] == pytest.approx(1 / 3)
+    assert report["selective_exact_accuracy"] == 0.5
+    assert report["selective_within_one_class_accuracy"] == 0.5
+    assert report["by_method"]["static"]["abstentions"] == 1
+    assert report["by_confidence"]["low"]["n"] == 2
+    assert report["confusion_matrix"]["O(n^2)"]["unknown"] == 1
+
+
+def test_selective_accuracy_is_unavailable_when_every_record_abstains() -> None:
+    report = _score(
+        [
+            {
+                "id": "abstained",
+                "method": "static",
+                "expected": "O(n)",
+                "predicted": "unknown",
+                "partition": "evaluation",
+            }
+        ]
+    )
+
+    assert report["coverage"] == 0
+    assert report["selective_exact_accuracy"] is None
+    assert report["selective_exact_accuracy_95_ci"] is None
+
+
 def test_held_out_confidence_mapping_uses_separate_solution_partitions() -> None:
     records = [
         {

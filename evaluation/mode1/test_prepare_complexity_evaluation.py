@@ -102,6 +102,40 @@ def test_predictions_are_sorted_deterministically(tmp_path) -> None:
     ]
 
 
+def test_unknown_prediction_is_preserved_as_an_abstention(tmp_path) -> None:
+    gold_path = tmp_path / "gold.jsonl"
+    prediction_path = tmp_path / "predictions.jsonl"
+    _write_jsonl(
+        gold_path,
+        [
+            {
+                "id": "case-1",
+                "expected": "O(n)",
+                "partition": "evaluation",
+                "reviewer": "reviewer-1",
+                "rationale": "One pass over the input.",
+                "source_sha256": "a" * 64,
+            }
+        ],
+    )
+    gold = load_gold(gold_path)
+    _write_jsonl(
+        prediction_path,
+        [
+            {
+                "id": "case-1",
+                "method": "static",
+                "predicted": "unknown",
+                "report_sha256": "b" * 64,
+            }
+        ],
+    )
+
+    joined = combine(gold, load_predictions(prediction_path, gold), "c" * 64, "d" * 64)
+
+    assert joined[0]["predicted"] == "unknown"
+
+
 @pytest.mark.parametrize(
     ("mutate", "message"),
     [

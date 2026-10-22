@@ -1,0 +1,204 @@
+{
+  "axioma_reports": [
+    {
+      "checks": [
+        {
+          "details": {},
+          "name": "empty",
+          "outcome": "passed"
+        },
+        {
+          "details": {},
+          "name": "positive",
+          "outcome": "passed"
+        },
+        {
+          "details": {},
+          "name": "mixed-sign",
+          "outcome": "passed"
+        },
+        {
+          "details": {},
+          "name": "large-integers",
+          "outcome": "passed"
+        },
+        {
+          "details": {},
+          "name": "zero",
+          "outcome": "passed"
+        }
+      ],
+      "id": "sum-control-01",
+      "return_code": 0,
+      "stderr": ""
+    },
+    {
+      "checks": [
+        {
+          "details": {},
+          "name": "empty",
+          "outcome": "passed"
+        },
+        {
+          "details": {
+            "actual": 0,
+            "expected": 6
+          },
+          "name": "positive",
+          "outcome": "failed"
+        },
+        {
+          "details": {
+            "actual": 0,
+            "expected": -3
+          },
+          "name": "mixed-sign",
+          "outcome": "failed"
+        },
+        {
+          "details": {
+            "actual": 0,
+            "expected": 1000000000005
+          },
+          "name": "large-integers",
+          "outcome": "failed"
+        },
+        {
+          "details": {},
+          "name": "zero",
+          "outcome": "passed"
+        }
+      ],
+      "id": "sum-mutant-constant-zero-01",
+      "return_code": 0,
+      "stderr": ""
+    },
+    {
+      "checks": [
+        {
+          "details": {},
+          "name": "empty",
+          "outcome": "passed"
+        },
+        {
+          "details": {
+            "actual": 3,
+            "expected": 6
+          },
+          "name": "positive",
+          "outcome": "failed"
+        },
+        {
+          "details": {
+            "actual": -5,
+            "expected": -3
+          },
+          "name": "mixed-sign",
+          "outcome": "failed"
+        },
+        {
+          "details": {
+            "actual": 1000000000007,
+            "expected": 1000000000005
+          },
+          "name": "large-integers",
+          "outcome": "failed"
+        },
+        {
+          "details": {},
+          "name": "zero",
+          "outcome": "passed"
+        }
+      ],
+      "id": "sum-mutant-skips-last-01",
+      "return_code": 0,
+      "stderr": ""
+    },
+    {
+      "checks": [
+        {
+          "details": {},
+          "name": "empty",
+          "outcome": "passed"
+        },
+        {
+          "details": {
+            "actual": -6,
+            "expected": 6
+          },
+          "name": "positive",
+          "outcome": "failed"
+        },
+        {
+          "details": {
+            "actual": 3,
+            "expected": -3
+          },
+          "name": "mixed-sign",
+          "outcome": "failed"
+        },
+        {
+          "details": {
+            "actual": -1000000000005,
+            "expected": 1000000000005
+          },
+          "name": "large-integers",
+          "outcome": "failed"
+        },
+        {
+          "details": {},
+          "name": "zero",
+          "outcome": "passed"
+        }
+      ],
+      "id": "sum-mutant-subtracts-01",
+      "return_code": 0,
+      "stderr": ""
+    }
+  ],
+  "labeling_basis": "Source-level review and stated integer-sum semantics, recorded before Axioma checks; labels were not inferred from pass/fail outcomes.",
+  "preselection_file": "detection-preselection-2026-10-22.json",
+  "preselection_sha256": "908cd6918fc752865b8adbcf143b1a1068536587e7c8d48af30cd6fcfdd3701c",
+  "runtime": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.3 (tags/v3.14.3:323c59a, Feb  3 2026, 16:04:56) [MSC v.1944 64 bit (AMD64)]"
+  },
+  "solutions": [
+    {
+      "failed": 0,
+      "id": "sum-control-01",
+      "label": "correct",
+      "label_rationale": "Initialize at zero and add each element exactly once; this matches the stated sum for empty and non-empty integer arrays.",
+      "passed": 5,
+      "skipped": 0,
+      "source_sha256": "15756a2c174b3ef5c9f3a734e1f5fb72a5bf31e1f6cece6ec044bde5a46d5f38"
+    },
+    {
+      "failed": 3,
+      "id": "sum-mutant-constant-zero-01",
+      "label": "mutant",
+      "label_rationale": "Always returns zero, so the positive, mixed-sign, and large-integer examples contradict the required sum.",
+      "passed": 2,
+      "skipped": 0,
+      "source_sha256": "3c537f38a219420f7aa1478df79ad61776b5a111f112a8cd16729ba16dc11fe8"
+    },
+    {
+      "failed": 3,
+      "id": "sum-mutant-skips-last-01",
+      "label": "mutant",
+      "label_rationale": "Iterates over values[:-1] and omits the last array element for non-empty arrays with a non-zero final element.",
+      "passed": 2,
+      "skipped": 0,
+      "source_sha256": "6a4bcc962036f7c49fbdc4db2251c2a5f288d50f24c3bdc741310dbb9a184202"
+    },
+    {
+      "failed": 3,
+      "id": "sum-mutant-subtracts-01",
+      "label": "mutant",
+      "label_rationale": "Subtracts each value instead of adding it, producing the negated sum on non-zero totals.",
+      "passed": 2,
+      "skipped": 0,
+      "source_sha256": "c54fbd754a7d86169cdaeb34e76321d3f9cd4cd565e0f8c7d366232b923c5586"
+    }
+  ]
+}

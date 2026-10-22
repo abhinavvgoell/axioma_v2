@@ -1,4 +1,4 @@
-import type { AnalysisReport, Job, Language, OptimizationProposalResponse } from './types'
+import type { AnalysisReport, Job, Language, OptimizationProposalResponse, ProblemMatch } from './types'
 
 export class ApiError extends Error {
   readonly status: number
@@ -54,5 +54,12 @@ export function findOptimizationProposals(input: {
   return request<OptimizationProposalResponse>('/v1/optimization-proposals', {
     method: 'POST',
     body: JSON.stringify(input),
+  })
+}
+
+export function matchProblem(statement: string): Promise<ProblemMatch> {
+  return request<ProblemMatch>('/v1/problem-specs/match', {
+    method: 'POST',
+    body: JSON.stringify({ statement }),
   })
 }

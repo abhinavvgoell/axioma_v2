@@ -1,0 +1,20 @@
+{
+  "candidate_id": "python-two-sum-nested-loop-to-hash-map-20261022-01",
+  "selected_before_measurement": true,
+  "selection_rule": "Use the existing narrowly matched Two Sum proposal on the standard lexicographic nested-loop implementation; choose sizes to force the original scan to find the pair near the end, before collecting counts.",
+  "problem_statement": "Given an integer array nums and an integer target, return the indices of two distinct numbers whose sum equals target, or an empty array if there is no pair.",
+  "entrypoint": "solve",
+  "original_source": "def solve(nums, target):\n    for i in range(len(nums)):\n        for j in range(i + 1, len(nums)):\n            if nums[i] + nums[j] == target:\n                return [i, j]\n    return []\n",
+  "candidate_source": "def solve(nums, target):\n    seen = {}\n    answer = None\n    for i in range(len(nums) - 1, -1, -1):\n        complement = target - nums[i]\n        if complement in seen:\n            answer = [i, seen[complement]]\n        seen[nums[i]] = i\n    return answer if answer is not None else []\n",
+  "equivalence_cases": [
+    {"name": "standard-pair", "args": [[2, 7, 11, 15], 9], "kwargs": {}, "expected": [0, 1]},
+    {"name": "duplicate-values", "args": [[3, 3], 6], "kwargs": {}, "expected": [0, 1]},
+    {"name": "negative-values", "args": [[-3, 4, 3, 90], 0], "kwargs": {}, "expected": [0, 2]},
+    {"name": "no-pair", "args": [[1, 2, 3], 100], "kwargs": {}, "expected": []},
+    {"name": "lexicographically-first-pair", "args": [[1, 1, 2, 2], 3], "kwargs": {}, "expected": [0, 2]}
+  ],
+  "benchmark_sizes": [40, 80, 160, 320],
+  "benchmark_input_rule": "For each size n, pass list(range(n)) and target 2*n-3, forcing the first valid pair to be the last two indices.",
+  "evaluation_methods": ["executed_source_line_events", "executed_cpython_opcode_events"],
+  "claim_limit": "Operation-count comparison on one preselected Two Sum input family; not wall-clock speedup, asymptotic proof, or general optimizer accuracy."
+}

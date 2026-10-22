@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 CLASSES = ("O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n^2)", "O(n^3)", "O(2^n)")
+UNKNOWN = "unknown"
 CONFIDENCE = {"high", "medium", "low"}
 PARTITIONS = {"calibration", "evaluation"}
 
@@ -54,11 +55,14 @@ def load_records(path: Path) -> list[dict[str, Any]]:
             for field in ("id", "method"):
                 if not isinstance(record[field], str) or not record[field].strip():
                     raise ValueError(f"line {line_number}: {field} must be a non-empty string")
-            for field in ("expected", "predicted"):
-                if record[field] not in CLASSES:
-                    raise ValueError(
-                        f"line {line_number}: {field} must be one of {', '.join(CLASSES)}"
-                    )
+            if record["expected"] not in CLASSES:
+                raise ValueError(
+                    f"line {line_number}: expected must be one of {', '.join(CLASSES)}"
+                )
+            if record["predicted"] not in (*CLASSES, UNKNOWN):
+                raise ValueError(
+                    f"line {line_number}: predicted must be one of {', '.join((*CLASSES, UNKNOWN))}"
+                )
             confidence = record.get("confidence")
             if confidence is not None and (
                 not isinstance(confidence, str) or confidence not in CONFIDENCE
@@ -93,39 +97,74 @@ def _score(records: list[dict[str, Any]]) -> dict[str, Any]:
     minimum_solutions = 50
     exact = 0
     within_one = 0
+    answered_records = [record for record in records if record["predicted"] != UNKNOWN]
     confusion: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     by_method: dict[str, list[dict[str, Any]]] = defaultdict(list)
     by_confidence: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for record in records:
-        distance = abs(CLASSES.index(record["expected"]) - CLASSES.index(record["predicted"]))
+        answered = record["predicted"] != UNKNOWN
+        distance = (
+            abs(CLASSES.index(record["expected"]) - CLASSES.index(record["predicted"]))
+            if answered
+            else None
+        )
         exact += distance == 0
-        within_one += distance <= 1
+        within_one += distance is not None and distance <= 1
         confusion[record["expected"]][record["predicted"]] += 1
         by_method[record["method"]].append(record)
-        if record.get("confidence") is not None:
+        if answered and record.get("confidence") is not None:
             by_confidence[record["confidence"]].append(record)
 
     def summary(items: list[dict[str, Any]]) -> dict[str, Any]:
         n = len(items)
+        answered = [item for item in items if item["predicted"] != UNKNOWN]
         exact = sum(item["expected"] == item["predicted"] for item in items)
+        selective_exact = sum(item["expected"] == item["predicted"] for item in answered)
         adjacent = sum(
-            abs(CLASSES.index(item["expected"]) - CLASSES.index(item["predicted"])) <= 1
+            item["predicted"] != UNKNOWN
+            and abs(CLASSES.index(item["expected"]) - CLASSES.index(item["predicted"])) <= 1
             for item in items
+        )
+        selective_adjacent = sum(
+            abs(CLASSES.index(item["expected"]) - CLASSES.index(item["predicted"])) <= 1
+            for item in answered
         )
         return {
             "n": n,
+            "answered": len(answered),
+            "abstentions": n - len(answered),
+            "coverage": len(answered) / n,
+            "coverage_95_ci": _wilson_interval(len(answered), n),
             "exact_accuracy": exact / n,
             "exact_accuracy_95_ci": _wilson_interval(exact, n),
             "within_one_class_accuracy": adjacent / n,
             "within_one_class_accuracy_95_ci": _wilson_interval(adjacent, n),
+            "selective_exact_accuracy": selective_exact / len(answered) if answered else None,
+            "selective_exact_accuracy_95_ci": _wilson_interval(selective_exact, len(answered)),
+            "selective_within_one_class_accuracy": (
+                selective_adjacent / len(answered) if answered else None
+            ),
+            "selective_within_one_class_accuracy_95_ci": _wilson_interval(
+                selective_adjacent, len(answered)
+            ),
         }
 
     matrix = {
-        expected: {predicted: confusion[expected][predicted] for predicted in CLASSES}
+        expected: {
+            predicted: confusion[expected][predicted] for predicted in (*CLASSES, UNKNOWN)
+        }
         for expected in CLASSES
     }
-    calibration_records = [item for item in records if item["partition"] == "calibration"]
-    evaluation_records = [item for item in records if item["partition"] == "evaluation"]
+    calibration_records = [
+        item
+        for item in records
+        if item["partition"] == "calibration" and item["predicted"] != UNKNOWN
+    ]
+    evaluation_records = [
+        item
+        for item in records
+        if item["partition"] == "evaluation" and item["predicted"] != UNKNOWN
+    ]
     calibration_by_method_confidence: dict[
         tuple[str, str], list[dict[str, Any]]
     ] = defaultdict(list)
@@ -230,6 +269,36 @@ def _score(records: list[dict[str, Any]]) -> dict[str, Any]:
         "exact_accuracy_95_ci": _wilson_interval(exact, len(records)),
         "within_one_class_accuracy": within_one / len(records),
         "within_one_class_accuracy_95_ci": _wilson_interval(within_one, len(records)),
+        "answered": len(answered_records),
+        "abstentions": len(records) - len(answered_records),
+        "coverage": len(answered_records) / len(records),
+        "coverage_95_ci": _wilson_interval(len(answered_records), len(records)),
+        "selective_exact_accuracy": (
+            sum(item["expected"] == item["predicted"] for item in answered_records)
+            / len(answered_records)
+            if answered_records
+            else None
+        ),
+        "selective_exact_accuracy_95_ci": _wilson_interval(
+            sum(item["expected"] == item["predicted"] for item in answered_records),
+            len(answered_records),
+        ),
+        "selective_within_one_class_accuracy": (
+            sum(
+                abs(CLASSES.index(item["expected"]) - CLASSES.index(item["predicted"])) <= 1
+                for item in answered_records
+            )
+            / len(answered_records)
+            if answered_records
+            else None
+        ),
+        "selective_within_one_class_accuracy_95_ci": _wilson_interval(
+            sum(
+                abs(CLASSES.index(item["expected"]) - CLASSES.index(item["predicted"])) <= 1
+                for item in answered_records
+            ),
+            len(answered_records),
+        ),
         "by_method": {method: summary(items) for method, items in sorted(by_method.items())},
         "by_partition": {
             partition: summary([item for item in records if item["partition"] == partition])
@@ -259,7 +328,7 @@ def main() -> int:
     try:
         report = _score(load_records(args.records))
         report["input_sha256"] = hashlib.sha256(args.records.read_bytes()).hexdigest()
-        report["evaluator_version"] = "0.2.0"
+        report["evaluator_version"] = "0.3.0"
     except (OSError, ValueError) as exc:
         parser.error(str(exc))
     output = json.dumps(report, indent=2, sort_keys=True) + "\n"

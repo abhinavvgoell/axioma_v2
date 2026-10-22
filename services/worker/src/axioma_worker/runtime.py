@@ -784,6 +784,7 @@ def run_claimed_job(
                             + str(complexity_report["skipped_reason"])[:300]
                         ),
                         details={
+                            **complexity.details,
                             "measurement_method": "executed_source_line_events",
                             "points": [],
                             "skipped_reason": str(complexity_report["skipped_reason"])[:300],

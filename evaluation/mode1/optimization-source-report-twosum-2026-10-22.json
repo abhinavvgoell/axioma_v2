@@ -1,0 +1,121 @@
+{
+  "candidate_id": "python-two-sum-nested-loop-to-hash-map-20261022-01",
+  "candidate_source_sha256": "0576bcefa01f4b304458d1a4cc54f3216a9623f7b83894b445e478a95bfac363",
+  "complexity_report": {
+    "measurements": [
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 1638,
+        "opcode_events": 9914,
+        "peak_traced_bytes": 133649,
+        "size": 40
+      },
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 6478,
+        "opcode_events": 39034,
+        "peak_traced_bytes": 133505,
+        "size": 80
+      },
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 25758,
+        "opcode_events": 154874,
+        "peak_traced_bytes": 133505,
+        "size": 160
+      },
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 102718,
+        "opcode_events": 616954,
+        "peak_traced_bytes": 133601,
+        "size": 320
+      }
+    ],
+    "optimized_measurements": [
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 1638,
+        "opcode_events": 9914,
+        "optimized_line_events": 165,
+        "optimized_opcode_events": 627,
+        "optimized_peak_traced_bytes": 135145,
+        "peak_traced_bytes": 133649,
+        "size": 40
+      },
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 6478,
+        "opcode_events": 39034,
+        "optimized_line_events": 325,
+        "optimized_opcode_events": 1227,
+        "optimized_peak_traced_bytes": 136777,
+        "peak_traced_bytes": 133505,
+        "size": 80
+      },
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 25758,
+        "opcode_events": 154874,
+        "optimized_line_events": 645,
+        "optimized_opcode_events": 2427,
+        "optimized_peak_traced_bytes": 140297,
+        "peak_traced_bytes": 133505,
+        "size": 160
+      },
+      {
+        "input_strategy": "user_supplied",
+        "line_events": 102718,
+        "opcode_events": 616954,
+        "optimized_line_events": 1285,
+        "optimized_opcode_events": 4827,
+        "optimized_peak_traced_bytes": 149385,
+        "peak_traced_bytes": 133601,
+        "size": 320
+      }
+    ],
+    "skipped_reason": null
+  },
+  "harness": {
+    "return_code": 0,
+    "stderr": ""
+  },
+  "optimization_report": {
+    "checked": 5,
+    "checks": [
+      {
+        "details": {},
+        "name": "optimization/standard-pair",
+        "outcome": "passed"
+      },
+      {
+        "details": {},
+        "name": "optimization/duplicate-values",
+        "outcome": "passed"
+      },
+      {
+        "details": {},
+        "name": "optimization/negative-values",
+        "outcome": "passed"
+      },
+      {
+        "details": {},
+        "name": "optimization/no-pair",
+        "outcome": "passed"
+      },
+      {
+        "details": {},
+        "name": "optimization/lexicographically-first-pair",
+        "outcome": "passed"
+      }
+    ],
+    "requested": 5
+  },
+  "original_source_sha256": "f2201af20b04f0d35c0c194ba9008ab37a2a53785c27ccfe9dd7ca58186ef349",
+  "preselection_file": "optimization-preselection-twosum-2026-10-22.json",
+  "preselection_sha256": "92d02cd174ee80d111faf0d6728944e940f2bac381d42d4d0e15202423304a8c",
+  "runtime": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.3 (tags/v3.14.3:323c59a, Feb  3 2026, 16:04:56) [MSC v.1944 64 bit (AMD64)]"
+  }
+}

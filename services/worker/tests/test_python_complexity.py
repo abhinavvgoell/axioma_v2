@@ -30,6 +30,145 @@ def test_complexity_estimator_accounts_for_sort_and_recursion_limits() -> None:
     assert recursive_case.estimate == "unknown (recursion detected)"
 
 
+def test_complexity_estimator_counts_iterable_consuming_builtins() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(values):\n    return sum(values)\n", "solve"
+    )
+
+    assert estimate.estimate == "O(n)"
+    assert "iterable-consuming built-in" in estimate.explanation
+
+
+def test_recognizes_binary_search_as_logarithmic() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(values, target):\n"
+        "    low, high = 0, len(values) - 1\n"
+        "    while low <= high:\n"
+        "        middle = (low + high) // 2\n"
+        "        if values[middle] == target: return middle\n"
+        "        if values[middle] < target: low = middle + 1\n"
+        "        else: high = middle - 1\n"
+        "    return -1\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(log n)"
+    assert estimate.confidence == "low"
+    assert any(signal["kind"] == "binary_search" for signal in estimate.details["code_analysis"]["signals"])
+
+
+def test_unrecognized_data_dependent_loop_remains_unknown() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(value):\n    while value > 0:\n        value -= 3\n", "solve"
+    )
+
+    assert estimate.estimate == "unknown (data-dependent loop bound)"
+
+
+def test_recognizes_adjacency_list_bfs_with_queue_and_visited_guard() -> None:
+    estimate = analyze_python_complexity(
+        "from collections import deque\n"
+        "def solve(graph, start):\n"
+        "    visited = {start}\n"
+        "    queue = deque([start])\n"
+        "    while queue:\n"
+        "        node = queue.popleft()\n"
+        "        for neighbor in graph[node]:\n"
+        "            if neighbor not in visited:\n"
+        "                visited.add(neighbor)\n"
+        "                queue.append(neighbor)\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(V + E)"
+    assert estimate.confidence == "low"
+    assert any(
+        signal["kind"] == "graph_bfs"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_unvisited_adjacency_queue_loop_remains_unknown() -> None:
+    estimate = analyze_python_complexity(
+        "from collections import deque\n"
+        "def solve(graph, start):\n"
+        "    queue = deque([start])\n"
+        "    while queue:\n"
+        "        node = queue.popleft()\n"
+        "        for neighbor in graph[node]:\n"
+        "            queue.append(neighbor)\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "unknown (data-dependent loop bound)"
+
+
+def test_recognizes_recursive_binary_tree_walk() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(node):\n"
+        "    if node is None: return 0\n"
+        "    return 1 + solve(node.left) + solve(node.right)\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(n)"
+    assert estimate.confidence == "low"
+    assert any(
+        signal["kind"] == "tree_recursion"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_recognizes_recursive_adjacency_list_dfs() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(graph, node, visited):\n"
+        "    for neighbor in graph[node]:\n"
+        "        if neighbor not in visited:\n"
+        "            visited.add(neighbor)\n"
+        "            solve(graph, neighbor, visited)\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(V + E)"
+    assert estimate.confidence == "low"
+    assert any(
+        signal["kind"] == "graph_dfs"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_unrecognized_recursive_recurrence_remains_unknown() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(n):\n"
+        "    if n < 2: return n\n"
+        "    return solve(n - 1) + solve(n - 2)\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "unknown (recursion detected)"
+
+
+def test_code_analysis_exposes_python_patterns_and_source_lines() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(values, target):\n"
+        "    seen = set()\n"
+        "    for value in values:\n"
+        "        if target - value in seen:\n"
+        "            return True\n"
+        "        seen.add(value)\n"
+        "    return False\n",
+        "solve",
+    )
+
+    analysis = estimate.details["code_analysis"]
+    signals = analysis["signals"]
+    assert analysis["language"] == "python"
+    assert analysis["loop_count"] == 1
+    assert any(signal["kind"] == "loop" and signal["line"] == 3 for signal in signals)
+    assert any(signal["kind"] == "membership" and signal["line"] == 4 for signal in signals)
+    assert any(signal["kind"] == "collection_operation" and signal["line"] == 6 for signal in signals)
+
+
 def test_complexity_estimator_reports_unavailable_entrypoint() -> None:
     estimate = analyze_python_complexity("def other(): pass", "solve")
 
@@ -54,6 +193,7 @@ def test_line_event_fit_compares_coarse_growth_and_keeps_raw_points() -> None:
     assert measured.methods_disagree is False
     assert measured.confidence == "low"
     assert measured.details["measurement_method"] == "executed_source_line_events"
+    assert measured.details["code_analysis"]["language"] == "python"
     assert len(measured.details["points"]) == 4
 
 
@@ -143,3 +283,17 @@ def test_peak_traced_memory_does_not_fit_when_every_observation_is_zero() -> Non
 
     assert result["state"] == "not_estimated"
     assert "No positive" in result["reason"]
+
+
+def test_peak_traced_memory_does_not_fit_flat_or_decreasing_noise() -> None:
+    points = [
+        {"size": 32, "peak_traced_bytes": 6842},
+        {"size": 64, "peak_traced_bytes": 6690},
+        {"size": 128, "peak_traced_bytes": 6530},
+        {"size": 256, "peak_traced_bytes": 6362},
+    ]
+
+    result = estimate_python_peak_memory(points)
+
+    assert result["state"] == "not_estimated"
+    assert "measurement noise" in result["reason"]

@@ -1,0 +1,18 @@
+{
+  "candidate_id": "python-sum-loop-to-builtin-20261022-01",
+  "selected_before_measurement": true,
+  "selection_rule": "Use the existing exact-pattern Python proposal that replaces integer-array accumulation with sum(); do not select based on benchmark outcome.",
+  "entrypoint": "solve",
+  "original_source": "def solve(values):\n    total = 0\n    for value in values:\n        total += value\n    return total\n",
+  "candidate_source": "def solve(values):\n    return sum(values)\n",
+  "equivalence_cases": [
+    {"name": "positive-values", "args": [[1, 2, 3]], "kwargs": {}, "expected": 6},
+    {"name": "empty-array", "args": [[]], "kwargs": {}, "expected": 0},
+    {"name": "negative-and-positive-values", "args": [[-8, 3, 2]], "kwargs": {}, "expected": -3},
+    {"name": "large-integers", "args": [[1000000000000, 7, -2]], "kwargs": {}, "expected": 1000000000005}
+  ],
+  "benchmark_sizes": [100, 200, 400, 800],
+  "benchmark_input_rule": "For each size n, pass list(range(n)) to solve.",
+  "evaluation_methods": ["executed_source_line_events", "executed_cpython_opcode_events"],
+  "claim_limit": "Operation-count comparison only; not wall-clock speedup, asymptotic proof, or general optimizer accuracy."
+}

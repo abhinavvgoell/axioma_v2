@@ -1,0 +1,30 @@
+{
+  "confusion": {
+    "correct_flagged": 0,
+    "correct_not_flagged": 1,
+    "mutants_detected": 3,
+    "mutants_not_detected": 0
+  },
+  "correct_control_false_positive_rate": 0.0,
+  "correct_control_false_positive_rate_95_ci": {
+    "lower": 0.0,
+    "upper": 0.7934506856227626
+  },
+  "evaluator_version": "0.2.0",
+  "excluded_incomplete": {},
+  "input_sha256": "de30e893e1590fa6e2b9810103c63eeb8b47245b4dce54a77cecdc157a67f919",
+  "interpretation": "A failed test marks a mutant as detected or a correct control as a false positive. Records with no failure and at least one skipped test are excluded as incomplete. These metrics describe only the labeled evaluation set.",
+  "mutant_detection_recall": 1.0,
+  "mutant_detection_recall_95_ci": {
+    "lower": 0.4385029682449546,
+    "upper": 1.0
+  },
+  "precision": 1.0,
+  "precision_95_ci": {
+    "lower": 0.4385029682449546,
+    "upper": 1.0
+  },
+  "records": 4,
+  "scored_correct_controls": 1,
+  "scored_mutants": 3
+}

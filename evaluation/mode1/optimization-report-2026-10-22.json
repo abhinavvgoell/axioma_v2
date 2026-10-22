@@ -1,0 +1,53 @@
+{
+  "candidate_records": 1,
+  "equivalence": {
+    "evaluable_candidates": 1,
+    "excluded_incomplete_candidates": 0,
+    "failed": 0,
+    "incomplete": 0,
+    "preservation_rate": 1.0,
+    "preservation_rate_95_ci": {
+      "lower": 0.20654931437723745,
+      "upper": 1.0
+    },
+    "preserved": 1
+  },
+  "evaluator_version": "0.1.0",
+  "input_sha256": "b69d43450c2133d2012c9f960f6b821253e8a5de99441d6dfddee343b0863ca4",
+  "limitations": [
+    "Evaluation records must be selected and labeled independently of the measured outcomes.",
+    "The Wilson interval treats candidate records as independent; candidates from one source solution may be correlated.",
+    "Four or more paired sizes do not remove host, JVM, or harness noise. Preserve raw reports and rerun on a controlled host.",
+    "Python line-event and opcode counts are work proxies and are never reported as wall-clock speedup."
+  ],
+  "paired_measurements": {
+    "executed_cpython_opcode_events": {
+      "eligible_candidates": 1,
+      "excluded_for_failed_or_incomplete_equivalence": 0,
+      "excluded_for_insufficient_sizes": 0,
+      "improved_at_every_size": 1,
+      "improved_at_every_size_rate": 1.0,
+      "improved_at_every_size_rate_95_ci": {
+        "lower": 0.20654931437723745,
+        "upper": 1.0
+      },
+      "interpretation": "This is a deterministic work-count reduction, not wall-clock speedup. A success requires a lower count at every one of at least four paired sizes and complete equivalence.",
+      "preserved_candidates_without_measurements": 0,
+      "work_count_method": "executed_cpython_opcode_events"
+    },
+    "executed_source_line_events": {
+      "eligible_candidates": 1,
+      "excluded_for_failed_or_incomplete_equivalence": 0,
+      "excluded_for_insufficient_sizes": 0,
+      "improved_at_every_size": 1,
+      "improved_at_every_size_rate": 1.0,
+      "improved_at_every_size_rate_95_ci": {
+        "lower": 0.20654931437723745,
+        "upper": 1.0
+      },
+      "interpretation": "This is a deterministic work-count reduction, not wall-clock speedup. A success requires a lower count at every one of at least four paired sizes and complete equivalence.",
+      "preserved_candidates_without_measurements": 0,
+      "work_count_method": "executed_source_line_events"
+    }
+  }
+}

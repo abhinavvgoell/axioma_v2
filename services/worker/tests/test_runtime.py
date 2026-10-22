@@ -345,6 +345,7 @@ def test_function_harness_persists_one_result_per_sample() -> None:
         assert complexity.method == "static_ast_loop_depth"
         assert complexity.estimate == "O(1) (loop-free target)"
         assert complexity.confidence == "low"
+        assert complexity.details["code_analysis"]["language"] == "python"
         assert complexity.details["constraint_scalability"]["state"] == "not_estimated"
 
 
@@ -722,6 +723,7 @@ def test_java_function_harness_records_sample_results() -> None:
         assert complexity.method == "static_java_token_loop_depth"
         assert complexity.estimate == "O(n^2)"
         assert complexity.confidence == "low"
+        assert complexity.details["code_analysis"]["language"] == "java"
 
 
 def test_java_reference_generated_checks_are_persisted() -> None:

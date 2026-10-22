@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from evaluate_complexity import CLASSES, CONFIDENCE, PARTITIONS
+from evaluate_complexity import CLASSES, CONFIDENCE, PARTITIONS, UNKNOWN
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
@@ -74,8 +74,10 @@ def load_predictions(path: Path, gold: dict[str, dict[str, Any]]) -> list[dict[s
             raise ValueError(f"predictions line {line_number}: duplicate id and method")
         seen.add(key)
         predicted_ids.add(solution_id)
-        if record.get("predicted") not in CLASSES:
-            raise ValueError(f"predictions line {line_number}: predicted must be a supported complexity class")
+        if record.get("predicted") not in (*CLASSES, UNKNOWN):
+            raise ValueError(
+                f"predictions line {line_number}: predicted must be a supported complexity class or unknown"
+            )
         confidence = record.get("confidence")
         if confidence is not None and (
             not isinstance(confidence, str) or confidence not in CONFIDENCE

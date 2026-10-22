@@ -64,6 +64,16 @@ export interface OptimizationProposalResponse {
   message: string
 }
 
+export interface ProblemMatch {
+  recognized: boolean
+  slug: string | null
+  title: string | null
+  topics: string[]
+  test_count: number
+  test_source: string | null
+  problem: Record<string, unknown> | null
+}
+
 export interface JobEvent {
   id: number
   job_id: string

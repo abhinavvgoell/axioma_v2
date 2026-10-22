@@ -11,6 +11,22 @@ jobs:
   python:
     name: Python API, worker, and evaluators
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_DB: axioma
+          POSTGRES_USER: axioma
+          POSTGRES_PASSWORD: axioma
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U axioma -d axioma"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      AXIOMA_TEST_DATABASE_URL: postgresql+psycopg://axioma:axioma@localhost:5432/axioma
     defaults:
       run:
         working-directory: services/api
@@ -24,6 +40,10 @@ jobs:
       - run: python -m pip install -r requirements.lock
       - run: python -m pip install -e . --no-deps
       - run: python -m pip install -e ../worker --no-deps
+      - name: Apply migrations to PostgreSQL
+        run: python -m alembic upgrade head
+        env:
+          DATABASE_URL: postgresql+psycopg://axioma:axioma@localhost:5432/axioma
       - name: Run API and worker tests
         run: python -m pytest tests ../worker/tests -q
       - name: Run Mode 1 evaluator tests
@@ -31,7 +51,6 @@ jobs:
         working-directory: .
       - name: Lint Python
         run: ruff check src tests migrations ../worker/src ../worker/tests ../../evaluation/mode1
-      - run: alembic upgrade head
 
   frontend:
     name: Frontend lint and production build
