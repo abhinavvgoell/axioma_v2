@@ -44,7 +44,26 @@ def test_catalog_recognizes_standard_permutation_statement_without_title() -> No
     assert match.test_count >= 3
 
 
-def test_catalog_does_not_match_a_shorter_title_inside_a_longer_title() -> None:
+def test_catalog_does_not_match_a_shorter_title_inside_a_longer_title(monkeypatch) -> None:
+    from axioma_api import problem_catalog
+
+    monkeypatch.setattr(
+        problem_catalog,
+        "_imported_packs",
+        lambda: (
+            {
+                "slug": "longest-valid-parentheses",
+                "title": "Longest Valid Parentheses",
+                "topics": ["string", "dynamic programming"],
+                "entrypoint": "Solution.longestValidParentheses",
+                "constraints": [],
+                "samples": [
+                    {"name": "example", "args": [")()())"], "kwargs": {}, "expected": 4}
+                ],
+            },
+        ),
+    )
+
     match = match_problem_statement("32. Longest Valid Parentheses")
 
     assert match.recognized is True
