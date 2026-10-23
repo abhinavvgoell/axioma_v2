@@ -1103,6 +1103,101 @@ def _backtracking_helper_line(
     return None
 
 
+def _permutation_backtracking_line(
+    helpers: list[ast.FunctionDef | ast.AsyncFunctionDef],
+) -> int | None:
+    """Recognize choose/recurse/unchoose generation using a shared path collection."""
+    for helper in helpers:
+        if _has_unbounded_cache(helper):
+            continue
+        calls = _recursive_call_nodes(helper)
+        if not calls:
+            continue
+        for loop in (node for node in ast.walk(helper) if isinstance(node, ast.For)):
+            calls_inside_loop = [
+                call for call in calls if any(node is call for node in ast.walk(loop))
+            ]
+            if not calls_inside_loop:
+                continue
+            collections_with_append = {
+                node.func.value.id
+                for node in ast.walk(loop)
+                if isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and isinstance(node.func.value, ast.Name)
+                and node.func.attr == "append"
+            }
+            collections_with_pop = {
+                node.func.value.id
+                for node in ast.walk(loop)
+                if isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and isinstance(node.func.value, ast.Name)
+                and node.func.attr == "pop"
+            }
+            if collections_with_append & collections_with_pop:
+                return calls_inside_loop[0].lineno
+    return None
+
+
+def _binary_recursive_branch_line(
+    helpers: list[ast.FunctionDef | ast.AsyncFunctionDef],
+) -> int | None:
+    """Recognize an uncached helper that makes two progressing recursive branches."""
+    for helper in helpers:
+        if _has_unbounded_cache(helper):
+            continue
+        calls = _recursive_call_nodes(helper)
+        progressing_calls = [
+            call for call in calls if _progresses_recursive_state(helper, call)
+        ]
+        if len(progressing_calls) >= 2:
+            return min(call.lineno for call in progressing_calls)
+    return None
+
+
+def _is_sieve_of_eratosthenes(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize the standard prime-marking loop whose stride is the current prime."""
+    for outer in (node for node in ast.walk(function) if isinstance(node, ast.While)):
+        if not any(
+            isinstance(node, ast.BinOp)
+            and isinstance(node.op, ast.Mult)
+            and isinstance(node.left, ast.Name)
+            and isinstance(node.right, ast.Name)
+            and node.left.id == node.right.id
+            for node in ast.walk(outer.test)
+        ):
+            continue
+        for inner in (node for node in ast.walk(outer) if isinstance(node, ast.For)):
+            if not (
+                isinstance(inner.iter, ast.Call)
+                and isinstance(inner.iter.func, ast.Name)
+                and inner.iter.func.id == "range"
+                and len(inner.iter.args) == 3
+                and isinstance(inner.iter.args[2], ast.Name)
+            ):
+                continue
+            stride = inner.iter.args[2].id
+            starts_at_square = isinstance(inner.iter.args[0], ast.BinOp) and isinstance(
+                inner.iter.args[0].op, ast.Mult
+            ) and all(
+                isinstance(part, ast.Name) and part.id == stride
+                for part in (inner.iter.args[0].left, inner.iter.args[0].right)
+            )
+            advances_stride = any(
+                isinstance(node, ast.AugAssign)
+                and isinstance(node.target, ast.Name)
+                and node.target.id == stride
+                and isinstance(node.op, ast.Add)
+                and isinstance(node.value, ast.Constant)
+                and node.value.value == 1
+                for node in ast.walk(outer)
+            )
+            if starts_at_square and advances_stride:
+                return outer.lineno
+    return None
+
+
 def _is_tree_recursive_walk(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
     """Recognize direct recursion over one or both child links of a tree node."""
     if any(
@@ -1380,6 +1475,9 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     local_recursive_helpers = _local_recursive_helpers(function)
     memoized_state = _memoized_helper_dimensions(function, local_recursive_helpers)
     backtracking_line = _backtracking_helper_line(local_recursive_helpers)
+    permutation_line = _permutation_backtracking_line(local_recursive_helpers)
+    binary_branch_line = _binary_recursive_branch_line(local_recursive_helpers)
+    sieve_line = _is_sieve_of_eratosthenes(function)
     data_dependent_loop_nesting = max(
         _dynamic_loop_nesting(function), 1 if iterable_consumers else 0
     )
@@ -1434,6 +1532,25 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "kind": "recursive_backtracking",
             "label": "Recursive state advancement inside a candidate loop",
             "line": backtracking_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if permutation_line is not None:
+        signals.append({
+            "kind": "permutation_backtracking",
+            "label": "Choose, recurse, and unchoose path construction",
+            "line": permutation_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if binary_branch_line is not None:
+        signals.append({
+            "kind": "binary_recursive_branching",
+            "label": "Two progressing recursive branches without memoization",
+            "line": binary_branch_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if sieve_line is not None:
+        signals.append({
+            "kind": "sieve", "label": "Prime-marking loop starts at each square", "line": sieve_line
         })
         signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
     if bisect_line is not None:
@@ -1502,6 +1619,21 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         explanation = (
             "Recognized recursive state advancement inside a candidate loop. Search paths may grow "
             "exponentially; this low-confidence pattern does not prove the branching factor or bound."
+        )
+    elif permutation_line is not None:
+        estimate = "O(n * n!) (permutation search heuristic)"
+        method = "static_ast_permutation_backtracking"
+        explanation = (
+            "Recognized path construction that chooses an option, recurses, then removes it. "
+            "Generating all permutations creates n! outputs of length n, giving O(n * n!) work. "
+            "This low-confidence pattern does not prove that every branch is reachable."
+        )
+    elif binary_branch_line is not None:
+        estimate = "O(2^n) (recursive branching heuristic)"
+        method = "static_ast_binary_recursive_branching"
+        explanation = (
+            "Recognized two progressing recursive branches without memoization. The number of "
+            "paths can double at each input position, so this is conservatively reported as O(2^n)."
         )
     elif recursive or local_recursive_helpers:
         estimate = "unknown (recursion detected)"
@@ -1594,6 +1726,13 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         explanation = (
             "Recognized a Z-array scan. Its right boundary only advances through the string, so the "
             "total matching work is linear."
+        )
+    elif sieve_line is not None:
+        method = "static_ast_sieve_of_eratosthenes"
+        estimate = "O(n log log n)"
+        explanation = (
+            "Recognized the Sieve of Eratosthenes: marking multiples begins at p² and advances by p. "
+            "Under the usual prime-marking analysis, its time complexity is O(n log log n)."
         )
     elif has_while:
         estimate = "unknown (data-dependent loop bound)"

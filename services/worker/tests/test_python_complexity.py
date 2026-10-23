@@ -330,6 +330,50 @@ def test_recognizes_heap_based_graph_traversal_and_z_algorithm() -> None:
     assert z_algorithm.estimate == "O(n)"
 
 
+def test_recognizes_permutation_and_binary_recursive_search() -> None:
+    permutations = analyze_python_complexity(
+        "def solve(nums):\n"
+        "    result, path = [], []\n"
+        "    used = [False] * len(nums)\n"
+        "    def build():\n"
+        "        if len(path) == len(nums): result.append(path[:]); return\n"
+        "        for i, value in enumerate(nums):\n"
+        "            if not used[i]:\n"
+        "                used[i] = True; path.append(value); build(); path.pop(); used[i] = False\n"
+        "    build()\n"
+        "    return result\n",
+        "solve",
+    )
+    subset_search = analyze_python_complexity(
+        "def solve(nums, target):\n"
+        "    def search(index, total):\n"
+        "        if index == len(nums): return total == target\n"
+        "        return search(index + 1, total) or search(index + 1, total + nums[index])\n"
+        "    return search(0, 0)\n",
+        "solve",
+    )
+
+    assert permutations.estimate.startswith("O(n * n!)")
+    assert subset_search.estimate.startswith("O(2^n)")
+
+
+def test_recognizes_sieve_of_eratosthenes() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(n):\n"
+        "    prime = [True] * (n + 1)\n"
+        "    p = 2\n"
+        "    while p * p <= n:\n"
+        "        if prime[p]:\n"
+        "            for multiple in range(p * p, n + 1, p): prime[multiple] = False\n"
+        "        p += 1\n"
+        "    return prime\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(n log log n)"
+    assert estimate.method == "static_ast_sieve_of_eratosthenes"
+
+
 def test_unrecognized_data_dependent_loop_remains_unknown() -> None:
     estimate = analyze_python_complexity(
         "def solve(value):\n    while value > 0:\n        value -= 3\n", "solve"

@@ -54,10 +54,14 @@ def bucket(estimate: str) -> str:
         return "linear"
     if estimate == "O(n log n)":
         return "n_log_n"
+    if estimate == "O(n log log n)":
+        return "n_log_log_n"
     if estimate == "O(n^2)":
         return "quadratic"
     if estimate.startswith("O(2^n)"):
         return "exponential"
+    if estimate.startswith("O(n * n!)"):
+        return "factorial"
     if estimate == "O(V + E)":
         return "graph"
     if estimate == "O((V + E) log V)":
