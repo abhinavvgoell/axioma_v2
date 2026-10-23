@@ -26,7 +26,7 @@ _LIMITATIONS = [
     "Benchmark the original and candidate on representative increasing input sizes; a lower source-level cost does not guarantee a speedup.",
 ]
 _TWO_SUM_LIMITATIONS = [
-    "This rule supports Python functions with the exact nested pair-search structure it recognizes.",
+    "This rule supports Python and Java functions with the exact nested pair-search structure it recognizes.",
     "The hash-map lookup has expected O(n) time and uses O(n) auxiliary space; hash operations have worst-case caveats.",
     "The candidate scans from right to left so it preserves the first pair returned by the recognized nested-loop order.",
     "A static match is only a candidate. Run the supplied checks and increasing-size benchmarks before relying on it.",
@@ -263,6 +263,61 @@ def _python_two_sum_candidate(code: str, entrypoint: str) -> str | None:
     return "".join([*lines[:start], *replacement_lines, *lines[end:]])
 
 
+def _java_two_sum_candidate(code: str, entrypoint: str) -> str | None:
+    parts = entrypoint.split(".")
+    if len(parts) != 2 or parts[0] == "AxiomaOptimized":
+        return None
+    class_pattern = re.compile(
+        rf"(?P<prefix>\b(?:public\s+)?class\s+){re.escape(parts[0])}\b"
+    )
+    class_matches = list(class_pattern.finditer(code))
+    if len(class_matches) != 1:
+        return None
+    declaration_pattern = re.compile(
+        rf"\bint\s*\[\s*\]\s+{re.escape(parts[1])}\s*\(\s*"
+        rf"int\s*\[\s*\]\s*(?P<nums>{_IDENTIFIER})\s*,\s*"
+        rf"int\s+(?P<target>{_IDENTIFIER})\s*\)"
+    )
+    declarations = list(declaration_pattern.finditer(code))
+    if len(declarations) != 1:
+        return None
+    nums, target = declarations[0].group("nums", "target")
+    loop_pattern = re.compile(
+        rf"^(?P<indent>[ \t]*)for\s*\(\s*int\s+(?P<i>{_IDENTIFIER})\s*=\s*0\s*;\s*"
+        rf"(?P=i)\s*<\s*{re.escape(nums)}\.length\s*;\s*(?P=i)\+\+\s*\)\s*\{{\r?\n"
+        rf"(?P<inner_indent>[ \t]+)for\s*\(\s*int\s+(?P<j>{_IDENTIFIER})\s*=\s*"
+        rf"(?P=i)\s*\+\s*1\s*;\s*(?P=j)\s*<\s*{re.escape(nums)}\.length\s*;\s*(?P=j)\+\+\s*\)\s*\{{\r?\n"
+        rf"(?P<if_indent>[ \t]+)if\s*\(\s*{re.escape(nums)}\[(?P=i)\]\s*\+\s*"
+        rf"{re.escape(nums)}\[(?P=j)\]\s*==\s*{re.escape(target)}\s*\)\s*\{{\r?\n"
+        rf"(?P<return_indent>[ \t]+)return\s+new\s+int\s*\[\s*\]\s*\{{\s*"
+        rf"(?P=i)\s*,\s*(?P=j)\s*\}}\s*;\r?\n"
+        rf"(?P=if_indent)\}}\r?\n(?P=inner_indent)\}}\r?\n(?P=indent)\}}\r?\n"
+        rf"(?P=indent)return\s+new\s+int\s*\[\s*0\s*\]\s*;(?=\r?$)",
+        re.MULTILINE,
+    )
+    matches = list(loop_pattern.finditer(code))
+    if len(matches) != 1:
+        return None
+
+    match = matches[0]
+    indent, inner_indent, i_name = match.group("indent", "inner_indent", "i")
+    newline = "\r\n" if "\r\n" in code else "\n"
+    replacement = (
+        f"{indent}java.util.Map<Integer, Integer> seen = new java.util.HashMap<>();{newline}"
+        f"{indent}int[] answer = new int[0];{newline}"
+        f"{indent}for (int {i_name} = {nums}.length - 1; {i_name} >= 0; {i_name}--) {{{newline}"
+        f"{inner_indent}int complement = {target} - {nums}[{i_name}];{newline}"
+        f"{inner_indent}if (seen.containsKey(complement)) {{{newline}"
+        f"{inner_indent}    answer = new int[]{{{i_name}, seen.get(complement)}};{newline}"
+        f"{inner_indent}}}{newline}"
+        f"{inner_indent}seen.put({nums}[{i_name}], {i_name});{newline}"
+        f"{indent}}}{newline}"
+        f"{indent}return answer;"
+    )
+    updated = code[: match.start()] + replacement + code[match.end() :]
+    return class_pattern.sub(lambda found: found.group("prefix") + "AxiomaOptimized", updated, count=1)
+
+
 def _java_candidate(code: str, entrypoint: str) -> str | None:
     method_name = entrypoint.rsplit(".", maxsplit=1)[-1]
     declaration = re.search(
@@ -298,11 +353,6 @@ def propose_optimizations(
             proposals=[], message="Rule-based proposals currently require a function interface."
         )
     if _is_two_sum_problem(problem):
-        if language != "python":
-            return OptimizationProposalResponse(
-                proposals=[],
-                message="The Two Sum improvement rule currently supports Python only.",
-            )
         if not _has_integer_first_argument_samples(problem) or not all(
             isinstance(sample, FunctionSample)
             and len(sample.args) >= 2
@@ -313,7 +363,13 @@ def propose_optimizations(
                 proposals=[],
                 message="No Two Sum proposal was made: examples must include an integer array and integer target.",
             )
-        candidate = _python_two_sum_candidate(code, problem.interface.entrypoint)
+        candidate = (
+            _python_two_sum_candidate(code, problem.interface.entrypoint)
+            if language == "python"
+            else _java_two_sum_candidate(code, problem.interface.entrypoint)
+            if language == "java"
+            else None
+        )
         if candidate is None:
             return OptimizationProposalResponse(
                 proposals=[],

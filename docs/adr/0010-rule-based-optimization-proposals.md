@@ -10,7 +10,7 @@ Mode 1 should suggest improvements without silently changing a student's solutio
 
 ## Decision
 
-Add a deterministic API proposal route that recognizes one exact integer-array accumulation pattern in Python and Java. It returns a candidate source string with static evidence, low confidence, and explicit limitations. The route validates the problem specification but does not execute submitted code.
+Add a deterministic API proposal route that recognizes exact integer-array accumulation and nested Two Sum pair-search patterns in Python and Java. It returns a candidate source string with static evidence, low confidence, and explicit limitations. The route validates the problem specification but does not execute submitted code.
 
 The UI requires the user to select “Use as optimization candidate.” The normal worker flow then checks the alternate against declared outputs and, when configured, user-reference differential inputs. Optional benchmark measurements are presented separately and can show no improvement. The original source remains intact. No LLM call is made.
 

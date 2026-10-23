@@ -112,6 +112,34 @@ def test_python_two_sum_pairwise_search_proposes_order_preserving_hash_map() -> 
     assert candidate([1, 2, 3], 7) == []
 
 
+def test_java_two_sum_pairwise_search_proposes_order_preserving_hash_map() -> None:
+    source = """class Solution {
+    public int[] twoSum(int[] nums, int target) {
+        for (int i = 0; i < nums.length; i++) {
+            for (int j = i + 1; j < nums.length; j++) {
+                if (nums[i] + nums[j] == target) {
+                    return new int[]{i, j};
+                }
+            }
+        }
+        return new int[0];
+    }
+}
+"""
+
+    result = propose_optimizations("java", source, two_sum_problem())
+
+    assert len(result.proposals) == 1
+    proposal = result.proposals[0]
+    assert proposal.rule_id == "two_sum_pairwise_to_hash_map_v1"
+    assert proposal.evidence_type == "static"
+    assert "expected O(n)" in proposal.summary
+    assert "class AxiomaOptimized" in proposal.candidate_code
+    assert "for (int i = nums.length - 1; i >= 0; i--)" in proposal.candidate_code
+    assert "answer = new int[]{i, seen.get(complement)};" in proposal.candidate_code
+    assert "return answer;" in proposal.candidate_code
+
+
 def test_two_sum_rule_requires_problem_match_and_exact_nested_pattern() -> None:
     source = """def solve(nums, target):
     seen = {}

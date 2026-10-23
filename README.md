@@ -37,7 +37,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 - Browser-local recent run history stores job IDs, self-assigned topic tags, and report summaries (never source code); users can reopen server-side reports, export the displayed job and report as JSON, clear local history, and review descriptive topic failure counts and recent complexity estimates.
 - Function jobs can provide one reference and an independent second reference; both must match samples and each other before their outputs are used for differential checks. The UI describes this as corroboration, not proof.
 - Function-problem UI can submit a user-provided optimization candidate and optional benchmark inputs; it shows equivalence counts, before/after estimates, measurements, and their limits. It does not generate or silently apply code changes.
-- Rule-based proposals recognize a narrow integer-array sum pattern in Python/Java and a nested Two Sum search in Python. The analyzer can present the Two Sum hash-map candidate and run it against the matched test pack plus increasing-size benchmarks; suggestions stay static and low-confidence until checked, and no LLM provider is called.
+- Rule-based proposals recognize a narrow integer-array sum pattern and a nested Two Sum search in Python/Java. The analyzer can present the Two Sum hash-map candidate and run it against the matched test pack plus increasing-size benchmarks; suggestions stay static and low-confidence until checked, and no LLM provider is called.
 
 ### Not built or not verified yet
 
