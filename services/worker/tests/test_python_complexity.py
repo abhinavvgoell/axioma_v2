@@ -271,6 +271,65 @@ def test_recognizes_heap_pops_and_character_trie_build() -> None:
     assert trie_case.estimate == "O(n)"
 
 
+def test_recognizes_ternary_search_and_fenwick_prefix_loops() -> None:
+    ternary = analyze_python_complexity(
+        "def solve(left, right, score):\n"
+        "    while right - left > 2:\n"
+        "        third = (right - left) // 3\n"
+        "        first, second = left + third, right - third\n"
+        "        if score(first) < score(second): left = first\n"
+        "        else: right = second\n"
+        "    return left\n",
+        "solve",
+    )
+    fenwick = analyze_python_complexity(
+        "def solve(values, index):\n"
+        "    total = 0\n"
+        "    while index > 0:\n"
+        "        index -= index & -index\n"
+        "        total += values[index]\n"
+        "    return total\n",
+        "solve",
+    )
+
+    assert ternary.estimate == "O(log n)"
+    assert fenwick.estimate == "O(log n)"
+
+
+def test_recognizes_heap_based_graph_traversal_and_z_algorithm() -> None:
+    dijkstra = analyze_python_complexity(
+        "import heapq\n"
+        "def solve(graph, start):\n"
+        "    distance = {start: 0}\n"
+        "    heap = [(0, start)]\n"
+        "    while heap:\n"
+        "        cost, node = heapq.heappop(heap)\n"
+        "        for neighbor, weight in graph[node]:\n"
+        "            new_cost = cost + weight\n"
+        "            if new_cost < distance.get(neighbor, float('inf')):\n"
+        "                distance[neighbor] = new_cost\n"
+        "                heapq.heappush(heap, (new_cost, neighbor))\n"
+        "    return distance\n",
+        "solve",
+    )
+    z_algorithm = analyze_python_complexity(
+        "def solve(text):\n"
+        "    n = len(text)\n"
+        "    z = [0] * n\n"
+        "    left = right = 0\n"
+        "    for i in range(1, n):\n"
+        "        while i + z[i] < n and text[z[i]] == text[i + z[i]]:\n"
+        "            z[i] += 1\n"
+        "        if i + z[i] - 1 > right:\n"
+        "            left, right = i, i + z[i] - 1\n"
+        "    return z\n",
+        "solve",
+    )
+
+    assert dijkstra.estimate == "O((V + E) log V)"
+    assert z_algorithm.estimate == "O(n)"
+
+
 def test_unrecognized_data_dependent_loop_remains_unknown() -> None:
     estimate = analyze_python_complexity(
         "def solve(value):\n    while value > 0:\n        value -= 3\n", "solve"

@@ -60,6 +60,8 @@ def bucket(estimate: str) -> str:
         return "exponential"
     if estimate == "O(V + E)":
         return "graph"
+    if estimate == "O((V + E) log V)":
+        return "heap_graph"
     return "unknown"
 
 

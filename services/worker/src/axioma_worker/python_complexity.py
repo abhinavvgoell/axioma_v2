@@ -777,6 +777,114 @@ def _is_character_trie_build(function: ast.FunctionDef | ast.AsyncFunctionDef) -
     return None
 
 
+def _is_ternary_search_loop(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize a three-way interval search that retains two thirds each step."""
+    for loop in (node for node in ast.walk(function) if isinstance(node, ast.While)):
+        third_names = {
+            target.id
+            for node in ast.walk(loop)
+            if isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and isinstance(node.value, ast.BinOp)
+            and isinstance(node.value.op, ast.FloorDiv)
+            and isinstance(node.value.right, ast.Constant)
+            and node.value.right.value == 3
+            for target in node.targets
+        }
+        if not third_names:
+            continue
+        updates = {
+            node.targets[0].id
+            for node in ast.walk(loop)
+            if isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and isinstance(node.value, ast.Name)
+        }
+        if len(updates) >= 2:
+            return loop.lineno
+    return None
+
+
+def _is_dijkstra_heap_traversal(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize lazy-deletion Dijkstra traversal over an adjacency list and heap."""
+    for loop in (node for node in ast.walk(function) if isinstance(node, ast.While)):
+        has_pop = any(
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "heappop"
+            for node in ast.walk(loop)
+        )
+        has_push = any(
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "heappush"
+            for node in ast.walk(loop)
+        )
+        scans_neighbors = any(
+            isinstance(node, ast.For)
+            and isinstance(node.iter, ast.Subscript)
+            and isinstance(node.iter.value, ast.Name)
+            for node in ast.walk(loop)
+        )
+        if has_pop and has_push and scans_neighbors:
+            return loop.lineno
+    return None
+
+
+def _is_fenwick_prefix_loop(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize index -= index & -index prefix traversal in a Fenwick tree."""
+    for loop in (node for node in ast.walk(function) if isinstance(node, ast.While)):
+        for update in ast.walk(loop):
+            if not isinstance(update, ast.AugAssign) or not isinstance(update.target, ast.Name):
+                continue
+            if not isinstance(update.op, ast.Sub) or not isinstance(update.value, ast.BinOp):
+                continue
+            if not isinstance(update.value.op, ast.BitAnd):
+                continue
+            if not (
+                isinstance(update.value.left, ast.Name)
+                and update.value.left.id == update.target.id
+                and isinstance(update.value.right, ast.UnaryOp)
+                and isinstance(update.value.right.op, ast.USub)
+                and isinstance(update.value.right.operand, ast.Name)
+                and update.value.right.operand.id == update.target.id
+            ):
+                continue
+            return loop.lineno
+    return None
+
+
+def _is_z_algorithm(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize the standard Z-array scan with a right boundary that only advances."""
+    for outer in (node for node in ast.walk(function) if isinstance(node, ast.For)):
+        if not isinstance(outer.target, ast.Name):
+            continue
+        index_name = outer.target.id
+        for inner in (node for node in ast.walk(outer) if isinstance(node, ast.While)):
+            grows_z_value = any(
+                isinstance(node, ast.AugAssign)
+                and isinstance(node.op, ast.Add)
+                and isinstance(node.value, ast.Constant)
+                and node.value.value == 1
+                and isinstance(node.target, ast.Subscript)
+                and isinstance(node.target.slice, ast.Name)
+                and node.target.slice.id == index_name
+                for node in ast.walk(inner)
+            )
+            has_boundary_update = any(
+                isinstance(node, ast.Assign)
+                and len(node.targets) == 1
+                and isinstance(node.targets[0], (ast.Tuple, ast.List))
+                and len(node.targets[0].elts) == 2
+                for node in ast.walk(outer)
+            )
+            if grows_z_value and has_boundary_update:
+                return outer.lineno
+    return None
+
+
 def _is_adjacency_list_bfs(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
     """Recognize a queue traversal over adjacency lists with a visited guard."""
     for outer in ast.walk(function):
@@ -1265,6 +1373,10 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     matrix_staircase_line = _is_matrix_staircase_search(function)
     heap_pop_line = _is_heap_pop_scan(function)
     trie_build_line = _is_character_trie_build(function)
+    ternary_search_line = _is_ternary_search_loop(function)
+    dijkstra_line = _is_dijkstra_heap_traversal(function)
+    fenwick_line = _is_fenwick_prefix_loop(function)
+    z_algorithm_line = _is_z_algorithm(function)
     local_recursive_helpers = _local_recursive_helpers(function)
     memoized_state = _memoized_helper_dimensions(function, local_recursive_helpers)
     backtracking_line = _backtracking_helper_line(local_recursive_helpers)
@@ -1351,6 +1463,10 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         ("matrix_staircase_search", "Matrix search moves one row or column per step", matrix_staircase_line),
         ("heap_pop_scan", "Heap construction followed by heap operations", heap_pop_line),
         ("trie_build", "Word and character loops build trie nodes", trie_build_line),
+        ("ternary_search", "Three-way interval search", ternary_search_line),
+        ("dijkstra", "Heap-based adjacency-list traversal", dijkstra_line),
+        ("fenwick_prefix", "Fenwick index clears its lowest set bit", fenwick_line),
+        ("z_algorithm", "Z-array scan advances a matching prefix boundary", z_algorithm_line),
     ):
         if line is not None:
             signals.append({"kind": kind, "label": label, "line": line})
@@ -1449,6 +1565,35 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         explanation = (
             "Recognized a trie build over words and their characters. Here n means the total number "
             "of input characters, and each character creates or follows one trie edge."
+        )
+    elif ternary_search_line is not None:
+        method = "static_ast_ternary_search"
+        estimate = "O(log n)"
+        explanation = (
+            "Recognized a three-way interval search. Each iteration keeps a constant fraction "
+            "of the current range, so the number of score evaluations is logarithmic in the range."
+        )
+    elif dijkstra_line is not None:
+        method = "static_ast_heap_graph_traversal"
+        estimate = "O((V + E) log V)"
+        explanation = (
+            "Recognized a heap-based traversal over adjacency lists. With binary-heap push and pop "
+            "operations, the conservative cost is O((V + E) log V). This assumes graph size bounds "
+            "and heap operations follow the usual Dijkstra-style model."
+        )
+    elif fenwick_line is not None:
+        method = "static_ast_fenwick_prefix"
+        estimate = "O(log n)"
+        explanation = (
+            "Recognized a Fenwick prefix traversal that clears one set bit from the index each step. "
+            "An index has at most logarithmically many set bits."
+        )
+    elif z_algorithm_line is not None:
+        method = "static_ast_z_algorithm"
+        estimate = "O(n)"
+        explanation = (
+            "Recognized a Z-array scan. Its right boundary only advances through the string, so the "
+            "total matching work is linear."
         )
     elif has_while:
         estimate = "unknown (data-dependent loop bound)"
