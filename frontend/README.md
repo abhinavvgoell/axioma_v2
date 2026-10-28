@@ -15,7 +15,7 @@ npm ci
 npm run dev
 ```
 
-Open <http://127.0.0.1:5173/>. The Vite development server forwards `/api/...` requests to `http://127.0.0.1:8000/...`. The UI can show submitted job status with only the API running; a worker and Docker sandbox are needed to produce a completed analysis report.
+Open <http://127.0.0.1:5173/>. The Vite development server forwards `/api/...` requests to `http://127.0.0.1:8000/...` by default. If that port is occupied, set `$env:AXIOMA_API_PROXY_TARGET = 'http://127.0.0.1:8001'` before `npm run dev` and start the API with `--port 8001`. The UI can show submitted job status with only the API running; a worker and Docker sandbox are needed to produce a completed analysis report.
 
 ## Build and lint
 
