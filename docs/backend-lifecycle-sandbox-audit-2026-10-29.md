@@ -1,7 +1,9 @@
 # Backend lifecycle and sandbox audit
 
-Date: 2026-10-29  
-Audited revision: `01b16dd`  
+Date: 2026-10-29
+
+Audited revision: `01b16dd`
+
 Scope: job creation, queueing, worker recovery, cancellation, Docker execution boundary, resource limits, and existing verification. This is a local-development audit, not a public-deployment security approval. No code, schema, or configuration was changed.
 
 ## Summary
