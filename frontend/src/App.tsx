@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ApiError, cancelJob, findOptimizationProposals, getJob, getReport, matchProblem, submitJob } from './api'
+import { ApiError, cancelJob, findOptimizationProposals, generateComplexityBenchmarks, getJob, getReport, matchProblem, submitJob } from './api'
 import type { AnalysisReport, Job, JobStatus, Language, OptimizationProposal, ProblemMatch } from './types'
 import LandingPage from './LandingPage'
 import './App.css'
@@ -14,6 +14,35 @@ function twoSumBenchmarks() {
     args: [Array<number>(size).fill(0), -1],
     kwargs: {},
   }))
+}
+
+function benchmarkPlan(problem: Record<string, unknown>) {
+  const constraints = problem.constraints
+  const samples = problem.samples
+  if (!Array.isArray(constraints) || !Array.isArray(samples) || samples.length === 0) return null
+  const numericArrays = constraints.flatMap((value) => {
+    if (typeof value !== 'object' || value === null) return []
+    const constraint = value as Record<string, unknown>
+    if (typeof constraint.path !== 'string') return []
+    const match = /^args\[(\d+)\]\.length$/.exec(constraint.path)
+    if (!match) return []
+    const sample = samples[0] as Record<string, unknown>
+    const args = sample.args
+    const index = Number(match[1])
+    if (!Array.isArray(args) || !Array.isArray(args[index])) return []
+    const values = args[index] as unknown[]
+    if (!values.every((item) => typeof item === 'number' && Number.isFinite(item))) return []
+    return [{ path: constraint.path, minimum: constraint.minimum, maximum: constraint.maximum }]
+  })
+  if (numericArrays.length !== 1) return null
+
+  const { path, minimum, maximum } = numericArrays[0]
+  const low = Math.max(1, Number.isInteger(minimum) ? Number(minimum) : 1)
+  const high = Math.min(32, Number.isInteger(maximum) ? Number(maximum) : 32)
+  if (high - low < 3) return null
+  const sizes = Array.from({ length: 4 }, (_, index) => Math.round(low + (high - low) * index / 3))
+  if (new Set(sizes).size !== 4) return null
+  return { size_path: path, sizes }
 }
 
 interface HistoryEntry {
@@ -223,6 +252,21 @@ function AnalyzerApp() {
         if (optimization.rule_id === 'two_sum_pairwise_to_hash_map_v1') {
           request.complexity_benchmarks = twoSumBenchmarks()
         }
+      } else {
+        const plan = benchmarkPlan(problem)
+        if (plan) {
+          try {
+            const generated = await generateComplexityBenchmarks({
+              problem,
+              ...plan,
+              pattern: 'ascending',
+              seed: 0,
+            })
+            if (generated.benchmarks.length === 4) request.complexity_benchmarks = generated.benchmarks
+          } catch {
+            // Keep the normal sample analysis available when a pack cannot produce a benchmark.
+          }
+        }
       }
       const path = `/v1/jobs/mode1/${language}-function`
       const created = await submitJob(path, request)
@@ -374,7 +418,7 @@ function AnalyzerApp() {
 
         <section className="main-panel">
           <div className="page-heading">
-            <div><div className="eyebrow">MODE 1 <span>/</span> DSA SOLUTION ANALYZER</div><h1>Check your solution.</h1><p>Paste a problem and your code. Axioma supplies the checks.</p></div>
+            <div><div className="eyebrow">MODE 1 <span>/</span> DSA SOLUTION ANALYZER</div><h1>Check your solution.</h1><p>Paste a problem and your code. Axioma supplies checks and growth benchmarks when the problem pack supports them.</p></div>
             <div className="page-actions">{report && <button className="quiet-button" onClick={exportReport}>EXPORT REPORT JSON</button>}{canCancel && <button className="quiet-button" onClick={() => void stopJob()}>Cancel job</button>}<button className="run-button" onClick={() => void runAnalysis()} disabled={busy || isRunning}><span>{busy || isRunning ? '◌' : '▶'}</span>{busy ? 'SUBMITTING' : isRunning ? 'ANALYZING' : 'RUN ANALYSIS'}</button></div>
           </div>
 

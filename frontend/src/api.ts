@@ -63,3 +63,16 @@ export function matchProblem(statement: string): Promise<ProblemMatch> {
     body: JSON.stringify({ statement }),
   })
 }
+
+export function generateComplexityBenchmarks(input: {
+  problem: Record<string, unknown>
+  size_path: string
+  sizes: number[]
+  pattern: 'ascending'
+  seed: number
+}): Promise<{ benchmarks: { size: number; args: unknown[]; kwargs: Record<string, unknown>; strategy: string }[] }> {
+  return request('/v1/problem-specs/generate-complexity-benchmarks', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
