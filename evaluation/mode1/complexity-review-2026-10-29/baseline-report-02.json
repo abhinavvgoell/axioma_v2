@@ -1,0 +1,196 @@
+{
+  "evaluation": "five-case calibration diagnostic",
+  "analyzer_commit": "5afb193f6bda0020039e90cdd15b0bfa28481b3b",
+  "dataset_id": "axioma-20261029-review-packet-02",
+  "gold_sha256": "3d9086b8294296b41c81802eb3c200a6b50f028a7772da1ea38c720b0b712e9b",
+  "partition": "calibration",
+  "case_count": 5,
+  "time_complexity": {
+    "correct": 3,
+    "eligible": 5,
+    "end_to_end_exact_accuracy": 0.6,
+    "answered": 3,
+    "coverage": 0.6,
+    "selective_exact_accuracy": 1.0
+  },
+  "normalization": "O(V + E) -> O(n), as documented for this evaluator",
+  "space_complexity": "Not scored separately. Space notes in supplied user rationales are not part of this time-only scoring.",
+  "results": [
+    {
+      "id": "axioma-20261029-06",
+      "title": "Longest unique substring window",
+      "language": "python",
+      "family": "sliding_window",
+      "source_sha256": "3afbfc634c1a15810edfb1d6051c4ecacd5f63507f270d7f69b171b06b5d12d4",
+      "expected_time": "O(n)",
+      "reviewed_complexity": "O(n)",
+      "predicted_time": "O(n)",
+      "prediction_raw": "O(n)",
+      "exact_match": true,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 5
+        },
+        {
+          "kind": "membership",
+          "label": "Membership check; cost depends on the container",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "axioma-20261029-07",
+      "title": "Insertion sort",
+      "language": "java",
+      "family": "sorting",
+      "source_sha256": "a4a9149c363f0822d040b3e9ebb9d82ba7b27ce3dedf65e34811168a534e2133",
+      "expected_time": "O(n^2)",
+      "reviewed_complexity": "O(n^2)",
+      "predicted_time": "unknown",
+      "prediction_raw": "unknown (data-dependent or incomplete loop)",
+      "exact_match": false,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": null
+        },
+        {
+          "kind": "loop",
+          "label": "while loop",
+          "line": null
+        },
+        {
+          "kind": "indexing",
+          "label": "Array or indexed access; concrete access cost is not inferred",
+          "line": null
+        }
+      ]
+    },
+    {
+      "id": "axioma-20261029-08",
+      "title": "Longest increasing subsequence by dynamic programming",
+      "language": "python",
+      "family": "dynamic_programming",
+      "source_sha256": "7ab2e20123e6cccf1776c2d59374d8f8cd2e93cee76938b3bca6bb940860fec9",
+      "expected_time": "O(n^2)",
+      "reviewed_complexity": "O(n^2)",
+      "predicted_time": "O(n^2)",
+      "prediction_raw": "O(n^2)",
+      "exact_match": true,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum data-dependent loop or comprehension nesting depth: 2. Loops with source-level constant bounds are not counted as input growth. Called helper functions are not included; this estimate is not a proof.",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 5
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 6
+        },
+        {
+          "kind": "iterable_consumer",
+          "label": "max() consumes an iterable",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "id": "axioma-20261029-09",
+      "title": "Reachable vertices with breadth-first search",
+      "language": "java",
+      "family": "graph_bfs",
+      "source_sha256": "8a157ea058d04dfe6925ed5679f70a0cc11532bb6cf79f4c173c39aba18da381",
+      "expected_time": "O(n)",
+      "reviewed_complexity": "O(V + E)",
+      "predicted_time": "unknown",
+      "prediction_raw": "unknown (data-dependent or incomplete loop)",
+      "exact_match": false,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "while loop",
+          "line": null
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": null
+        },
+        {
+          "kind": "collection_operation",
+          "label": ".add() call; concrete type and cost are not inferred",
+          "line": null
+        },
+        {
+          "kind": "collection_operation",
+          "label": ".remove() call; concrete type and cost are not inferred",
+          "line": null
+        },
+        {
+          "kind": "collection_operation",
+          "label": ".get() call; concrete type and cost are not inferred",
+          "line": null
+        },
+        {
+          "kind": "collection_operation",
+          "label": ".add() call; concrete type and cost are not inferred",
+          "line": null
+        },
+        {
+          "kind": "indexing",
+          "label": "Array or indexed access; concrete access cost is not inferred",
+          "line": null
+        }
+      ]
+    },
+    {
+      "id": "axioma-20261029-10",
+      "title": "Binary tree height",
+      "language": "java",
+      "family": "tree_recursion",
+      "source_sha256": "a32f6ad47e15de0fb989d2099a0eee421bf6cb32c7bc508b72985a8290db788f",
+      "expected_time": "O(n)",
+      "reviewed_complexity": "O(n)",
+      "predicted_time": "O(n)",
+      "prediction_raw": "O(n)",
+      "exact_match": true,
+      "method": "static_java_tree_recursion",
+      "confidence": "low",
+      "explanation": "Recognized direct recursion over a tree node's left/right child link. Assuming the input is a tree with no cycles or shared subtrees, each visited node is processed once, for O(n) work. The syntax check cannot establish that input structure. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "signals": [
+        {
+          "kind": "recursion",
+          "label": "Direct self-call; tree-child traversal recognized",
+          "line": null
+        },
+        {
+          "kind": "tree_recursion",
+          "label": "Recursion follows a left or right tree-child link",
+          "line": null
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Only five calibration cases; not held-out or broad evaluation evidence.",
+    "Only static source analysis was performed; no submitted solution ran.",
+    "Only time complexity was scored.",
+    "No meaningful per-family performance claim from one example per family."
+  ]
+}

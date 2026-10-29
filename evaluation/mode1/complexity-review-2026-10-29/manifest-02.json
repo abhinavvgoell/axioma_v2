@@ -1,6 +1,6 @@
 {
   "dataset_id": "axioma-20261029-review-packet-02",
-  "status": "awaiting_human_labels",
+  "status": "labels_frozen_before_analysis",
   "partition": "calibration",
   "case_count": 5,
   "languages": {
@@ -15,7 +15,7 @@
     "tree_recursion"
   ],
   "case_file": "review-set-02.jsonl",
-  "case_file_sha256": "897caf0c357fa4030133bfa98c62f1196aad35d2ca285b0cbbf4bc167ad7df17",
+  "case_file_sha256": "3d9086b8294296b41c81802eb3c200a6b50f028a7772da1ea38c720b0b712e9b",
   "packet_file": "packet-02.md",
   "case_source_sha256": {
     "axioma-20261029-06": "3afbfc634c1a15810edfb1d6051c4ecacd5f63507f270d7f69b171b06b5d12d4",
@@ -24,6 +24,13 @@
     "axioma-20261029-09": "8a157ea058d04dfe6925ed5679f70a0cc11532bb6cf79f4c173c39aba18da381",
     "axioma-20261029-10": "a32f6ad47e15de0fb989d2099a0eee421bf6cb32c7bc508b72985a8290db788f"
   },
-  "analyzer_run": "none",
-  "freshness_note": "Axioma has not analyzed this packet. Labels are to be supplied before analysis. These cases are calibration examples and cannot be presented as untouched holdout results."
+  "analyzer_run": "baseline-report-02.json",
+  "analyzer_commit": "5afb193f6bda0020039e90cdd15b0bfa28481b3b",
+  "freshness_note": "Labels were frozen before analysis. This packet has now been analyzed and is calibration data; it cannot be presented as untouched holdout results.",
+  "reviewed_by": "user",
+  "review_date": "2026-10-29",
+  "label_file": "gold-reviewed-02.jsonl",
+  "label_file_sha256": "3d9086b8294296b41c81802eb3c200a6b50f028a7772da1ea38c720b0b712e9b",
+  "scored_dimension": "worst-case time complexity",
+  "label_normalization": "O(V + E) is normalized to O(n) for this evaluator; original wording is preserved in reviewed_complexity."
 }
