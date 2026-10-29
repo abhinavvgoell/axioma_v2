@@ -38,6 +38,51 @@ def test_java_code_analysis_exposes_while_loop_uncertainty() -> None:
     assert estimate.estimate == "unknown (data-dependent or incomplete loop)"
 
 
+def test_recognizes_java_inward_two_pointer_scan() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { boolean check(String letters) { "
+        "int start = 0; int end = letters.length() - 1; "
+        "while (start < end) { "
+        "if (letters.charAt(start) != letters.charAt(end)) return false; "
+        "start++; end--; } return true; } }",
+        "Solution.check",
+    )
+
+    assert estimate.method == "static_java_inward_two_pointer_scan"
+    assert estimate.estimate == "O(n)"
+    assert estimate.confidence == "low"
+    assert any(
+        signal["kind"] == "inward_two_pointer_scan"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_inward_two_pointer_rule_rejects_missing_cursor_progress() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { void scan(int[] values) { "
+        "int left = 0; int right = values.length - 1; "
+        "while (left < right) { left++; } } }",
+        "Solution.scan",
+    )
+
+    assert estimate.estimate == "unknown (data-dependent or incomplete loop)"
+    assert not any(
+        signal["kind"] == "inward_two_pointer_scan"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_inward_two_pointer_rule_rejects_conditional_cursor_progress() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { void scan(int[] values) { "
+        "int left = 0; int right = values.length - 1; "
+        "while (left < right) { if (values[left] < 0) left++; right--; } } }",
+        "Solution.scan",
+    )
+
+    assert estimate.estimate == "unknown (data-dependent or incomplete loop)"
+
+
 def test_recognizes_nested_java_insertion_sort_shift_as_quadratic() -> None:
     estimate = analyze_java_complexity(
         "class Solution { void sort(int[] data) { "

@@ -55,3 +55,9 @@ The output reproduces `axioma-20261029-12: O(n) → unknown (data-dependent or i
 The original case 13 used a top-level function with two progressing recursive calls in one boolean expression. The recognizer previously inspected only local helper functions, which caused an avoidable abstention. The entrypoint is now included, and the recognizer requires two progressing calls in the same `BinOp` or `BoolOp` expression. This avoids treating mutually exclusive branches as exponential. Functions with unbounded memoization remain excluded from this exponential classification.
 
 This is a targeted calibration-driven change. No packet03 post-fix score is claimed; the fixture informed the change and is not an independent evaluation set.
+
+## Follow-up: Java inward two-pointer fix
+
+Approved category: Java inward-moving two-pointer scans. The analyzer now recognizes one braced `while` loop whose condition compares two cursors, whose lower bound was last initialized to zero, and whose upper bound was last initialized from a `.length` expression. Each cursor must have exactly one unit step in the expected direction; cursor resets, conditional cursor progress, nested loops, and `continue` reject the pattern. A recognized case is reported as a low-confidence static `O(n)` estimate, with an `inward_two_pointer_scan` signal. Other unbounded while-loops retain the existing inconclusive result.
+
+Development regressions use a synthetic string scan with an early mismatch return, plus near misses with a missing cursor update and conditional cursor progress. The original packet03 calibration was not rescored after the fix, and no post-fix accuracy claim is made.

@@ -284,6 +284,88 @@ def _is_binary_search_loop(tokens: list[str], spans: list[tuple[int, int]]) -> b
     return False
 
 
+def _unit_step_count(tokens: list[str], variable: str, direction: str) -> int:
+    operator = "+" if direction == "positive" else "-"
+    prefix = "++" if direction == "positive" else "--"
+    return sum(
+        token == variable and index + 1 < len(tokens) and tokens[index + 1] == prefix
+        or token == prefix and index + 1 < len(tokens) and tokens[index + 1] == variable
+        or token == variable
+        and index + 2 < len(tokens)
+        and tokens[index + 1 : index + 3] == [operator + "=", "1"]
+        or token == variable
+        and index + 4 < len(tokens)
+        and tokens[index + 1 : index + 4] == ["=", variable, operator]
+        and tokens[index + 4] == "1"
+        for index, token in enumerate(tokens)
+    )
+
+
+def _is_inward_two_pointer_scan(tokens: list[str], spans: list[tuple[int, int]]) -> bool:
+    """Recognize a single linear scan over a sequence using opposing cursors."""
+    if len(spans) != 1 or tokens[spans[0][0]] != "while":
+        return False
+    start, end = spans[0]
+    header = _loop_header(tokens, start)
+    if header is None:
+        return False
+    opening, closing = header
+    condition = tokens[opening + 1 : closing]
+    comparison = next(
+        (
+            (condition[index], condition[index + 1], condition[index + 2])
+            for index in range(len(condition) - 2)
+            if condition[index + 1] in {"<", "<=", ">", ">="}
+            and all(re.fullmatch(r"[A-Za-z_$][\w$]*", condition[pos]) for pos in (index, index + 2))
+        ),
+        None,
+    )
+    if comparison is None:
+        return False
+    first, operator, second = comparison
+    low, high = (first, second) if operator in {"<", "<="} else (second, first)
+    body_open = closing + 1
+    if body_open >= end or tokens[body_open] != "{":
+        return False
+    body = tokens[body_open + 1 : end]
+    if any(token in {"for", "while", "do", "continue", "switch", "?"} for token in body):
+        return False
+
+    def prior_value(variable: str) -> list[str]:
+        assignments = [
+            index for index in range(start - 1)
+            if tokens[index] == variable and tokens[index + 1] == "="
+        ]
+        if not assignments:
+            return []
+        value_start = assignments[-1] + 2
+        value_end = next(
+            (index for index in range(value_start, start) if tokens[index] == ";"), start
+        )
+        return tokens[value_start:value_end]
+
+    low_start = prior_value(low) == ["0"]
+    high_value = prior_value(high)
+    high_bound = any(
+        high_value[index - 1 : index + 1] == [".", "length"]
+        for index in range(1, len(high_value))
+    ) and (high_value[-1:] in ([")"], ["length"]) or high_value[-2:] == ["-", "1"])
+    if not low_start or not high_bound:
+        return False
+    if _unit_step_count(body, low, "positive") != 1 or _unit_step_count(body, high, "negative") != 1:
+        return False
+    if _unit_step_count(body, low, "negative") or _unit_step_count(body, high, "positive"):
+        return False
+    if _has_reset(body, low) or _has_reset(body, high):
+        return False
+    for index, token in enumerate(body):
+        if token == "if":
+            guard = _loop_header(body, index)
+            if guard is None or body[guard[1] + 1 : guard[1] + 2] != ["return"]:
+                return False
+    return True
+
+
 def _is_insertion_sort_shift(tokens: list[str], spans: list[tuple[int, int]]) -> bool:
     """Recognize a nested insertion-sort shift loop with a decreasing array index."""
     for outer_start, outer_end in spans:
@@ -704,6 +786,13 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "label": "Nested shifting loop moves an indexed element left one position at a time",
             "line": None,
         })
+    inward_two_pointer_scan = _is_inward_two_pointer_scan(body, spans)
+    if inward_two_pointer_scan:
+        signals.append({
+            "kind": "inward_two_pointer_scan",
+            "label": "Two sequence bounds move inward by one step per loop iteration",
+            "line": None,
+        })
 
     amortized_forward_scan = _amortized_forward_scan(body, spans)
     if graph_bfs or graph_dfs:
@@ -741,6 +830,17 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "Recognized a closed-interval search pattern: the midpoint is computed from both "
             "bounds and each bound is updated to midpoint ± 1. The remaining interval shrinks "
             "by a constant factor per iteration. This tokenizer-based recognition is a heuristic."
+        )
+    elif inward_two_pointer_scan:
+        method = "static_java_inward_two_pointer_scan"
+        estimate = "O(n)"
+        explanation = (
+            "Recognized a single while-loop over a sequence-sized interval initialized from "
+            "zero to its end, with the lower cursor incremented and upper cursor decremented "
+            "once per continuing iteration. The interval shrinks by at least one each time, "
+            "so the loop runs O(n) iterations, with constant work per iteration under the "
+            "usual constant-time indexing assumption. This tokenizer-based pattern match is "
+            "a heuristic."
         )
     elif insertion_sort_shift:
         method = "static_java_insertion_sort_shift"
