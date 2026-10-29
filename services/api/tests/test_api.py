@@ -614,6 +614,7 @@ def test_generated_inputs_are_seeded_and_obey_numeric_and_length_constraints(
     assert first.status_code == second.status_code == 200
     assert first.json() == second.json()
     result = first.json()
+    assert result["generator_version"] == "problem-input-generator-v1"
     assert result["generated"] == 11
     assert all(2 <= len(case["args"][0]) <= 6 for case in result["cases"])
     assert all(-5 <= case["args"][0][0] <= 5 for case in result["cases"])
@@ -701,8 +702,12 @@ def test_complexity_benchmark_generator_returns_copyable_patterned_inputs(
     assert first.json() == second.json()
     result = first.json()
     assert result["pattern"] == "descending"
+    assert result["generator_version"] == "problem-input-generator-v1"
     benchmarks = result["benchmarks"]
     assert all(item["strategy"] == "descending" for item in benchmarks)
+    assert all(item["generator_version"] == result["generator_version"] for item in benchmarks)
+    assert all(item["seed"] == payload["seed"] for item in benchmarks)
+    assert all(item["size_path"] == payload["size_path"] for item in benchmarks)
     assert [item["size"] for item in benchmarks] == [4, 8, 16, 32]
     assert all(len(item["args"][0]) == item["size"] for item in benchmarks)
     assert all(item["args"][0] == sorted(item["args"][0], reverse=True) for item in benchmarks)

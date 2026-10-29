@@ -150,6 +150,9 @@ class ComplexityBenchmarkSample(BaseModel):
     size: int = Field(ge=1, le=1_000_000_000)
     args: list[Any] = Field(default_factory=list, max_length=64)
     kwargs: dict[str, Any] = Field(default_factory=dict, max_length=64)
+    generator_version: str | None = Field(default=None, min_length=1, max_length=40)
+    seed: int | None = Field(default=None, ge=0, le=4_294_967_295)
+    size_path: str | None = Field(default=None, max_length=120)
     strategy: Literal[
         "ascending",
         "descending",
@@ -407,6 +410,7 @@ class GeneratedInputCase(BaseModel):
 
 
 class ProblemInputGenerationResult(BaseModel):
+    generator_version: str
     seed: int
     requested: int = Field(ge=1)
     generated: int = Field(ge=0)
@@ -460,6 +464,7 @@ class ComplexityBenchmarkGenerationRequest(BaseModel):
 
 
 class ComplexityBenchmarkGenerationResult(BaseModel):
+    generator_version: str
     seed: int
     size_path: str
     pattern: str

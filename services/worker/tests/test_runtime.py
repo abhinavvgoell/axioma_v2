@@ -384,7 +384,16 @@ def test_python_benchmark_fit_and_measurements_are_persisted() -> None:
                 input={
                     "code": "def solve(value): return value",
                     "complexity_benchmarks": [
-                        {"size": size, "args": [size], "kwargs": {}} for size in (10, 20, 40, 80)
+                        {
+                            "size": size,
+                            "args": [size],
+                            "kwargs": {},
+                            "generator_version": "problem-input-generator-v1",
+                            "seed": 42,
+                            "size_path": "args[0]",
+                            "strategy": "descending",
+                        }
+                        for size in (10, 20, 40, 80)
                     ],
                     "problem": {
                         "statement": "Return the input.",
@@ -408,6 +417,16 @@ def test_python_benchmark_fit_and_measurements_are_persisted() -> None:
         assert complexity.details["measurement_method"] == "executed_source_line_events"
         assert complexity.details["signals"]["opcode_count_fit"]["estimate"] == "O(n)"
         assert [point["size"] for point in complexity.details["points"]] == [10, 20, 40, 80]
+        assert complexity.details["benchmark_provenance"] == {
+            "state": "declared_generated",
+            "metadata_source": "job_request",
+            "generator_version": "problem-input-generator-v1",
+            "seed": 42,
+            "size_path": "args[0]",
+            "sizes": [10, 20, 40, 80],
+            "strategies": ["descending", "descending", "descending", "descending"],
+            "runtime_image": "python:3.13-slim",
+        }
 
 
 def test_exhaustive_differential_results_share_the_normal_test_ledger() -> None:
@@ -943,3 +962,7 @@ def test_reference_guided_cases_are_persisted_separately() -> None:
             ("reference/sample", "passed"),
             ("sample", "passed"),
         ]
+        claim = session.query(EvidenceClaimRecord).filter_by(job_id=job_id).one()
+        assert claim.provenance["details"]["seed"] == 42
+        assert claim.provenance["details"]["generator_version"] == "problem-input-generator-v1"
+        assert claim.provenance["details"]["generated_tests_actual"] == 1

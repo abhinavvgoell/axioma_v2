@@ -22,7 +22,11 @@ from axioma_api.contracts import (
 from axioma_api.jobs import transition_job
 from axioma_api.models import ComplexityRecord, EvidenceClaimRecord, Job, TestCaseRecord
 from axioma_api.problem_validation import validate_problem_spec
-from axioma_api.problem_generation import generate_exhaustive_inputs, generate_problem_inputs
+from axioma_api.problem_generation import (
+    GENERATOR_VERSION,
+    generate_exhaustive_inputs,
+    generate_problem_inputs,
+)
 from axioma_api.queue import claim_next_job, reap_expired_jobs
 from axioma_worker.adapters import get_adapter
 from axioma_worker.java_harness import build_java_function_harness
@@ -48,6 +52,29 @@ def is_cancelled(session_factory: sessionmaker, job_id: str) -> bool:
     with session_factory() as session:
         job = session.get(Job, job_id)
         return job is None or job.status == JobStatus.CANCELLED.value
+
+
+def _benchmark_provenance(samples: list[ComplexityBenchmarkSample]) -> dict:
+    if not samples:
+        return {"state": "not_requested"}
+    versions = {sample.generator_version for sample in samples}
+    seeds = {sample.seed for sample in samples}
+    size_paths = {sample.size_path for sample in samples}
+    generated = (
+        None not in versions
+        and None not in seeds
+        and None not in size_paths
+        and len(versions) == len(seeds) == len(size_paths) == 1
+    )
+    return {
+        "state": "declared_generated" if generated else "user_supplied_or_legacy",
+        "metadata_source": "job_request",
+        "generator_version": next(iter(versions)) if len(versions) == 1 else None,
+        "seed": next(iter(seeds)) if len(seeds) == 1 else None,
+        "size_path": next(iter(size_paths)) if len(size_paths) == 1 else None,
+        "sizes": [sample.size for sample in samples],
+        "strategies": [sample.strategy for sample in samples],
+    }
 
 
 def _stdin_execute_script(language: str) -> str:
@@ -100,6 +127,7 @@ def run_claimed_job(
     optimization_report: dict = {}
     property_report: dict = {}
     generated_count_effective = 0
+    generated_samples: list[dict] = []
     problem: ProblemSpec | None = None
     try:
         if mode != "dsa_analysis":
@@ -150,6 +178,8 @@ def run_claimed_job(
                     ComplexityBenchmarkSample.model_validate(item)
                     for item in input_payload.get("complexity_benchmarks", [])
                 ]
+                benchmark_provenance = _benchmark_provenance(benchmark_samples)
+                benchmark_provenance["runtime_image"] = adapter.image
                 if benchmark_samples and (
                     len(benchmark_samples) < 4
                     or len(benchmark_samples) > 6
@@ -659,6 +689,12 @@ def run_claimed_job(
                                 input_payload.get("independent_reference_code")
                             ),
                             "generated_tests_requested": generated_count_effective,
+                            "generated_tests_actual": len(generated_samples),
+                            "generator_version": (
+                                GENERATOR_VERSION
+                                if generated_samples and not exhaustive_mode
+                                else None
+                            ),
                             "exhaustive_tests": exhaustive_mode,
                             "reference_limit": (
                                 (
@@ -733,6 +769,12 @@ def run_claimed_job(
                                 ),
                                 "requested_generated": property_report.get("requested", 0),
                                 "generated": property_report.get("generated", 0),
+                                "generator_version": (
+                                    GENERATOR_VERSION
+                                    if property_report.get("generated", 0)
+                                    else None
+                                ),
+                                "seed": int(input_payload.get("seed", 0)),
                                 "example_checks": example_checks,
                                 "generated_checks": generated_checks,
                                 "passed": property_passed,
@@ -834,6 +876,7 @@ def run_claimed_job(
                     details={
                         **complexity.details,
                         "space_measurement": estimate_python_peak_memory(measured_points),
+                        "benchmark_provenance": benchmark_provenance,
                         "constraint_scalability": estimate_constraint_scale(
                             problem.constraints, complexity.estimate
                         ),
@@ -1029,6 +1072,7 @@ def run_claimed_job(
                     details={
                         **complexity.details,
                         "space_measurement": estimate_java_heap_pool_peak_growth(measured_points),
+                        "benchmark_provenance": benchmark_provenance,
                         "constraint_scalability": estimate_constraint_scale(
                             problem.constraints, complexity.estimate
                         ),

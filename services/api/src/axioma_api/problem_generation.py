@@ -25,6 +25,7 @@ from axioma_api.problem_validation import validate_problem_spec
 
 _PATH_PART = re.compile(r"\.([A-Za-z_]\w*)|\[(\d+)\]")
 _ROOT = re.compile(r"^(args|kwargs|stdin)")
+GENERATOR_VERSION = "problem-input-generator-v1"
 
 
 def _path_parts(path: str) -> tuple[str, list[str | int]]:
@@ -379,6 +380,7 @@ def generate_problem_inputs(
         if case is not None:
             append_case(sample, case, "random_constraint_sample")
     return ProblemInputGenerationResult(
+        generator_version=GENERATOR_VERSION,
         seed=request.seed,
         requested=request.count,
         generated=len(cases),
@@ -436,11 +438,15 @@ def generate_complexity_benchmarks(
                 size=size,
                 args=args,
                 kwargs=kwargs,
+                generator_version=GENERATOR_VERSION,
+                seed=request.seed,
+                size_path=request.size_path,
                 strategy=request.pattern,
             )
         )
 
     return ComplexityBenchmarkGenerationResult(
+        generator_version=GENERATOR_VERSION,
         seed=request.seed,
         size_path=request.size_path,
         pattern=request.pattern,
