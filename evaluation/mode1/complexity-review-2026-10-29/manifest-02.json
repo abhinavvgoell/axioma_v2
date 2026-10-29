@@ -1,0 +1,29 @@
+{
+  "dataset_id": "axioma-20261029-review-packet-02",
+  "status": "awaiting_human_labels",
+  "partition": "calibration",
+  "case_count": 5,
+  "languages": {
+    "python": 2,
+    "java": 3
+  },
+  "families": [
+    "sliding_window",
+    "sorting",
+    "dynamic_programming",
+    "graph_bfs",
+    "tree_recursion"
+  ],
+  "case_file": "review-set-02.jsonl",
+  "case_file_sha256": "897caf0c357fa4030133bfa98c62f1196aad35d2ca285b0cbbf4bc167ad7df17",
+  "packet_file": "packet-02.md",
+  "case_source_sha256": {
+    "axioma-20261029-06": "3afbfc634c1a15810edfb1d6051c4ecacd5f63507f270d7f69b171b06b5d12d4",
+    "axioma-20261029-07": "a4a9149c363f0822d040b3e9ebb9d82ba7b27ce3dedf65e34811168a534e2133",
+    "axioma-20261029-08": "7ab2e20123e6cccf1776c2d59374d8f8cd2e93cee76938b3bca6bb940860fec9",
+    "axioma-20261029-09": "8a157ea058d04dfe6925ed5679f70a0cc11532bb6cf79f4c173c39aba18da381",
+    "axioma-20261029-10": "a32f6ad47e15de0fb989d2099a0eee421bf6cb32c7bc508b72985a8290db788f"
+  },
+  "analyzer_run": "none",
+  "freshness_note": "Axioma has not analyzed this packet. Labels are to be supplied before analysis. These cases are calibration examples and cannot be presented as untouched holdout results."
+}
