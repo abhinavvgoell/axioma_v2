@@ -771,6 +771,41 @@ def test_complexity_benchmark_generator_supports_repeated_character_strings(
     assert [item["args"][0] for item in result["benchmarks"]] == ["a", "aaaa", "aaaaaaaa", "a" * 16]
 
 
+def test_complexity_benchmark_scales_one_argument_and_preserves_other_inputs(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/v1/problem-specs/generate-complexity-benchmarks",
+        json={
+            "problem": {
+                "statement": "Check whether s2 contains a permutation of s1.",
+                "interface": {"kind": "function", "entrypoint": "Solution.checkInclusion"},
+                "constraints": [
+                    {"path": "args[0].length", "minimum": 1, "maximum": 16},
+                    {"path": "args[1].length", "minimum": 2, "maximum": 32},
+                ],
+                "samples": [
+                    {
+                        "kind": "function",
+                        "name": "base",
+                        "args": ["ab", "eidbaooo"],
+                        "expected": True,
+                    }
+                ],
+            },
+            "size_path": "args[1].length",
+            "sizes": [8, 16, 24, 32],
+            "pattern": "repeated_characters",
+            "seed": 0,
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    benchmarks = response.json()["benchmarks"]
+    assert [item["args"][0] for item in benchmarks] == ["ab"] * 4
+    assert [item["args"][1] for item in benchmarks] == ["e" * size for size in (8, 16, 24, 32)]
+
+
 def test_optimization_proposal_route_returns_static_unverified_candidate(
     client: TestClient,
 ) -> None:

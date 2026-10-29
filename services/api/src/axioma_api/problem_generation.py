@@ -406,10 +406,11 @@ def generate_complexity_benchmarks(
         )
 
     rng = random.Random(request.seed)
-    constraints = sorted(
-        request.problem.constraints,
-        key=lambda item: ("length" not in item.path, len(item.path)),
-    )
+    constraints = [
+        constraint
+        for constraint in request.problem.constraints
+        if constraint.path == request.size_path
+    ]
     benchmarks: list[ComplexityBenchmarkSample] = []
     for size in request.sizes:
         case = _candidate_case(

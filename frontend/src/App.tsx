@@ -24,6 +24,7 @@ function benchmarkPlan(problem: Record<string, unknown>) {
     path: string
     minimum: unknown
     maximum: unknown
+    sampleLength: number
     pattern: 'ascending' | 'repeated_characters'
   }[] = []
   for (const value of constraints) {
@@ -38,18 +39,23 @@ function benchmarkPlan(problem: Record<string, unknown>) {
     if (!Array.isArray(args)) continue
     const sampleValue = args[index]
     if (typeof sampleValue === 'string') {
-      scalableInputs.push({ path: constraint.path, minimum: constraint.minimum, maximum: constraint.maximum, pattern: 'repeated_characters' })
+      scalableInputs.push({ path: constraint.path, minimum: constraint.minimum, maximum: constraint.maximum, sampleLength: sampleValue.length, pattern: 'repeated_characters' })
       continue
     }
     if (!Array.isArray(sampleValue)) continue
     const values = sampleValue as unknown[]
     if (!values.every((item) => typeof item === 'number' && Number.isFinite(item))) continue
-    scalableInputs.push({ path: constraint.path, minimum: constraint.minimum, maximum: constraint.maximum, pattern: 'ascending' })
+    scalableInputs.push({ path: constraint.path, minimum: constraint.minimum, maximum: constraint.maximum, sampleLength: values.length, pattern: 'ascending' })
   }
-  if (scalableInputs.length !== 1) return null
+  if (scalableInputs.length === 0) return null
 
-  const { path, minimum, maximum, pattern } = scalableInputs[0]
-  const low = Math.max(1, Number.isInteger(minimum) ? Number(minimum) : 1)
+  scalableInputs.sort((left, right) => {
+    const leftIndex = Number(/\[(\d+)\]/.exec(left.path)?.[1] ?? -1)
+    const rightIndex = Number(/\[(\d+)\]/.exec(right.path)?.[1] ?? -1)
+    return leftIndex - rightIndex
+  })
+  const { path, minimum, maximum, sampleLength, pattern } = scalableInputs[scalableInputs.length - 1]
+  const low = Math.max(1, Number.isInteger(minimum) ? Number(minimum) : 1, sampleLength)
   const high = Math.min(32, Number.isInteger(maximum) ? Number(maximum) : 32)
   if (high - low < 3) return null
   const sizes = Array.from({ length: 4 }, (_, index) => Math.round(low + (high - low) * index / 3))

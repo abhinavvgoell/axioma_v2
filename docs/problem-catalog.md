@@ -44,7 +44,8 @@ then fills remaining slots in question-ID order. The catalog contains 48 Tree-ta
 contain 20 retained cases; the remaining packs contain 5 to 19. With the constraint parser, 612 of
 the current 1,000 packs have at least one retained machine-checkable constraint, including 135
 with a supported string-length constraint. The UI can automatically prepare bounded growth checks
-for 364 packs with exactly one supported scalable input. All retained
+for 366 packs with at least one supported scalable input. If a pack has several, it scales only
+the highest-index eligible input and keeps the remaining first-example arguments fixed. All retained
 constraints were checked against every imported sample during this import. This balanced starter
 catalog still does not cover every LeetCode problem; custom judge object types remain unsupported.
 The import is local-only and is not committed to the repository; rerun the command above to generate
