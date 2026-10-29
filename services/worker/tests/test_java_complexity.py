@@ -260,6 +260,47 @@ def test_recognizes_java_adjacency_bfs_with_boolean_array_visited_guard() -> Non
     )
 
 
+def test_recognizes_java_adjacency_matrix_bfs_as_quadratic() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { int countReachable(boolean[][] adjacency, int start) { "
+        "int size = adjacency.length; boolean[] seen = new boolean[size]; "
+        "Queue<Integer> queue = new ArrayDeque<>(); seen[start] = true; "
+        "queue.add(start); int count = 0; while (!queue.isEmpty()) { "
+        "int node = queue.remove(); count++; "
+        "for (int neighbor = 0; neighbor < size; neighbor++) { "
+        "if (adjacency[node][neighbor] && !seen[neighbor]) { "
+        "seen[neighbor] = true; queue.add(neighbor); } } } return count; } }",
+        "Solution.countReachable",
+    )
+
+    assert estimate.method == "static_java_matrix_bfs"
+    assert estimate.estimate == "O(V^2)"
+    assert estimate.confidence == "low"
+    assert any(
+        signal["kind"] == "graph_matrix_bfs"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_java_matrix_bfs_without_visited_marking_stays_inconclusive() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { void traverse(boolean[][] adjacency, int start) { "
+        "int size = adjacency.length; boolean[] seen = new boolean[size]; "
+        "Queue<Integer> queue = new ArrayDeque<>(); queue.add(start); "
+        "while (!queue.isEmpty()) { int node = queue.remove(); "
+        "for (int neighbor = 0; neighbor < size; neighbor++) { "
+        "if (adjacency[node][neighbor] && !seen[neighbor]) { "
+        "queue.add(neighbor); } } } } }",
+        "Solution.traverse",
+    )
+
+    assert estimate.estimate == "unknown (data-dependent or incomplete loop)"
+    assert not any(
+        signal["kind"] == "graph_matrix_bfs"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
 def test_unmarked_java_array_visited_guard_does_not_claim_bfs_complexity() -> None:
     estimate = analyze_java_complexity(
         "class Solution { void solve(Map<Integer,List<Integer>> graph, int start) { "
