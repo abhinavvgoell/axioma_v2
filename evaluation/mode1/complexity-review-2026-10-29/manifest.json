@@ -1,0 +1,23 @@
+{
+  "dataset_id": "axioma-20261029-review-packet-01",
+  "status": "labels_frozen_before_analysis",
+  "reviewed_by": "user",
+  "review_date": "2026-10-29",
+  "partition": "calibration",
+  "cases": 5,
+  "languages": {
+    "python": 3,
+    "java": 2
+  },
+  "scored_dimension": "worst-case time complexity only",
+  "label_file": "gold-reviewed.jsonl",
+  "label_file_sha256": "582b4b577071f36b266825234203f7c56c2c513450d45b1ab7d553da6fd5063b",
+  "source_sha256_by_case": {
+    "axioma-20261029-01": "bb906aa31669d4da5d90b58db9878a60532ebc3bf6c1a2a6f71a5e594e1ede80",
+    "axioma-20261029-02": "e923b02ae07367cd625a528d0c7ba6d40719845bcab02f2f6c835d917cd79a5f",
+    "axioma-20261029-03": "ac9eb20cfbaef3690349eabf5cf6c54541cca332d8a4f7c500146fbce204f1cb",
+    "axioma-20261029-04": "40db2e64881fbb3ae3b961dafbe12196569dd8e0626e22aa263d59a93de2f953",
+    "axioma-20261029-05": "a8bbb31b23170976916b382390b7c26deac5614fc668ce30a63b6c9e4921368f"
+  },
+  "freshness_note": "This five-case packet is an initial diagnostic/calibration batch, not a final held-out evaluation. It has no untouched evaluation partition. Analyzer predictions have not been produced at label-freeze time."
+}

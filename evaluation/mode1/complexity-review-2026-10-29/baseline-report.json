@@ -1,0 +1,160 @@
+{
+  "evaluation": "five-case calibration diagnostic",
+  "analyzer_commit": "428654fffdd3d8a095faf76478728d2e73a60908",
+  "dataset_id": "axioma-20261029-review-packet-01",
+  "gold_sha256": "582b4b577071f36b266825234203f7c56c2c513450d45b1ab7d553da6fd5063b",
+  "partition": "calibration",
+  "case_count": 5,
+  "time_complexity": {
+    "correct": 5,
+    "eligible": 5,
+    "end_to_end_exact_accuracy": 1.0,
+    "answered": 5,
+    "coverage": 1.0,
+    "selective_exact_accuracy": 1.0
+  },
+  "space_complexity": "not scored; space notes were included in rationales but no separate space-label rubric was frozen",
+  "results": [
+    {
+      "id": "axioma-20261029-01",
+      "title": "Count values (Python)",
+      "language": "python",
+      "source_sha256": "bb906aa31669d4da5d90b58db9878a60532ebc3bf6c1a2a6f71a5e594e1ede80",
+      "expected_time": "O(n)",
+      "predicted_time": "O(n)",
+      "exact_match": true,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "estimate_raw": "O(n)",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+      "detected_signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 3
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "axioma-20261029-02",
+      "title": "Sort values (Java)",
+      "language": "java",
+      "source_sha256": "e923b02ae07367cd625a528d0c7ba6d40719845bcab02f2f6c835d917cd79a5f",
+      "expected_time": "O(n log n)",
+      "predicted_time": "O(n log n)",
+      "exact_match": true,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "estimate_raw": "O(n log n)",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A common sort call was detected. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "detected_signals": [
+        {
+          "kind": "sorting",
+          "label": "sort() call",
+          "line": null
+        },
+        {
+          "kind": "indexing",
+          "label": "Array or indexed access; concrete access cost is not inferred",
+          "line": null
+        }
+      ]
+    },
+    {
+      "id": "axioma-20261029-03",
+      "title": "Check every pair (Python)",
+      "language": "python",
+      "source_sha256": "ac9eb20cfbaef3690349eabf5cf6c54541cca332d8a4f7c500146fbce204f1cb",
+      "expected_time": "O(n^2)",
+      "predicted_time": "O(n^2)",
+      "exact_match": true,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "estimate_raw": "O(n^2)",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum data-dependent loop or comprehension nesting depth: 2. Loops with source-level constant bounds are not counted as input growth. Called helper functions are not included; this estimate is not a proof.",
+      "detected_signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 3
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "axioma-20261029-04",
+      "title": "Find a value (Java)",
+      "language": "java",
+      "source_sha256": "40db2e64881fbb3ae3b961dafbe12196569dd8e0626e22aa263d59a93de2f953",
+      "expected_time": "O(log n)",
+      "predicted_time": "O(log n)",
+      "exact_match": true,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "estimate_raw": "O(log n)",
+      "explanation": "Recognized a closed-interval search pattern: the midpoint is computed from both bounds and each bound is updated to midpoint ± 1. The remaining interval shrinks by a constant factor per iteration. This tokenizer-based recognition is a heuristic. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "detected_signals": [
+        {
+          "kind": "loop",
+          "label": "while loop",
+          "line": null
+        },
+        {
+          "kind": "indexing",
+          "label": "Array or indexed access; concrete access cost is not inferred",
+          "line": null
+        },
+        {
+          "kind": "binary_search",
+          "label": "Interval-halving loop updates both search bounds from the midpoint",
+          "line": null
+        }
+      ]
+    },
+    {
+      "id": "axioma-20261029-05",
+      "title": "Fixed clock scan (Python)",
+      "language": "python",
+      "source_sha256": "a8bbb31b23170976916b382390b7c26deac5614fc668ce30a63b6c9e4921368f",
+      "expected_time": "O(1)",
+      "predicted_time": "O(1)",
+      "exact_match": true,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "estimate_raw": "O(1) (loop-free target)",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. No loops or built-in sorting calls were detected in the target function. Called helper functions are not included; this estimate is not a proof.",
+      "detected_signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 3
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 4
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 6
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Only five cases from calibration; not held-out or broad evaluation evidence.",
+    "Only static parsing was run; submitted programs were not executed.",
+    "Worst-case time only was scored.",
+    "No meaningful family-level breakdown at this sample size."
+  ]
+}
