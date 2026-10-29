@@ -1,0 +1,34 @@
+{
+  "dataset_id": "axioma-20261029-review-packet-03",
+  "status": "awaiting_human_labels",
+  "partition": "calibration",
+  "case_count": 5,
+  "languages": {
+    "python": 3,
+    "java": 2
+  },
+  "families": [
+    "stack",
+    "two_pointers",
+    "backtracking",
+    "graph_matrix_bfs",
+    "dynamic_programming"
+  ],
+  "case_file": "review-set-03.jsonl",
+  "case_file_sha256": "17c96c526b54f1f7ef21e5cefdc3db21d31dc41c9feb285c00908734fccfb3c7",
+  "packet_file": "packet-03.md",
+  "case_source_sha256": {
+    "axioma-20261029-11": "94c63276aed4e13d7c9de6ac06aa5cbf78384ebf8cdded2af7ad8a4ad2ae7538",
+    "axioma-20261029-12": "1fbe7b671ff6022567df5bdf633bf4f1636ba4963f92232d36cc2f977dba4d22",
+    "axioma-20261029-13": "fff882938a6c77ceb9e31ab4946216c9493dc1ff1216215e8eebced77e41dd50",
+    "axioma-20261029-14": "c9802e17e6ad29f71a7c99686537959f95f027f6b2f36dabd247a9b23e306380",
+    "axioma-20261029-15": "ebe1b91c79c6dabd9a2833244b578aa1afefbdc33f3542ee3bb2ded954297edb"
+  },
+  "analyzer_run": "none",
+  "freshness_note": "Axioma has not analyzed these cases. Human labels and rationales must be supplied and frozen first. These are calibration cases, not untouched holdout data.",
+  "reviewed_by": null,
+  "review_date": null,
+  "label_file": "gold-reviewed-03.jsonl",
+  "label_file_sha256": null,
+  "scored_dimension": "worst-case time complexity"
+}
