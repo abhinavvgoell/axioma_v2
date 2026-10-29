@@ -497,8 +497,27 @@ def _is_adjacency_list_bfs(tokens: list[str], spans: list[tuple[int, int]]) -> b
                     ),
                     None,
                 )
+                visited_array_name = next(
+                    (
+                        guard[index - 2]
+                        for index in range(3, len(guard) - 1)
+                        if guard[index - 3] == "!"
+                        and guard[index - 1] == "["
+                        and guard[index] == neighbor
+                        and guard[index + 1] == "]"
+                    ),
+                    None,
+                )
+                array_guard_marks_visited = (
+                    visited_array_name is not None
+                    and any(
+                        body[index : index + 6]
+                        == [visited_array_name, "[", neighbor, "]", "=", "true"]
+                        for index in range(len(body) - 5)
+                    )
+                )
                 if (
-                    visited_name is not None
+                    (visited_name is not None or array_guard_marks_visited)
                     and _has_method_call(body, queue_name, {"add", "offer", "addLast"}, neighbor)
                 ):
                     return True
@@ -693,9 +712,9 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         traversal = "recursive traversal" if graph_dfs else "queue-based traversal"
         work_unit = "visited once" if graph_dfs else "enqueued once"
         explanation = (
-            f"Recognized {traversal} over adjacency lists with a visited-set guard. Assuming "
+            f"Recognized {traversal} over adjacency lists with a visited-state guard. Assuming "
             f"each vertex is {work_unit} and each adjacency entry is scanned once, the work is "
-            "O(V + E). This assumes constant-time visited-set operations; the syntax check is a heuristic."
+            "O(V + E). Visited checks must be constant-time; the syntax match is a heuristic."
         )
     elif tree_recursion:
         method = "static_java_tree_recursion"

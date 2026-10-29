@@ -154,6 +154,39 @@ def test_unvisited_java_adjacency_queue_loop_remains_unknown() -> None:
     assert estimate.estimate == "unknown (data-dependent or incomplete loop)"
 
 
+def test_recognizes_java_adjacency_bfs_with_boolean_array_visited_guard() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { int count(Map<Integer,List<Integer>> graph, int start) { "
+        "boolean[] seen = new boolean[graph.size()]; Queue<Integer> queue = new ArrayDeque<>(); "
+        "seen[start] = true; queue.add(start); while (!queue.isEmpty()) { "
+        "int node = queue.remove(); for (int neighbor : graph.get(node)) { "
+        "if (!seen[neighbor]) { seen[neighbor] = true; queue.add(neighbor); } } } "
+        "return 0; } }",
+        "Solution.count",
+    )
+
+    assert estimate.method == "static_java_graph_bfs"
+    assert estimate.estimate == "O(V + E)"
+    assert estimate.confidence == "low"
+    assert any(
+        signal["kind"] == "graph_bfs"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_unmarked_java_array_visited_guard_does_not_claim_bfs_complexity() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { void solve(Map<Integer,List<Integer>> graph, int start) { "
+        "boolean[] seen = new boolean[graph.size()]; Queue<Integer> queue = new ArrayDeque<>(); "
+        "queue.add(start); while (!queue.isEmpty()) { int node = queue.remove(); "
+        "for (int neighbor : graph.get(node)) { if (!seen[neighbor]) { "
+        "queue.add(neighbor); } } } } }",
+        "Solution.solve",
+    )
+
+    assert estimate.estimate == "unknown (data-dependent or incomplete loop)"
+
+
 def test_recognizes_java_recursive_adjacency_list_dfs() -> None:
     estimate = analyze_java_complexity(
         "class Solution { void dfs(int node, Map<Integer,List<Integer>> graph, "

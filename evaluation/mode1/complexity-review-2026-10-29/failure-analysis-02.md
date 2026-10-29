@@ -19,6 +19,6 @@ These are two useful failure examples, not evidence of broad Java or algorithm-f
 
 The insertion-sort failure category has since been addressed by a narrow Java structural recognizer for an outer array pass plus a backward, element-shifting inner loop. A synthetic positive fixture predicts `O(n^2)` and a near-miss backward loop remains inconclusive. The pre-change baseline above is preserved; the five-case packet was not rescored after this change and must not be described as an untouched holdout.
 
-The array-backed visited-state BFS gap remains open. Its next implementation should recognize the `boolean[]` visited-guard form with positive and near-miss tests. Any broader performance claim requires a fresh, untouched evaluation packet.
+The array-backed visited-state BFS gap has since been addressed by extending the existing adjacency-list BFS recognizer to accept `if (!seen[neighbor]) { seen[neighbor] = true; queue.add(neighbor); }`. A synthetic positive fixture predicts `O(V + E)`; a near-miss that enqueues without marking the neighbor remains inconclusive. The five-case packet was not rescored after this change. Any broader performance claim requires a fresh, untouched evaluation packet.
 
 The follow-up changed only the Java static analyzer, its regression tests, and this evaluation note. No catalog, database, or API schema changes were made.
