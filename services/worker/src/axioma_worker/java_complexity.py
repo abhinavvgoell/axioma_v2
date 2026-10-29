@@ -284,6 +284,97 @@ def _is_binary_search_loop(tokens: list[str], spans: list[tuple[int, int]]) -> b
     return False
 
 
+def _is_insertion_sort_shift(tokens: list[str], spans: list[tuple[int, int]]) -> bool:
+    """Recognize a nested insertion-sort shift loop with a decreasing array index."""
+    for outer_start, outer_end in spans:
+        if tokens[outer_start] != "for":
+            continue
+        outer_header = _loop_header(tokens, outer_start)
+        if outer_header is None:
+            continue
+        header_open, header_close = outer_header
+        header = tokens[header_open + 1 : header_close]
+        semicolons = [i for i, token in enumerate(header) if token == ";"]
+        if len(semicolons) != 2:
+            continue
+        initializer = header[: semicolons[0]]
+        condition = header[semicolons[0] + 1 : semicolons[1]]
+        update = header[semicolons[1] + 1 :]
+        assignment = next(
+            (index for index, token in enumerate(initializer) if token == "="), None
+        )
+        if assignment is None or assignment < 1 or assignment + 1 >= len(initializer):
+            continue
+        outer_index = initializer[assignment - 1]
+        if not re.fullmatch(r"[A-Za-z_$][\w$]*", outer_index):
+            continue
+        if not any(
+            condition[index : index + 2] == [outer_index, "<"]
+            and "length" in condition[index + 2 :]
+            for index in range(len(condition) - 1)
+        ):
+            continue
+        if not (outer_index in update and ("++" in update or "+=" in update)):
+            continue
+
+        for inner_start, inner_end in spans:
+            if not (
+                outer_start < inner_start < inner_end <= outer_end
+                and tokens[inner_start] == "while"
+            ):
+                continue
+            inner_header = _loop_header(tokens, inner_start)
+            if inner_header is None:
+                continue
+            condition_open, condition_close = inner_header
+            inner_condition = tokens[condition_open + 1 : condition_close]
+            inner_index = next(
+                (
+                    inner_condition[index]
+                    for index in range(len(inner_condition) - 2)
+                    if inner_condition[index + 1 : index + 3] == [">=", "0"]
+                    or inner_condition[index + 1 : index + 3] == [">", "-1"]
+                ),
+                None,
+            )
+            if inner_index is None:
+                continue
+
+            # The inner pointer must be initialized from the outer index just before
+            # the while-loop, as in `j = i - 1`.
+            before_while = tokens[outer_start + 1 : inner_start]
+            pointer_initialized = any(
+                before_while[index : index + 5]
+                == [inner_index, "=", outer_index, "-", "1"]
+                for index in range(len(before_while) - 4)
+            )
+            if not pointer_initialized:
+                continue
+
+            body_open = condition_close + 1
+            if body_open >= inner_end or tokens[body_open] != "{":
+                continue
+            body = tokens[body_open + 1 : inner_end]
+            shift_assignment = any(
+                len(body[index : index + 12]) == 12
+                and body[index + 1] == "["
+                and body[index + 2] == inner_index
+                and body[index + 3 : index + 6] == ["+", "1", "]"]
+                and body[index + 6] == "="
+                and body[index + 7] == body[index]
+                and body[index + 8 : index + 11] == ["[", inner_index, "]"]
+                for index in range(len(body))
+            )
+            pointer_decrements = any(
+                body[index : index + 2] in ([inner_index, "--"], ["--", inner_index])
+                or body[index : index + 3] == [inner_index, "-=", "1"]
+                for index in range(len(body))
+            )
+            if shift_assignment and pointer_decrements:
+                return True
+    return False
+
+
 def _is_tree_recursive_walk(tokens: list[str], method_name: str) -> bool:
     """Recognize direct recursion over one or both child links of a tree node."""
     recursive_children: list[tuple[str, str]] = []
@@ -530,6 +621,7 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     )
     has_while = any(token == "while" for token in body)
     binary_search = _is_binary_search_loop(body, spans)
+    insertion_sort_shift = _is_insertion_sort_shift(body, spans)
     tree_recursion = not spans and recursive and _is_tree_recursive_walk(body, parts[1])
     graph_bfs = not recursive and _is_adjacency_list_bfs(body, spans)
     graph_dfs = recursive and _is_adjacency_list_dfs(body, spans, parts[1])
@@ -587,6 +679,12 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "label": "Queue traversal over adjacency lists with a visited guard",
             "line": None,
         })
+    if insertion_sort_shift:
+        signals.append({
+            "kind": "insertion_sort_shift",
+            "label": "Nested shifting loop moves an indexed element left one position at a time",
+            "line": None,
+        })
 
     amortized_forward_scan = _amortized_forward_scan(body, spans)
     if graph_bfs or graph_dfs:
@@ -624,6 +722,14 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "Recognized a closed-interval search pattern: the midpoint is computed from both "
             "bounds and each bound is updated to midpoint ± 1. The remaining interval shrinks "
             "by a constant factor per iteration. This tokenizer-based recognition is a heuristic."
+        )
+    elif insertion_sort_shift:
+        method = "static_java_insertion_sort_shift"
+        estimate = "O(n^2)"
+        explanation = (
+            "Recognized an outer pass over the array and an inner backward shift that can move "
+            "each element across the preceding prefix. In the worst case the shifts sum to "
+            "1 + 2 + ... + (n - 1), giving O(n^2). This structural pattern match is a heuristic."
         )
     elif has_while or incomplete_loop:
         estimate = "unknown (data-dependent or incomplete loop)"

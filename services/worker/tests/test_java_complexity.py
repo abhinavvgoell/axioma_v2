@@ -38,6 +38,35 @@ def test_java_code_analysis_exposes_while_loop_uncertainty() -> None:
     assert estimate.estimate == "unknown (data-dependent or incomplete loop)"
 
 
+def test_recognizes_nested_java_insertion_sort_shift_as_quadratic() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { void sort(int[] data) { "
+        "for (int i = 1; i < data.length; i++) { int value = data[i]; "
+        "int j = i - 1; while (j >= 0 && data[j] > value) { "
+        "data[j + 1] = data[j]; j--; } data[j + 1] = value; } } }",
+        "Solution.sort",
+    )
+
+    assert estimate.method == "static_java_insertion_sort_shift"
+    assert estimate.estimate == "O(n^2)"
+    assert estimate.confidence == "low"
+    assert any(
+        signal["kind"] == "insertion_sort_shift"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_does_not_classify_arbitrary_backward_while_loop_as_insertion_sort() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { void solve(int[] data) { "
+        "for (int i = 1; i < data.length; i++) { int j = i - 1; "
+        "while (j >= 0 && data[j] > 0) { j--; } } } }",
+        "Solution.solve",
+    )
+
+    assert estimate.estimate == "unknown (data-dependent or incomplete loop)"
+
+
 def test_ignores_loop_words_in_comments_and_strings() -> None:
     estimate = analyze_java_complexity(
         'class Solution { void solve() { String note = "for (;;)"; /* while (x) {} */ } }',
