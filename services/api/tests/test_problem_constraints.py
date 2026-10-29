@@ -29,6 +29,20 @@ def test_parses_named_argument_ranges_and_powers_of_ten() -> None:
     ]
 
 
+def test_parses_multiples_of_powers_for_string_and_array_lengths() -> None:
+    constraints = parse_problem_constraints(
+        "Constraints:\n"
+        "- 0 <= s.length <= 5 * 104\n"
+        "- 1 <= nums.length <= 2 * 10^5\n",
+        ["s", "nums"],
+    )
+
+    assert [(item.path, item.minimum, item.maximum) for item in constraints] == [
+        ("args[0].length", 0, 50_000),
+        ("args[1].length", 1, 200_000),
+    ]
+
+
 def test_only_parses_ranges_after_constraints_heading_and_known_arguments() -> None:
     constraints = parse_problem_constraints(
         "1 <= count <= 10\nConstraints:\n"

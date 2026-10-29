@@ -5,7 +5,7 @@ import re
 from axioma_api.contracts import ConstraintRange
 
 
-_BOUND = r"-?\d+(?:\^\d+)?"
+_BOUND = r"-?\d+(?:\s*\*\s*\d+)?(?:\^\d+)?"
 _RANGE = re.compile(
     rf"^\s*(?:[-*•]\s*)?(?P<minimum>{_BOUND})\s*<=\s*"
     rf"(?P<name>[A-Za-z_]\w*(?:\.length)?)\s*<=\s*(?P<maximum>{_BOUND})\s*$",
@@ -20,13 +20,26 @@ def _number(source: str) -> int | None:
     sign = -1 if source.startswith("-") else 1
     unsigned = source[1:] if sign < 0 else source
     if "^" in unsigned:
-        base_text, exponent_text = unsigned.split("^", maxsplit=1)
-        if len(base_text) > 9 or len(exponent_text) > 2:
+        coefficient_text, power_text = unsigned.split("^", maxsplit=1)
+        if "*" in coefficient_text:
+            coefficient_text, base_text = coefficient_text.split("*", maxsplit=1)
+            coefficient = int(coefficient_text.strip())
+        else:
+            base_text = coefficient_text
+            coefficient = 1
+        base_text = base_text.strip()
+        if len(base_text) > 9 or len(power_text) > 2:
             return None
-        base, exponent = int(base_text), int(exponent_text)
+        base, exponent = int(base_text), int(power_text)
         if exponent > 64:
             return None
-        result = base**exponent
+        result = coefficient * base**exponent
+    elif "*" in unsigned:
+        left_text, right_text = unsigned.split("*", maxsplit=1)
+        left, right = _number(left_text.strip()), _number(right_text.strip())
+        if left is None or right is None:
+            return None
+        result = left * right
     elif re.fullmatch(r"10[3-9]", unsigned):
         # The pinned plain-text dataset drops the superscript marker in values
         # such as 10^4, leaving 104. Treat only this common LeetCode form as a

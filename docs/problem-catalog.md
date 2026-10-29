@@ -22,9 +22,10 @@ at least four. The local catalog also keeps each source problem description so A
 title-less prompts without calling an AI service. It extracts simple numeric bounds for scalar
 parameters and collection lengths from the `Constraints` section, using the starter method's
 argument order. A range is retained only when all imported examples satisfy it. The pinned text
-data sometimes flattens a superscript such as `10^4` to `104`; the importer recognizes this form
-for `10^3` through `10^9`. It skips element-wise, relational, ambiguous, unsupported, or
-sample-conflicting ranges rather than guessing. This is not a complete constraint parser.
+data sometimes flattens a superscript such as `10^4` to `104`, including multipliers such as
+`5 * 10^4` becoming `5 * 104`; the importer recognizes these forms for powers 10^3 through 10^9.
+It skips element-wise, relational, ambiguous, unsupported, or sample-conflicting ranges rather
+than guessing. This is not a complete constraint parser.
 
 Matching first checks known aliases and exact title headings. It then compares meaningful words in
 the pasted prompt with the imported descriptions. Short or ambiguous prompts are left unrecognized
@@ -40,8 +41,10 @@ compatible dataset problems:
 210 Easy, 395 Medium, and 395 Hard. Selection cycles through core DSA topics and difficulty levels,
 then fills remaining slots in question-ID order. The catalog contains 48 Tree-tagged, 103 Graph-tagged,
 223 Dynamic Programming-tagged, and 128 Breadth-First Search-tagged packs. Of the 1,000 packs, 977
-contain 20 retained cases; the remaining packs contain 5 to 19. With the constraint parser, 534 of
-the current 1,000 packs have at least one retained machine-checkable constraint. All retained
+contain 20 retained cases; the remaining packs contain 5 to 19. With the constraint parser, 612 of
+the current 1,000 packs have at least one retained machine-checkable constraint, including 135
+with a supported string-length constraint. The UI can automatically prepare bounded growth checks
+for 364 packs with exactly one supported scalable input. All retained
 constraints were checked against every imported sample during this import. This balanced starter
 catalog still does not cover every LeetCode problem; custom judge object types remain unsupported.
 The import is local-only and is not committed to the repository; rerun the command above to generate
