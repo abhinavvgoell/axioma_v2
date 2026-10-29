@@ -1,7 +1,9 @@
 # Mode 1 test and benchmark evidence audit
 
-Date: 2026-10-29  
-Scope: current implementation at `0494e3c` (Java adjacency-matrix BFS complexity rule).  
+Date: 2026-10-29
+
+Scope: current implementation at `0494e3c` (Java adjacency-matrix BFS complexity rule).
+
 Purpose: describe the evidence the existing workflow supports; this audit does not change analyzer behavior, scoring thresholds, or evaluation labels.
 
 ## Findings
