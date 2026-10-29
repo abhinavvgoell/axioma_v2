@@ -1,0 +1,664 @@
+{
+  "analyzer_commit": "28ca4d3e441aadb8a215c6b608d353b1f639be99",
+  "cases": [
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "python",
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 1,
+          "maximum_data_dependent_loop_nesting": 1,
+          "maximum_loop_nesting": 1,
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 3
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 4
+            }
+          ]
+        }
+      },
+      "estimate": "O(n)",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+      "id": "axioma-20261029-01",
+      "language": "python",
+      "method": "static_ast_loop_depth",
+      "methods_disagree": false,
+      "normalized_estimate": "O(n)",
+      "source_sha256": "bb906aa31669d4da5d90b58db9878a60532ebc3bf6c1a2a6f71a5e594e1ede80"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "java",
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 0,
+          "maximum_loop_nesting": 0,
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "sorting",
+              "label": "sort() call",
+              "line": null
+            },
+            {
+              "kind": "indexing",
+              "label": "Array or indexed access; concrete access cost is not inferred",
+              "line": null
+            }
+          ]
+        }
+      },
+      "estimate": "O(n log n)",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A common sort call was detected. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "id": "axioma-20261029-02",
+      "language": "java",
+      "method": "static_java_token_loop_depth",
+      "methods_disagree": false,
+      "normalized_estimate": "O(n log n)",
+      "source_sha256": "e923b02ae07367cd625a528d0c7ba6d40719845bcab02f2f6c835d917cd79a5f"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "python",
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 2,
+          "maximum_data_dependent_loop_nesting": 2,
+          "maximum_loop_nesting": 2,
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 3
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 4
+            }
+          ]
+        }
+      },
+      "estimate": "O(n^2)",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum data-dependent loop or comprehension nesting depth: 2. Loops with source-level constant bounds are not counted as input growth. Called helper functions are not included; this estimate is not a proof.",
+      "id": "axioma-20261029-03",
+      "language": "python",
+      "method": "static_ast_loop_depth",
+      "methods_disagree": false,
+      "normalized_estimate": "O(n^2)",
+      "source_sha256": "ac9eb20cfbaef3690349eabf5cf6c54541cca332d8a4f7c500146fbce204f1cb"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "java",
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 1,
+          "maximum_loop_nesting": 1,
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "indexing",
+              "label": "Array or indexed access; concrete access cost is not inferred",
+              "line": null
+            },
+            {
+              "kind": "binary_search",
+              "label": "Interval-halving loop updates both search bounds from the midpoint",
+              "line": null
+            }
+          ]
+        }
+      },
+      "estimate": "O(log n)",
+      "explanation": "Recognized a closed-interval search pattern: the midpoint is computed from both bounds and each bound is updated to midpoint ± 1. The remaining interval shrinks by a constant factor per iteration. This tokenizer-based recognition is a heuristic. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "id": "axioma-20261029-04",
+      "language": "java",
+      "method": "static_java_token_loop_depth",
+      "methods_disagree": false,
+      "normalized_estimate": "O(log n)",
+      "source_sha256": "40db2e64881fbb3ae3b961dafbe12196569dd8e0626e22aa263d59a93de2f953"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "python",
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 2,
+          "maximum_data_dependent_loop_nesting": 0,
+          "maximum_loop_nesting": 2,
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 3
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 4
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 6
+            }
+          ]
+        }
+      },
+      "estimate": "O(1) (loop-free target)",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. No loops or built-in sorting calls were detected in the target function. Called helper functions are not included; this estimate is not a proof.",
+      "id": "axioma-20261029-05",
+      "language": "python",
+      "method": "static_ast_loop_depth",
+      "methods_disagree": false,
+      "normalized_estimate": "O(1)",
+      "source_sha256": "a8bbb31b23170976916b382390b7c26deac5614fc668ce30a63b6c9e4921368f"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "python",
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 1,
+          "maximum_data_dependent_loop_nesting": 1,
+          "maximum_loop_nesting": 1,
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 5
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 6
+            }
+          ]
+        }
+      },
+      "estimate": "O(n)",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+      "id": "axioma-20261029-06",
+      "language": "python",
+      "method": "static_ast_loop_depth",
+      "methods_disagree": false,
+      "normalized_estimate": "O(n)",
+      "source_sha256": "3afbfc634c1a15810edfb1d6051c4ecacd5f63507f270d7f69b171b06b5d12d4"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "java",
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "indexing",
+              "label": "Array or indexed access; concrete access cost is not inferred",
+              "line": null
+            },
+            {
+              "kind": "insertion_sort_shift",
+              "label": "Nested shifting loop moves an indexed element left one position at a time",
+              "line": null
+            }
+          ]
+        }
+      },
+      "estimate": "O(n^2)",
+      "explanation": "Recognized an outer pass over the array and an inner backward shift that can move each element across the preceding prefix. In the worst case the shifts sum to 1 + 2 + ... + (n - 1), giving O(n^2). This structural pattern match is a heuristic. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "id": "axioma-20261029-07",
+      "language": "java",
+      "method": "static_java_insertion_sort_shift",
+      "methods_disagree": false,
+      "normalized_estimate": "O(n^2)",
+      "source_sha256": "a4a9149c363f0822d040b3e9ebb9d82ba7b27ce3dedf65e34811168a534e2133"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "python",
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 2,
+          "maximum_data_dependent_loop_nesting": 2,
+          "maximum_loop_nesting": 2,
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 5
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 6
+            },
+            {
+              "kind": "iterable_consumer",
+              "label": "max() consumes an iterable",
+              "line": 9
+            }
+          ]
+        }
+      },
+      "estimate": "O(n^2)",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum data-dependent loop or comprehension nesting depth: 2. Loops with source-level constant bounds are not counted as input growth. Called helper functions are not included; this estimate is not a proof.",
+      "id": "axioma-20261029-08",
+      "language": "python",
+      "method": "static_ast_loop_depth",
+      "methods_disagree": false,
+      "normalized_estimate": "O(n^2)",
+      "source_sha256": "7ab2e20123e6cccf1776c2d59374d8f8cd2e93cee76938b3bca6bb940860fec9"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "java",
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".remove() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".get() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "indexing",
+              "label": "Array or indexed access; concrete access cost is not inferred",
+              "line": null
+            },
+            {
+              "kind": "graph_bfs",
+              "label": "Queue traversal over adjacency lists with a visited guard",
+              "line": null
+            }
+          ]
+        }
+      },
+      "estimate": "O(V + E)",
+      "explanation": "Recognized queue-based traversal over adjacency lists with a visited-state guard. Assuming each vertex is enqueued once and each adjacency entry is scanned once, the work is O(V + E). Visited checks must be constant-time; the syntax match is a heuristic. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "id": "axioma-20261029-09",
+      "language": "java",
+      "method": "static_java_graph_bfs",
+      "methods_disagree": false,
+      "normalized_estimate": "O(n)",
+      "source_sha256": "8a157ea058d04dfe6925ed5679f70a0cc11532bb6cf79f4c173c39aba18da381"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "java",
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 0,
+          "maximum_loop_nesting": 0,
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "recursion",
+              "label": "Direct self-call; tree-child traversal recognized",
+              "line": null
+            },
+            {
+              "kind": "tree_recursion",
+              "label": "Recursion follows a left or right tree-child link",
+              "line": null
+            }
+          ]
+        }
+      },
+      "estimate": "O(n)",
+      "explanation": "Recognized direct recursion over a tree node's left/right child link. Assuming the input is a tree with no cycles or shared subtrees, each visited node is processed once, for O(n) work. The syntax check cannot establish that input structure. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "id": "axioma-20261029-10",
+      "language": "java",
+      "method": "static_java_tree_recursion",
+      "methods_disagree": false,
+      "normalized_estimate": "O(n)",
+      "source_sha256": "a32f6ad47e15de0fb989d2099a0eee421bf6cb32c7bc508b72985a8290db788f"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "python",
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 1,
+          "maximum_data_dependent_loop_nesting": 1,
+          "maximum_loop_nesting": 1,
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 4
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 5
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 6
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 9
+            }
+          ]
+        }
+      },
+      "estimate": "O(n)",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+      "id": "axioma-20261029-11",
+      "language": "python",
+      "method": "static_ast_loop_depth",
+      "methods_disagree": false,
+      "normalized_estimate": "O(n)",
+      "source_sha256": "94c63276aed4e13d7c9de6ac06aa5cbf78384ebf8cdded2af7ad8a4ad2ae7538"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "java",
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 1,
+          "maximum_loop_nesting": 1,
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "inward_two_pointer_scan",
+              "label": "Two sequence bounds move inward by one step per loop iteration",
+              "line": null
+            }
+          ]
+        }
+      },
+      "estimate": "O(n)",
+      "explanation": "Recognized a single while-loop over a sequence-sized interval initialized from zero to its end, with the lower cursor incremented and upper cursor decremented once per continuing iteration. The interval shrinks by at least one each time, so the loop runs O(n) iterations, with constant work per iteration under the usual constant-time indexing assumption. This tokenizer-based pattern match is a heuristic. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "id": "axioma-20261029-12",
+      "language": "java",
+      "method": "static_java_inward_two_pointer_scan",
+      "methods_disagree": false,
+      "normalized_estimate": "O(n)",
+      "source_sha256": "1fbe7b671ff6022567df5bdf633bf4f1636ba4963f92232d36cc2f977dba4d22"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "python",
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 0,
+          "maximum_data_dependent_loop_nesting": 0,
+          "maximum_loop_nesting": 0,
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "binary_recursive_branching",
+              "label": "Two progressing recursive branches without memoization",
+              "line": 6
+            },
+            {
+              "kind": "recursion",
+              "label": "Direct self-call; recurrence is not solved",
+              "line": 6
+            },
+            {
+              "kind": "recursion",
+              "label": "Direct self-call; recurrence is not solved",
+              "line": 7
+            }
+          ]
+        }
+      },
+      "estimate": "O(2^n) (recursive branching heuristic)",
+      "explanation": "Recognized two progressing recursive branches without memoization. The number of paths can double at each input position, so this is conservatively reported as O(2^n). Called helper functions are not included; this estimate is not a proof.",
+      "id": "axioma-20261029-13",
+      "language": "python",
+      "method": "static_ast_binary_recursive_branching",
+      "methods_disagree": false,
+      "normalized_estimate": "O(2^n)",
+      "source_sha256": "fff882938a6c77ceb9e31ab4946216c9493dc1ff1216215e8eebced77e41dd50"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "java",
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".remove() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "indexing",
+              "label": "Array or indexed access; concrete access cost is not inferred",
+              "line": null
+            },
+            {
+              "kind": "graph_matrix_bfs",
+              "label": "Queue traversal scans a full adjacency-matrix row per visited vertex",
+              "line": null
+            }
+          ]
+        }
+      },
+      "estimate": "O(V^2)",
+      "explanation": "Recognized queue-based BFS over a square adjacency matrix. The visited array is marked before each neighbor is enqueued, so each vertex enters the queue at most once; processing each vertex scans V matrix entries. Assuming O(1) matrix, visited array, and queue operations, the total work is O(V^2). This tokenizer-based match is a heuristic. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "id": "axioma-20261029-14",
+      "language": "java",
+      "method": "static_java_matrix_bfs",
+      "methods_disagree": false,
+      "normalized_estimate": "O(n^2)",
+      "source_sha256": "c9802e17e6ad29f71a7c99686537959f95f027f6b2f36dabd247a9b23e306380"
+    },
+    {
+      "confidence": "low",
+      "details": {
+        "code_analysis": {
+          "language": "python",
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Recurrence relations and called helper functions are not analyzed."
+          ],
+          "loop_count": 3,
+          "maximum_data_dependent_loop_nesting": 2,
+          "maximum_loop_nesting": 2,
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "comprehension",
+              "label": "1-level comprehension",
+              "line": 3
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 4
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 5
+            }
+          ]
+        }
+      },
+      "estimate": "O(n^2)",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum data-dependent loop or comprehension nesting depth: 2. Loops with source-level constant bounds are not counted as input growth. Called helper functions are not included; this estimate is not a proof.",
+      "id": "axioma-20261029-15",
+      "language": "python",
+      "method": "static_ast_loop_depth",
+      "methods_disagree": false,
+      "normalized_estimate": "O(n^2)",
+      "source_sha256": "ebe1b91c79c6dabd9a2833244b578aa1afefbdc33f3542ee3bb2ded954297edb"
+    }
+  ],
+  "dataset_ids": [
+    "axioma-20261029-review-packet-01",
+    "axioma-20261029-review-packet-02",
+    "axioma-20261029-review-packet-03"
+  ],
+  "gold_sha256": "0a39a213456fe19bbf516199d1be6745e286898148d03c07d678e7b10d87ad66",
+  "normalization": "O(V + E) => O(n) and O(V^2) => O(n^2) for these frozen labels",
+  "partition": "calibration",
+  "python_version": "3.14.3",
+  "run_at_utc": "2026-10-29T15:39:14.433070+00:00",
+  "scope": "time complexity only; post-fix calibration replay; not held-out evaluation"
+}

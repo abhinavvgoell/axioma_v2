@@ -26,8 +26,8 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 - Separate worker process with queue leases, recovery for expired work, and Java/Python execution adapters.
 - Mode 1 problem validation, constraint-aware generated inputs, repeatable adversarial complexity benchmarks, and Java/Python sample harnesses for function and stdin/stdout problems.
 - Evidence claims, reconciled test counts, categorical confidence, complexity result structure, and ordered verification-gate schema.
-- Low-confidence static complexity heuristics for Python and Java with visible detected code signals; optional Python line-event/opcode-count and Java JVM wall-time growth fitting with constraint-scale context. Python recognizes guarded adjacency-list BFS/DFS and tree walks; Java recognizes guarded adjacency-list BFS/DFS, recursive tree-child walks, and binary search. These are syntax patterns, not exhaustive algorithm recognition or proof of complexity.
-- Reproducible Mode 1 evaluators for complexity-class estimates, test detection, optimization preservation/paired measurements, and observed job latency. Complexity and detection reports include uncertainty intervals; confidence calibration requires solution-ID-separated partitions. No gold data or measured latency/performance claim is included yet.
+- Low-confidence static complexity heuristics for Python and Java with visible detected code signals; optional Python line-event/opcode-count and Java JVM wall-time growth fitting with constraint-scale context. Recognized patterns include guarded graph traversal, tree walks, binary search, and selected scan/stack shapes. These syntax patterns are not exhaustive algorithm recognition or proof of complexity.
+- Reproducible Mode 1 evaluators for complexity-class estimates, test detection, optimization preservation/paired measurements, and observed job latency. Complexity and detection reports include uncertainty intervals; confidence calibration requires solution-ID-separated partitions. The latest post-fix replay matches 15/15 reviewed calibration cases; it is not a held-out accuracy claim and remains below the evaluator's 50-solution minimum. See [the release-candidate validation record](docs/release-candidate-v1.md) and [the calibration report](evaluation/mode1/complexity-review-2026-10-29/evaluation-calibration-current-2026-10-29.json).
 - Optional Python and Java reference-guided differential checks, with an optional second independent implementation to catch disagreement, capped exhaustive checks for small positional integer domains, and bounded Python AST or Java operator mutation testing. References are checked against the examples first, but agreement does not prove correctness.
 - User-provided Python and Java optimization candidates are checked against declared outputs and, when available, user-reference generated cases. Optional measurements are kept separate: Python compares source-line and opcode events and reports a Python-traced peak-allocation estimate; Java compares warmed JVM reflective wall time and heap-pool peak-increase estimates. All measurements are low confidence and have documented limitations.
 - User-supplied Python and Java property predicates run against examples and seeded generated inputs in the sandbox; predicates are gated on example checks and labeled low confidence.
@@ -44,7 +44,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 - The Docker sandbox runs locally on Windows Docker Desktop's Linux backend. All six Docker integration checks passed on 2026-10-20; the [hosted Linux CI run #27](https://github.com/abhinavvgoell/axioma/actions/runs/39783780658) passed for commit `3d8f7f6`.
 - Authentication, user accounts, hosted deployment, GitHub App, and VS Code extension do not exist yet.
 - No Mode 2 repository ingestion/repair engine, trained defect-risk model, or benchmark evaluation report exists yet.
-- Mode 1 does not have a general trusted oracle, broad optimization-proposal coverage, or a curated golden evaluation set. Proposal rules cover only a few exact patterns, not arbitrary code. Property checks use user-supplied predicates over generated inputs, not a shrinking property-testing framework.
+- Mode 1 does not have a general trusted oracle, broad optimization-proposal coverage, or an untouched post-fix complexity holdout. Calibration and historical review sets are not independent evidence for general accuracy. Proposal rules cover only a few exact patterns, not arbitrary code. Property checks use user-supplied predicates over generated inputs, not a shrinking property-testing framework.
 - There are no independently selected optimization-evaluation runs or measured component-latency report yet; the optimization evaluator is ready to score saved paired evidence without inventing results.
 - The Mode 1 dashboard is still incomplete: local topic summaries are descriptive and are not a validated skill model; there is no cross-device history, account-level data deletion, or cross-user complexity trend analysis. Recent history is local to one browser and does not add accounts or server-side user ownership.
 
@@ -54,12 +54,12 @@ Track Mode 1 requirements and Gate 1 evidence in [docs/mode1-readiness.md](docs/
 
 ## Run locally on Windows
 
-Use Python 3.13 or 3.14 and Git. Docker Desktop with Linux containers is needed to run the worker's sandbox. The API and its tests can run with SQLite without Docker.
+Use Python 3.13 or 3.14 and Git. The commands below use Python 3.14. Docker Desktop with Linux containers is needed to run the worker's sandbox. The API and its tests can run with SQLite without Docker.
 
 Create and install the local environment from the repository root:
 
 ```powershell
-py -3.13 -m venv services/api/.venv
+py -3.14 -m venv services/api/.venv
 services/api/.venv/Scripts/python -m pip install -r services/api/requirements.lock
 services/api/.venv/Scripts/python -m pip install -e services/api --no-deps
 services/api/.venv/Scripts/python -m pip install -e services/worker --no-deps
@@ -109,9 +109,9 @@ From `services/api`:
 .\.venv\Scripts\python -m pytest tests ..\worker\tests
 ```
 
-The separate gold-set evaluator is documented in [evaluation/mode1/README.md](evaluation/mode1/README.md). It will not produce meaningful project-level results until at least 50 solutions have been independently labeled.
+The separate gold-set evaluator is documented in [evaluation/mode1/README.md](evaluation/mode1/README.md). Its 50-solution marker is a minimum count check, not a guarantee of statistical sufficiency. The current 15-case replay uses calibration data and must not be presented as a final held-out score.
 
-Local verification on 2026-10-20: API tests (41 passed), worker tests including Docker integration (66 passed), evaluator tests (24 passed), Python lint, frontend lint, and frontend production build. End-to-end sample jobs passed in Java and Python for both function and stdin/stdout interfaces. These checks do not establish that imported third-party test packs are correct or equivalent to LeetCode hidden judge tests.
+Current local verification is recorded in [docs/release-candidate-v1.md](docs/release-candidate-v1.md), including the exact API/worker and evaluator totals, frontend tests/build, PostgreSQL migration and queue check, and six-scenario Docker demo. These checks do not establish that imported third-party test packs are correct or equivalent to LeetCode hidden judge tests.
 
 ## Contract guarantees
 
