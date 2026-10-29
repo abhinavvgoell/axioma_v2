@@ -409,7 +409,11 @@ def _fixed_iterable(node: ast.AST) -> bool:
         if node.func.id == "pairwise" and len(node.args) == 1:
             node = node.args[0]
     return isinstance(node, (ast.Tuple, ast.List, ast.Set)) and all(
-        isinstance(item, ast.Constant) for item in node.elts
+        isinstance(item, ast.Constant)
+        or isinstance(item, ast.UnaryOp)
+        and isinstance(item.op, (ast.USub, ast.UAdd, ast.Not))
+        and isinstance(item.operand, ast.Constant)
+        for item in node.elts
     )
 
 
@@ -1156,6 +1160,163 @@ def _binary_recursive_branch_line(
     return None
 
 
+def _divide_and_conquer_helper_line(
+    helpers: list[ast.FunctionDef | ast.AsyncFunctionDef],
+) -> int | None:
+    """Recognize one recursive call per branch when its search range is halved."""
+    for helper in helpers:
+        if _has_unbounded_cache(helper):
+            continue
+        calls = _recursive_call_nodes(helper)
+        if len(calls) < 2:
+            continue
+        # A conditional expression chooses one recursive call at runtime. Requiring
+        # both alternatives to call the helper avoids labeling branching recursion O(log n).
+        for node in ast.walk(helper):
+            if not isinstance(node, ast.IfExp):
+                continue
+            branch_calls = [
+                [
+                    call for call in ast.walk(branch)
+                    if isinstance(call, ast.Call)
+                    and isinstance(call.func, ast.Name)
+                    and call.func.id == helper.name
+                ]
+                for branch in (node.body, node.orelse)
+            ]
+            if not all(len(branch) == 1 for branch in branch_calls):
+                continue
+            if not all(
+                _recursive_call_nodes_in(branch[0], helper.name) == 1
+                for branch in branch_calls
+            ):
+                continue
+            calls_in_expression = [
+                call for call in calls if any(call is found for found in ast.walk(node))
+            ]
+            if len(calls_in_expression) != 2:
+                continue
+            if all(_halves_recursive_argument(helper, call) for call in calls_in_expression):
+                return min(call.lineno for call in calls_in_expression)
+    return None
+
+
+def _is_small_choice_name(function: ast.FunctionDef | ast.AsyncFunctionDef, name: str) -> bool:
+    """Check whether a loop-local name is selected from a literal small collection."""
+    for node in ast.walk(function):
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+        if not any(isinstance(target, ast.Name) and target.id == name for target in targets):
+            continue
+        value = node.value
+        if isinstance(value, (ast.List, ast.Tuple)) and len(value.elts) <= 10:
+            return True
+        if (
+            isinstance(value, ast.Subscript)
+            and isinstance(value.value, ast.Name)
+            and isinstance(value.value.ctx, ast.Load)
+        ):
+            collection_name = value.value.id
+            if any(
+                isinstance(candidate, (ast.Assign, ast.AnnAssign))
+                and isinstance(candidate.value, (ast.List, ast.Tuple))
+                and any(
+                    isinstance(target, ast.Name) and target.id == collection_name
+                    for target in (
+                        candidate.targets
+                        if isinstance(candidate, ast.Assign)
+                        else [candidate.target]
+                    )
+                )
+                for candidate in ast.walk(function)
+            ):
+                return True
+    return False
+
+
+def _recursive_call_nodes_in(node: ast.AST, helper_name: str) -> int:
+    return sum(
+        isinstance(child, ast.Call)
+        and isinstance(child.func, ast.Name)
+        and child.func.id == helper_name
+        for child in ast.walk(node)
+    )
+
+
+def _halves_recursive_argument(
+    helper: ast.FunctionDef | ast.AsyncFunctionDef, call: ast.Call
+) -> bool:
+    parameters = [arg.arg for arg in [*helper.args.posonlyargs, *helper.args.args]]
+    half_names = {
+        target.id
+        for node in ast.walk(helper)
+        if isinstance(node, ast.Assign)
+        and isinstance(node.value, ast.BinOp)
+        and isinstance(node.value.op, ast.FloorDiv)
+        and isinstance(node.value.left, ast.Name)
+        and node.value.left.id in parameters
+        and isinstance(node.value.right, ast.Constant)
+        and node.value.right.value == 2
+        for target in node.targets
+        if isinstance(target, ast.Name)
+    }
+    for argument in call.args:
+        if not isinstance(argument, ast.BinOp) or not isinstance(argument.op, ast.Sub):
+            continue
+        if not isinstance(argument.left, ast.Name) or argument.left.id not in parameters:
+            continue
+        if isinstance(argument.right, ast.Name) and argument.right.id in half_names:
+            return True
+        half = argument.right
+        if (isinstance(half, ast.BinOp) and isinstance(half.op, ast.FloorDiv)
+                and isinstance(half.right, ast.Constant) and half.right.value == 2):
+            return True
+    return any(
+        isinstance(argument, ast.BinOp)
+        and isinstance(argument.op, ast.FloorDiv)
+        and isinstance(argument.right, ast.Constant)
+        and argument.right.value == 2
+        for argument in call.args
+    )
+
+
+def _memoized_cartesian_growth_line(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> int | None:
+    """Recognize iterative Cartesian-product expansion used for combinations."""
+    for loop in (node for node in ast.walk(function) if isinstance(node, ast.For)):
+        for statement in loop.body:
+            if not isinstance(statement, (ast.Assign, ast.AnnAssign)):
+                continue
+            value = statement.value
+            target_names = {
+                target.id
+                for target in (
+                    statement.targets
+                    if isinstance(statement, ast.Assign)
+                    else [statement.target]
+                )
+                if isinstance(target, ast.Name)
+            }
+            if not isinstance(value, ast.ListComp) or len(value.generators) != 2:
+                continue
+            first, second = value.generators
+            if not (isinstance(first.iter, ast.Name) and first.iter.id in target_names):
+                continue
+            if not (
+                _fixed_iterable(second.iter)
+                or isinstance(second.iter, ast.Name)
+                and _is_small_choice_name(function, second.iter.id)
+            ):
+                continue
+            if not isinstance(value.elt, ast.BinOp) or not isinstance(value.elt.op, ast.Add):
+                continue
+            if isinstance(value.elt.left, ast.Name) and isinstance(value.elt.right, ast.Name):
+                return getattr(statement, "lineno", loop.lineno)
+    return None
+
+
 def _is_sieve_of_eratosthenes(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
     """Recognize the standard prime-marking loop whose stride is the current prime."""
     for outer in (node for node in ast.walk(function) if isinstance(node, ast.While)):
@@ -1336,6 +1497,89 @@ def _is_local_adjacency_list_dfs(function: ast.FunctionDef | ast.AsyncFunctionDe
     return None
 
 
+def _is_local_tree_adjacency_dfs(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize paired parent-guarded DFS passes over a locally built tree adjacency list."""
+    builders = [
+        loop for loop in ast.walk(function)
+        if isinstance(loop, ast.For)
+        and isinstance(loop.iter, ast.Name)
+        and isinstance(loop.target, (ast.Tuple, ast.List))
+        and len(loop.target.elts) == 2
+        and all(isinstance(item, ast.Name) for item in loop.target.elts)
+    ]
+    adjacency_names: set[str] = set()
+    for builder in builders:
+        edge_names = {item.id for item in builder.target.elts if isinstance(item, ast.Name)}
+        appends = [
+            node for node in ast.walk(builder)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "append"
+            and isinstance(node.func.value, ast.Subscript)
+            and isinstance(node.func.value.value, ast.Name)
+            and node.args
+            and isinstance(node.args[0], ast.Name)
+        ]
+        if len(appends) < 2:
+            continue
+        pairs = {
+            (call.func.value.value.id, call.func.value.slice.id, call.args[0].id)
+            for call in appends
+            if isinstance(call.func.value.slice, ast.Name)
+        }
+        if any(
+            first[0] == second[0]
+            and first[1] in edge_names and first[2] in edge_names
+            and second[1] in edge_names and second[2] in edge_names
+            and first[1] == second[2] and first[2] == second[1]
+            for first in pairs for second in pairs if first != second
+        ):
+            adjacency_names.update(pair[0] for pair in pairs)
+
+    matching_helpers = []
+    for helper in _local_recursive_helpers(function):
+        parameters = [arg.arg for arg in [*helper.args.posonlyargs, *helper.args.args]]
+        if len(parameters) < 2 or len(_recursive_call_nodes(helper)) != 1:
+            continue
+        node_name, parent_name = parameters[:2]
+        call = _recursive_call_nodes(helper)[0]
+        if len(call.args) < 2 or not (
+            isinstance(call.args[0], ast.Name) and isinstance(call.args[1], ast.Name)
+            and call.args[1].id == node_name
+        ):
+            continue
+        for loop in (node for node in ast.walk(helper) if isinstance(node, ast.For)):
+            if not (
+                isinstance(loop.target, ast.Name)
+                and isinstance(loop.iter, ast.Subscript)
+                and isinstance(loop.iter.value, ast.Name)
+                and loop.iter.value.id in adjacency_names
+                and isinstance(loop.iter.slice, ast.Name)
+                and loop.iter.slice.id == node_name
+                and loop.target.id == call.args[0].id
+            ):
+                continue
+            guarded = any(
+                isinstance(node, ast.If)
+                and isinstance(node.test, ast.Compare)
+                and isinstance(node.test.left, ast.Name)
+                and node.test.left.id == loop.target.id
+                and len(node.test.ops) == 1
+                and isinstance(node.test.ops[0], ast.NotEq)
+                and len(node.test.comparators) == 1
+                and isinstance(node.test.comparators[0], ast.Name)
+                and node.test.comparators[0].id == parent_name
+                and any(child is call for child in ast.walk(node))
+                for node in ast.walk(loop)
+            )
+            if guarded:
+                matching_helpers.append(call.lineno)
+                break
+    if len(matching_helpers) >= 2:
+        return min(matching_helpers)
+    return None
+
+
 def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     method = "static_ast_loop_depth"
     explanation = "Heuristic from the target function's loop nesting and built-in sorting calls."
@@ -1462,6 +1706,7 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     graph_bfs_line = _is_adjacency_list_bfs(function)
     graph_dfs_line = _is_adjacency_list_dfs(function)
     local_graph_dfs_line = _is_local_adjacency_list_dfs(function)
+    local_tree_dfs_line = _is_local_tree_adjacency_dfs(function)
     tree_recursion_line = _is_tree_recursive_walk(function)
     sort_two_pointer_line = _is_sort_then_two_pointer_scan(function)
     floyd_line = _is_floyd_cycle_detection(function)
@@ -1477,6 +1722,8 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     backtracking_line = _backtracking_helper_line(local_recursive_helpers)
     permutation_line = _permutation_backtracking_line(local_recursive_helpers)
     binary_branch_line = _binary_recursive_branch_line(local_recursive_helpers)
+    divide_conquer_line = _divide_and_conquer_helper_line(local_recursive_helpers)
+    cartesian_growth_line = _memoized_cartesian_growth_line(function)
     sieve_line = _is_sieve_of_eratosthenes(function)
     data_dependent_loop_nesting = max(
         _dynamic_loop_nesting(function), 1 if iterable_consumers else 0
@@ -1503,6 +1750,14 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "kind": "graph_dfs",
             "label": "Local recursive helper traverses adjacency lists with a visited guard",
             "line": local_graph_dfs_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if local_tree_dfs_line is not None:
+        method = "static_ast_tree_graph_dfs"
+        signals.append({
+            "kind": "tree_graph_dfs",
+            "label": "Paired parent-guarded recursive passes over an undirected adjacency list",
+            "line": local_tree_dfs_line,
         })
         signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
     if tree_recursion_line is not None:
@@ -1548,6 +1803,20 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "line": binary_branch_line,
         })
         signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if divide_conquer_line is not None:
+        signals.append({
+            "kind": "divide_and_conquer_recursion",
+            "label": "Recursive search range is halved along one selected branch",
+            "line": divide_conquer_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if cartesian_growth_line is not None:
+        signals.append({
+            "kind": "cartesian_growth",
+            "label": "Each input item expands the accumulated combination set",
+            "line": cartesian_growth_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
     if sieve_line is not None:
         signals.append({
             "kind": "sieve", "label": "Prime-marking loop starts at each square", "line": sieve_line
@@ -1588,14 +1857,24 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         if line is not None:
             signals.append({"kind": kind, "label": label, "line": line})
     signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
-    if graph_bfs_line is not None or graph_dfs_line is not None or local_graph_dfs_line is not None or kahn_line is not None:
+    if (graph_bfs_line is not None or graph_dfs_line is not None
+            or local_graph_dfs_line is not None or local_tree_dfs_line is not None
+            or kahn_line is not None):
         estimate = "O(V + E)"
-        explanation = (
+        if local_tree_dfs_line is not None:
+            explanation = (
+                "Recognized paired parent-guarded DFS passes over a bidirectionally built "
+                "adjacency list. Assuming the input is a tree, each node and edge is processed "
+                "a constant number of times, for O(V + E) work. The source pattern cannot prove "
+                "that the input graph is acyclic."
+            )
+        else:
+            explanation = (
             "Recognized a graph traversal over adjacency lists with a visited guard. Assuming "
             "each vertex is processed once and each adjacency entry is scanned once, the work is "
             "O(V + E). This assumes constant-time visited-set operations; the syntax check is "
             "a heuristic."
-        )
+            )
     elif tree_recursion_line is not None:
         estimate = "O(n)"
         explanation = (
@@ -1612,6 +1891,22 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             f"input-sized loop inside the helper. Assuming each index ranges over at most n values, "
             f"the state space is {estimate}. This low-confidence pattern does not analyze helper "
             "calls, state bounds, or cache behavior beyond the decorator."
+        )
+    elif cartesian_growth_line is not None:
+        estimate = "O(2^n) (Cartesian product heuristic)"
+        method = "static_ast_cartesian_product"
+        explanation = (
+            "Recognized an accumulated list comprehension that combines every existing result "
+            "with a small choice set for each input item. The number of outputs grows exponentially; "
+            "this low-confidence pattern assumes the choice set has a bounded size."
+        )
+    elif divide_conquer_line is not None:
+        estimate = "O(log n)"
+        method = "static_ast_divide_and_conquer_recursion"
+        explanation = (
+            "Recognized mutually exclusive recursive branches that reduce a range by half per call. "
+            "The recursion depth is logarithmic; this syntax-based estimate does not include work "
+            "performed by helpers or before each recursive call."
         )
     elif backtracking_line is not None:
         estimate = "O(2^n) (recursive search heuristic)"

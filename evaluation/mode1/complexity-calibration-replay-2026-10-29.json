@@ -1,0 +1,189 @@
+{
+  "evaluation": "calibration-only replay; not a held-out score",
+  "date": "2026-10-29",
+  "dataset_repository": "newfacade/LeetCodeDataset",
+  "dataset_revision": "182cd19fd53161efd70a1ef074fe1056b659bfa3",
+  "source_set": "complexity-review-2026-10-22/gold-reviewed.jsonl",
+  "partition": "calibration",
+  "source_count": 25,
+  "exact_matches": 22,
+  "exact_accuracy": 0.88,
+  "records": [
+    {
+      "id": "lcd-v0.3.1-1-two-sum",
+      "expected": "O(n)",
+      "predicted": "O(n)",
+      "method": "static_ast_loop_depth",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-13-roman-to-integer",
+      "expected": "O(n)",
+      "predicted": "O(n)",
+      "method": "static_ast_loop_depth",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-20-valid-parentheses",
+      "expected": "O(n)",
+      "predicted": "O(n)",
+      "method": "static_ast_loop_depth",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-35-search-insert-position",
+      "expected": "O(log n)",
+      "predicted": "O(log n)",
+      "method": "static_ast_binary_search",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-70-climbing-stairs",
+      "expected": "O(n)",
+      "predicted": "O(n)",
+      "method": "static_ast_loop_depth",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-219-contains-duplicate-ii",
+      "expected": "O(n)",
+      "predicted": "O(n)",
+      "method": "static_ast_loop_depth",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-496-next-greater-element-i",
+      "expected": "O(n)",
+      "predicted": "O(n)",
+      "method": "static_ast_amortized_stack_scan",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-1791-find-center-of-star-graph",
+      "expected": "O(1)",
+      "predicted": "O(1)",
+      "method": "static_ast_loop_depth",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-4-median-of-two-sorted-arrays",
+      "expected": "O(log n)",
+      "predicted": "O(log n)",
+      "method": "static_ast_divide_and_conquer_recursion",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-30-substring-with-concatenation-of-all-words",
+      "expected": "O(n^2)",
+      "predicted": "unknown",
+      "method": "static_ast_loop_depth",
+      "exact_match": false
+    },
+    {
+      "id": "lcd-v0.3.1-37-sudoku-solver",
+      "expected": "O(2^n)",
+      "predicted": "O(2^n)",
+      "method": "static_ast_recursive_backtracking",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-42-trapping-rain-water",
+      "expected": "O(n)",
+      "predicted": "O(n)",
+      "method": "static_ast_loop_depth",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-44-wildcard-matching",
+      "expected": "O(n^2)",
+      "predicted": "O(n^2)",
+      "method": "static_ast_memoized_recursion",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-305-number-of-islands-ii",
+      "expected": "O(n log n)",
+      "predicted": "O(n^2)",
+      "method": "static_ast_loop_depth",
+      "exact_match": false
+    },
+    {
+      "id": "lcd-v0.3.1-329-longest-increasing-path-in-a-matrix",
+      "expected": "O(n^2)",
+      "predicted": "O(n^2)",
+      "method": "static_ast_memoized_recursion",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-834-sum-of-distances-in-tree",
+      "expected": "O(n)",
+      "predicted": "O(n)",
+      "method": "static_ast_tree_graph_dfs",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-3-longest-substring-without-repeating-characters",
+      "expected": "O(n)",
+      "predicted": "O(n)",
+      "method": "static_ast_amortized_pointer_scan",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-5-longest-palindromic-substring",
+      "expected": "O(n^2)",
+      "predicted": "O(n^2)",
+      "method": "static_ast_loop_depth",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-12-integer-to-roman",
+      "expected": "O(1)",
+      "predicted": "unknown",
+      "method": "static_ast_loop_depth",
+      "exact_match": false
+    },
+    {
+      "id": "lcd-v0.3.1-17-letter-combinations-of-a-phone-number",
+      "expected": "O(2^n)",
+      "predicted": "O(2^n)",
+      "method": "static_ast_cartesian_product",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-33-search-in-rotated-sorted-array",
+      "expected": "O(log n)",
+      "predicted": "O(log n)",
+      "method": "static_ast_binary_search",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-34-find-first-and-last-position-of-element-in-sorted-array",
+      "expected": "O(log n)",
+      "predicted": "O(log n)",
+      "method": "static_ast_binary_search",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-96-unique-binary-search-trees",
+      "expected": "O(n^2)",
+      "predicted": "O(n^2)",
+      "method": "static_ast_loop_depth",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-210-course-schedule-ii",
+      "expected": "O(n)",
+      "predicted": "O(n)",
+      "method": "static_ast_loop_depth",
+      "exact_match": true
+    },
+    {
+      "id": "lcd-v0.3.1-255-verify-preorder-sequence-in-binary-search-tree",
+      "expected": "O(n)",
+      "predicted": "O(n)",
+      "method": "static_ast_amortized_stack_scan",
+      "exact_match": true
+    }
+  ],
+  "limitations": "This replays the previously reviewed calibration partition after targeted analyzer changes. The old held-out partition has already been inspected and is not fresh evidence. Classes are normalized per complexity-review-2026-10-22/normalization.md; O(V + E) is mapped to O(n)."
+}

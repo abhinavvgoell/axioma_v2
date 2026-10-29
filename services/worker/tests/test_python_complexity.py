@@ -357,6 +357,84 @@ def test_recognizes_permutation_and_binary_recursive_search() -> None:
     assert subset_search.estimate.startswith("O(2^n)")
 
 
+def test_recognizes_recursive_halving_in_local_helper() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(nums1, nums2):\n"
+        "    def kth(i, j, k):\n"
+        "        if k == 1: return min(nums1[i], nums2[j])\n"
+        "        p = k // 2\n"
+        "        x, y = nums1[i + p], nums2[j + p]\n"
+        "        return kth(i + p, j, k - p) if x < y else kth(i, j + p, k - p)\n"
+        "    return kth(0, 0, len(nums1) + len(nums2))\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(log n)"
+    assert estimate.method == "static_ast_divide_and_conquer_recursion"
+
+
+def test_recognizes_accumulated_cartesian_product_expansion() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(digits):\n"
+        "    choices = ['abc', 'def', 'ghi']\n"
+        "    answers = ['']\n"
+        "    for digit in digits:\n"
+        "        letters = choices[int(digit) % 3]\n"
+        "        answers = [prefix + letter for prefix in answers for letter in letters]\n"
+        "    return answers\n",
+        "solve",
+    )
+
+    assert estimate.estimate.startswith("O(2^n)")
+    assert estimate.method == "static_ast_cartesian_product"
+
+
+def test_recognizes_cached_matrix_recursion_with_fixed_neighbor_scan() -> None:
+    estimate = analyze_python_complexity(
+        "from functools import cache\n"
+        "from itertools import pairwise\n"
+        "def solve(matrix):\n"
+        "    @cache\n"
+        "    def dfs(i, j):\n"
+        "        best = 0\n"
+        "        for a, b in pairwise((-1, 0, 1, 0, -1)):\n"
+        "            x, y = i + a, j + b\n"
+        "            if 0 <= x < rows and 0 <= y < cols and matrix[x][y] > matrix[i][j]:\n"
+        "                best = max(best, dfs(x, y))\n"
+        "        return best + 1\n"
+        "    rows, cols = len(matrix), len(matrix[0])\n"
+        "    return max(dfs(i, j) for i in range(rows) for j in range(cols))\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(n^2)"
+    assert estimate.method == "static_ast_memoized_recursion"
+
+
+def test_recognizes_parent_guarded_tree_rerooting_dfs() -> None:
+    estimate = analyze_python_complexity(
+        "from collections import defaultdict\n"
+        "def solve(n, edges):\n"
+        "    def first(node, parent):\n"
+        "        for neighbor in graph[node]:\n"
+        "            if neighbor != parent: first(neighbor, node)\n"
+        "    def second(node, parent):\n"
+        "        for neighbor in graph[node]:\n"
+        "            if neighbor != parent: second(neighbor, node)\n"
+        "    graph = defaultdict(list)\n"
+        "    for left, right in edges:\n"
+        "        graph[left].append(right)\n"
+        "        graph[right].append(left)\n"
+        "    first(0, -1)\n"
+        "    second(0, -1)\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(V + E)"
+    assert estimate.method == "static_ast_tree_graph_dfs"
+    assert "input is a tree" in estimate.explanation
+
+
 def test_recognizes_sieve_of_eratosthenes() -> None:
     estimate = analyze_python_complexity(
         "def solve(n):\n"
