@@ -532,7 +532,7 @@ def test_recognizes_recursive_adjacency_list_dfs() -> None:
     )
 
 
-def test_unrecognized_recursive_recurrence_remains_unknown() -> None:
+def test_recognizes_top_level_binary_recursive_recurrence() -> None:
     estimate = analyze_python_complexity(
         "def solve(n):\n"
         "    if n < 2: return n\n"
@@ -540,7 +540,45 @@ def test_unrecognized_recursive_recurrence_remains_unknown() -> None:
         "solve",
     )
 
+    assert estimate.estimate.startswith("O(2^n)")
+    assert estimate.method == "static_ast_binary_recursive_branching"
+
+
+def test_recognizes_top_level_take_skip_recursion() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(index, values, target):\n"
+        "    if index == len(values): return target == 0\n"
+        "    return solve(index + 1, values, target) or solve(index + 1, values, target - values[index])\n",
+        "solve",
+    )
+
+    assert estimate.estimate.startswith("O(2^n)")
+    assert estimate.method == "static_ast_binary_recursive_branching"
+
+
+def test_binary_recursive_branching_does_not_combine_mutually_exclusive_branches() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(n):\n"
+        "    if n <= 0: return 0\n"
+        "    if n % 2: return solve(n - 1)\n"
+        "    return solve(n - 1)\n",
+        "solve",
+    )
+
     assert estimate.estimate == "unknown (recursion detected)"
+
+
+def test_memoized_top_level_binary_recursion_is_not_exponential() -> None:
+    estimate = analyze_python_complexity(
+        "from functools import cache\n"
+        "@cache\n"
+        "def solve(n):\n"
+        "    if n < 2: return n\n"
+        "    return solve(n - 1) + solve(n - 2)\n",
+        "solve",
+    )
+
+    assert not estimate.estimate.startswith("O(2^n)")
 
 
 def test_code_analysis_exposes_python_patterns_and_source_lines() -> None:

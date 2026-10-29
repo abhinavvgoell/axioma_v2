@@ -987,15 +987,39 @@ def _is_adjacency_list_bfs(function: ast.FunctionDef | ast.AsyncFunctionDef) -> 
 
 
 def _recursive_call_nodes(function: ast.FunctionDef | ast.AsyncFunctionDef) -> list[ast.Call]:
-    return [
-        node
-        for node in ast.walk(function)
-        if isinstance(node, ast.Call)
-        and (
-            (isinstance(node.func, ast.Name) and node.func.id == function.name)
-            or (isinstance(node.func, ast.Attribute) and node.func.attr == function.name)
-        )
-    ]
+    return _recursive_calls_in_scope(function, function.name)
+
+
+def _recursive_calls_in_scope(node: ast.AST, function_name: str) -> list[ast.Call]:
+    """Find recursive calls without counting calls inside nested function scopes."""
+    calls: list[ast.Call] = []
+    pending = [node]
+    while pending:
+        current = pending.pop()
+        if current is not node and isinstance(
+            current, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
+        ):
+            continue
+        if isinstance(current, ast.Call) and (
+            (isinstance(current.func, ast.Name) and current.func.id == function_name)
+            or (isinstance(current.func, ast.Attribute) and current.func.attr == function_name)
+        ):
+            calls.append(current)
+        pending.extend(ast.iter_child_nodes(current))
+    return calls
+
+
+def _function_scope_nodes(function: ast.FunctionDef | ast.AsyncFunctionDef) -> list[ast.AST]:
+    """Return nodes owned by a function, excluding nested function and lambda bodies."""
+    nodes: list[ast.AST] = []
+    pending = list(function.body)
+    while pending:
+        node = pending.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            continue
+        nodes.append(node)
+        pending.extend(ast.iter_child_nodes(node))
+    return nodes
 
 
 def _local_recursive_helpers(
@@ -1147,7 +1171,7 @@ def _permutation_backtracking_line(
 def _binary_recursive_branch_line(
     helpers: list[ast.FunctionDef | ast.AsyncFunctionDef],
 ) -> int | None:
-    """Recognize an uncached helper that makes two progressing recursive branches."""
+    """Recognize two progressing recursive calls in one binary expression."""
     for helper in helpers:
         if _has_unbounded_cache(helper):
             continue
@@ -1155,8 +1179,16 @@ def _binary_recursive_branch_line(
         progressing_calls = [
             call for call in calls if _progresses_recursive_state(helper, call)
         ]
-        if len(progressing_calls) >= 2:
-            return min(call.lineno for call in progressing_calls)
+        if len(progressing_calls) < 2:
+            continue
+        progressing_ids = {id(call) for call in progressing_calls}
+        for node in _function_scope_nodes(helper):
+            if not isinstance(node, (ast.BinOp, ast.BoolOp)):
+                continue
+            expression_calls = _recursive_calls_in_scope(node, helper.name)
+            branching_calls = [call for call in expression_calls if id(call) in progressing_ids]
+            if len(branching_calls) >= 2:
+                return min(call.lineno for call in branching_calls)
     return None
 
 
@@ -1721,7 +1753,7 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     memoized_state = _memoized_helper_dimensions(function, local_recursive_helpers)
     backtracking_line = _backtracking_helper_line(local_recursive_helpers)
     permutation_line = _permutation_backtracking_line(local_recursive_helpers)
-    binary_branch_line = _binary_recursive_branch_line(local_recursive_helpers)
+    binary_branch_line = _binary_recursive_branch_line([function, *local_recursive_helpers])
     divide_conquer_line = _divide_and_conquer_helper_line(local_recursive_helpers)
     cartesian_growth_line = _memoized_cartesian_growth_line(function)
     sieve_line = _is_sieve_of_eratosthenes(function)
