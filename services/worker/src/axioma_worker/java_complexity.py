@@ -606,6 +606,156 @@ def _is_adjacency_list_bfs(tokens: list[str], spans: list[tuple[int, int]]) -> b
     return False
 
 
+def _is_adjacency_matrix_bfs(tokens: list[str], spans: list[tuple[int, int]]) -> bool:
+    """Recognize BFS with visited-before-enqueue marking and a full matrix row scan."""
+    if len(spans) != 2:
+        return False
+    for outer_start, outer_end in spans:
+        if tokens[outer_start] != "while":
+            continue
+        header = _loop_header(tokens, outer_start)
+        if header is None:
+            continue
+        opening, closing = header
+        condition = tokens[opening + 1 : closing]
+        queue_name = next(
+            (
+                condition[index - 1]
+                for index in range(1, len(condition) - 1)
+                if condition[index : index + 2] == [".", "isEmpty"]
+                and "!" in condition[:index]
+            ),
+            None,
+        )
+        if queue_name is None:
+            continue
+        current_node = next(
+            (
+                tokens[index - 2]
+                for index in range(outer_start + 3, outer_end - 3)
+                if tokens[index] == queue_name
+                and tokens[index + 1 : index + 4]
+                in ([".", "poll", "("], [".", "remove", "("], [".", "pollFirst", "("], [".", "removeFirst", "("])
+                and tokens[index - 1] == "="
+            ),
+            None,
+        )
+        if current_node is None:
+            continue
+
+        for inner_start, inner_end in spans:
+            if not (
+                outer_start < inner_start < inner_end <= outer_end
+                and tokens[inner_start] == "for"
+            ):
+                continue
+            inner_header = _loop_header(tokens, inner_start)
+            if inner_header is None:
+                continue
+            inner_open, inner_close = inner_header
+            loop_header = tokens[inner_open + 1 : inner_close]
+            separators = [index for index, token in enumerate(loop_header) if token == ";"]
+            if len(separators) != 2:
+                continue
+            initializer = loop_header[: separators[0]]
+            loop_condition = loop_header[separators[0] + 1 : separators[1]]
+            update = loop_header[separators[1] + 1 :]
+            if len(initializer) < 3 or initializer[-2:] != ["=", "0"]:
+                continue
+            neighbor = initializer[-3]
+            size = next(
+                (
+                    loop_condition[index + 2]
+                    for index in range(len(loop_condition) - 2)
+                    if loop_condition[index : index + 2] == [neighbor, "<"]
+                ),
+                None,
+            )
+            if size is None or not _is_positive_step(update, neighbor):
+                continue
+
+            for guard_start in range(inner_start + 1, inner_end):
+                if tokens[guard_start] != "if":
+                    continue
+                guard_header = _loop_header(tokens, guard_start)
+                if guard_header is None:
+                    continue
+                guard_open, guard_close = guard_header
+                guard = tokens[guard_open + 1 : guard_close]
+                matrix_name = next(
+                    (
+                        guard[index]
+                        for index in range(len(guard) - 6)
+                        if guard[index + 1 : index + 7]
+                        == ["[", current_node, "]", "[", neighbor, "]"]
+                    ),
+                    None,
+                )
+                visited_name = next(
+                    (
+                        guard[index + 1]
+                        for index in range(len(guard) - 4)
+                        if guard[index] == "!"
+                        and guard[index + 2 : index + 5] == ["[", neighbor, "]"]
+                    ),
+                    None,
+                )
+                if matrix_name is None or visited_name is None or "&&" not in guard:
+                    continue
+                size_init = [size, "=", matrix_name, ".", "length"]
+                if not any(
+                    tokens[index : index + len(size_init)] == size_init
+                    for index in range(outer_start - len(size_init) + 1)
+                ):
+                    continue
+                visited_init = [visited_name, "=", "new", "boolean", "[", size, "]"]
+                if not any(
+                    tokens[index : index + len(visited_init)] == visited_init
+                    for index in range(outer_start - len(visited_init) + 1)
+                ):
+                    continue
+                guard_body = guard_close + 1
+                if guard_body >= inner_end or tokens[guard_body] != "{":
+                    continue
+                guard_end = _matching(tokens, guard_body, "{", "}")
+                if guard_end is None or guard_end > inner_end:
+                    continue
+                body = tokens[guard_body + 1 : guard_end]
+                mark = next((index for index in range(len(body) - 5)
+                             if body[index : index + 6] == [visited_name, "[", neighbor, "]", "=", "true"]), None)
+                enqueue = next(
+                    (
+                        index
+                        for index in range(len(body) - 4)
+                        if body[index] == queue_name
+                        and body[index + 1] == "."
+                        and body[index + 2] in {"add", "offer", "addLast"}
+                        and body[index + 3 : index + 5] == ["(", neighbor]
+                    ),
+                    None,
+                )
+                if mark is None or enqueue is None or mark >= enqueue:
+                    continue
+                before_queue = tokens[:outer_start]
+                seed = next(
+                    (
+                        before_queue[index + 4]
+                        for index in range(len(before_queue) - 5)
+                        if before_queue[index : index + 4]
+                        in ([queue_name, ".", "add", "("],
+                            [queue_name, ".", "offer", "("],
+                            [queue_name, ".", "addLast", "("])
+                        and re.fullmatch(r"[A-Za-z_$][\w$]*", before_queue[index + 4])
+                        and before_queue[index + 5] == ")"
+                    ),
+                    None,
+                )
+                if seed is None:
+                    continue
+                return True
+    return False
+
+
 def _is_adjacency_list_dfs(
     tokens: list[str], spans: list[tuple[int, int]], method_name: str
 ) -> bool:
@@ -725,6 +875,7 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     insertion_sort_shift = _is_insertion_sort_shift(body, spans)
     tree_recursion = not spans and recursive and _is_tree_recursive_walk(body, parts[1])
     graph_bfs = not recursive and _is_adjacency_list_bfs(body, spans)
+    matrix_bfs = not recursive and _is_adjacency_matrix_bfs(body, spans)
     graph_dfs = recursive and _is_adjacency_list_dfs(body, spans, parts[1])
     signals: list[dict] = []
     for start, _ in spans:
@@ -780,6 +931,12 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "label": "Queue traversal over adjacency lists with a visited guard",
             "line": None,
         })
+    if matrix_bfs:
+        signals.append({
+            "kind": "graph_matrix_bfs",
+            "label": "Queue traversal scans a full adjacency-matrix row per visited vertex",
+            "line": None,
+        })
     if insertion_sort_shift:
         signals.append({
             "kind": "insertion_sort_shift",
@@ -804,6 +961,16 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             f"Recognized {traversal} over adjacency lists with a visited-state guard. Assuming "
             f"each vertex is {work_unit} and each adjacency entry is scanned once, the work is "
             "O(V + E). Visited checks must be constant-time; the syntax match is a heuristic."
+        )
+    elif matrix_bfs:
+        method = "static_java_matrix_bfs"
+        estimate = "O(V^2)"
+        explanation = (
+            "Recognized queue-based BFS over a square adjacency matrix. The visited array is "
+            "marked before each neighbor is enqueued, so each vertex enters the queue at most "
+            "once; processing each vertex scans V matrix entries. Assuming O(1) matrix, visited "
+            "array, and queue operations, the total work is O(V^2). This tokenizer-based match "
+            "is a heuristic."
         )
     elif tree_recursion:
         method = "static_java_tree_recursion"

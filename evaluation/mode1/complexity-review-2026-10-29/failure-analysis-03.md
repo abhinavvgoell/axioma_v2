@@ -61,3 +61,9 @@ This is a targeted calibration-driven change. No packet03 post-fix score is clai
 Approved category: Java inward-moving two-pointer scans. The analyzer now recognizes one braced `while` loop whose condition compares two cursors, whose lower bound was last initialized to zero, and whose upper bound was last initialized from a `.length` expression. Each cursor must have exactly one unit step in the expected direction; cursor resets, conditional cursor progress, nested loops, and `continue` reject the pattern. A recognized case is reported as a low-confidence static `O(n)` estimate, with an `inward_two_pointer_scan` signal. Other unbounded while-loops retain the existing inconclusive result.
 
 Development regressions use a synthetic string scan with an early mismatch return, plus near misses with a missing cursor update and conditional cursor progress. The original packet03 calibration was not rescored after the fix, and no post-fix accuracy claim is made.
+
+## Follow-up: Java adjacency-matrix BFS fix
+
+Approved category: BFS over a square adjacency matrix. The Java analyzer now requires a queue-draining `while` loop, one nested index-based `for` loop bounded by the matrix length, a boolean visited array sized from that same bound, a matrix-edge check, and visited marking before enqueue. It reports low-confidence static `O(V^2)` with the `graph_matrix_bfs` signal. The adjacency-list BFS rule remains separate and unchanged; missing or late visited marking stays inconclusive.
+
+Development tests use a synthetic matrix traversal and a near miss that enqueues before marking visited. The original packet03 case was checked directly and emitted `O(V^2)`; the packet was not rescored and no post-fix accuracy claim is made.

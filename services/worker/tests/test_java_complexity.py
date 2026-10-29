@@ -187,6 +187,47 @@ def test_recognizes_java_adjacency_list_bfs_with_visited_guard() -> None:
     )
 
 
+def test_recognizes_java_adjacency_matrix_bfs_as_quadratic() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { int reachable(boolean[][] matrix, int source) { "
+        "int size = matrix.length; boolean[] visited = new boolean[size]; "
+        "Queue<Integer> queue = new ArrayDeque<>(); visited[source] = true; "
+        "queue.add(source); int count = 0; while (!queue.isEmpty()) { "
+        "int node = queue.remove(); count++; "
+        "for (int column = 0; column < size; column++) { "
+        "if (matrix[node][column] && !visited[column]) { "
+        "visited[column] = true; queue.add(column); } } } return count; } }",
+        "Solution.reachable",
+    )
+
+    assert estimate.method == "static_java_matrix_bfs"
+    assert estimate.estimate == "O(V^2)"
+    assert estimate.confidence == "low"
+    assert any(
+        signal["kind"] == "graph_matrix_bfs"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_matrix_bfs_without_visited_mark_before_enqueue_remains_unknown() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { void walk(boolean[][] matrix, int source) { "
+        "int size = matrix.length; boolean[] visited = new boolean[size]; "
+        "Queue<Integer> queue = new ArrayDeque<>(); queue.add(source); "
+        "while (!queue.isEmpty()) { int node = queue.remove(); "
+        "for (int column = 0; column < size; column++) { "
+        "if (matrix[node][column] && !visited[column]) { "
+        "queue.add(column); visited[column] = true; } } } } }",
+        "Solution.walk",
+    )
+
+    assert estimate.estimate == "unknown (data-dependent or incomplete loop)"
+    assert not any(
+        signal["kind"] == "graph_matrix_bfs"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
 def test_unvisited_java_adjacency_queue_loop_remains_unknown() -> None:
     estimate = analyze_java_complexity(
         "class Solution { void solve(Map<Integer,List<Integer>> graph, int start) { "
