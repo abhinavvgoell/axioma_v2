@@ -738,6 +738,39 @@ def test_complexity_benchmark_generator_rejects_unsupported_sample_pattern(
     assert "could not generate the nearly_sorted pattern" in response.json()["detail"]
 
 
+def test_complexity_benchmark_generator_supports_repeated_character_strings(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/v1/problem-specs/generate-complexity-benchmarks",
+        json={
+            "problem": {
+                "statement": "Return the longest substring without repeating characters.",
+                "interface": {"kind": "function", "entrypoint": "Solution.lengthOfLongestSubstring"},
+                "constraints": [{"path": "args[0].length", "minimum": 0, "maximum": 16}],
+                "samples": [
+                    {
+                        "kind": "function",
+                        "name": "base",
+                        "args": ["abcabcbb"],
+                        "expected": 3,
+                    }
+                ],
+            },
+            "size_path": "args[0].length",
+            "sizes": [1, 4, 8, 16],
+            "pattern": "repeated_characters",
+            "seed": 0,
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["pattern"] == "repeated_characters"
+    assert [item["size"] for item in result["benchmarks"]] == [1, 4, 8, 16]
+    assert [item["args"][0] for item in result["benchmarks"]] == ["a", "aaaa", "aaaaaaaa", "a" * 16]
+
+
 def test_optimization_proposal_route_returns_static_unverified_candidate(
     client: TestClient,
 ) -> None:

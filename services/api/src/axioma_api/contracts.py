@@ -140,6 +140,7 @@ class ComplexityBenchmarkSample(BaseModel):
         "duplicate_heavy",
         "alternating_low_high",
         "nearly_sorted",
+        "repeated_characters",
     ] | None = None
 
 
@@ -404,6 +405,7 @@ class ComplexityBenchmarkGenerationRequest(BaseModel):
         "duplicate_heavy",
         "alternating_low_high",
         "nearly_sorted",
+        "repeated_characters",
     ]
     seed: int = Field(default=0, ge=0, le=4_294_967_295)
 

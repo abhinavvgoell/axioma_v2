@@ -68,7 +68,7 @@ export function generateComplexityBenchmarks(input: {
   problem: Record<string, unknown>
   size_path: string
   sizes: number[]
-  pattern: 'ascending'
+  pattern: 'ascending' | 'repeated_characters'
   seed: number
 }): Promise<{ benchmarks: { size: number; args: unknown[]; kwargs: Record<string, unknown>; strategy: string }[] }> {
   return request('/v1/problem-specs/generate-complexity-benchmarks', {

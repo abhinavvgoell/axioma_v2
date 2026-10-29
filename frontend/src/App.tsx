@@ -20,29 +20,41 @@ function benchmarkPlan(problem: Record<string, unknown>) {
   const constraints = problem.constraints
   const samples = problem.samples
   if (!Array.isArray(constraints) || !Array.isArray(samples) || samples.length === 0) return null
-  const numericArrays = constraints.flatMap((value) => {
-    if (typeof value !== 'object' || value === null) return []
+  const scalableInputs: {
+    path: string
+    minimum: unknown
+    maximum: unknown
+    pattern: 'ascending' | 'repeated_characters'
+  }[] = []
+  for (const value of constraints) {
+    if (typeof value !== 'object' || value === null) continue
     const constraint = value as Record<string, unknown>
-    if (typeof constraint.path !== 'string') return []
+    if (typeof constraint.path !== 'string') continue
     const match = /^args\[(\d+)\]\.length$/.exec(constraint.path)
-    if (!match) return []
+    if (!match) continue
     const sample = samples[0] as Record<string, unknown>
     const args = sample.args
     const index = Number(match[1])
-    if (!Array.isArray(args) || !Array.isArray(args[index])) return []
-    const values = args[index] as unknown[]
-    if (!values.every((item) => typeof item === 'number' && Number.isFinite(item))) return []
-    return [{ path: constraint.path, minimum: constraint.minimum, maximum: constraint.maximum }]
-  })
-  if (numericArrays.length !== 1) return null
+    if (!Array.isArray(args)) continue
+    const sampleValue = args[index]
+    if (typeof sampleValue === 'string') {
+      scalableInputs.push({ path: constraint.path, minimum: constraint.minimum, maximum: constraint.maximum, pattern: 'repeated_characters' })
+      continue
+    }
+    if (!Array.isArray(sampleValue)) continue
+    const values = sampleValue as unknown[]
+    if (!values.every((item) => typeof item === 'number' && Number.isFinite(item))) continue
+    scalableInputs.push({ path: constraint.path, minimum: constraint.minimum, maximum: constraint.maximum, pattern: 'ascending' })
+  }
+  if (scalableInputs.length !== 1) return null
 
-  const { path, minimum, maximum } = numericArrays[0]
+  const { path, minimum, maximum, pattern } = scalableInputs[0]
   const low = Math.max(1, Number.isInteger(minimum) ? Number(minimum) : 1)
   const high = Math.min(32, Number.isInteger(maximum) ? Number(maximum) : 32)
   if (high - low < 3) return null
   const sizes = Array.from({ length: 4 }, (_, index) => Math.round(low + (high - low) * index / 3))
   if (new Set(sizes).size !== 4) return null
-  return { size_path: path, sizes }
+  return { size_path: path, sizes, pattern }
 }
 
 interface HistoryEntry {
@@ -259,7 +271,7 @@ function AnalyzerApp() {
             const generated = await generateComplexityBenchmarks({
               problem,
               ...plan,
-              pattern: 'ascending',
+              pattern: plan.pattern,
               seed: 0,
             })
             if (generated.benchmarks.length === 4) request.complexity_benchmarks = generated.benchmarks

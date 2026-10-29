@@ -172,6 +172,15 @@ def _candidate_case(
         if pattern is not None:
             path, name = pattern
             collection = _collection_for_length_path(case, path)
+            if isinstance(collection, str):
+                if name != "repeated_characters":
+                    return None
+                unit = collection[:1] or "a"
+                _set_value(case, path.removesuffix(".length"), unit * len(collection), rng)
+                candidate = ProblemSpec.model_validate(
+                    {**problem.model_dump(mode="json"), "samples": [case]}
+                )
+                return case if validate_problem_spec(candidate).valid else None
             if not isinstance(collection, list):
                 return None
             if any(
@@ -386,11 +395,15 @@ def generate_complexity_benchmarks(
         raise ValueError("complexity benchmark generation requires function samples")
     sample_data = sample.model_dump(mode="json")
     collection = _collection_for_length_path(sample_data, request.size_path)
-    if not isinstance(collection, list) or any(
-        isinstance(value, bool) or not isinstance(value, (int, float))
+    string_pattern = isinstance(collection, str) and request.pattern == "repeated_characters"
+    numeric_array = isinstance(collection, list) and all(
+        not isinstance(value, bool) and isinstance(value, (int, float))
         for value in collection
-    ):
-        raise ValueError("size_path must point to a numeric array in the first example")
+    )
+    if not (string_pattern or numeric_array):
+        raise ValueError(
+            "size_path must point to a numeric array or use repeated_characters for a string"
+        )
 
     rng = random.Random(request.seed)
     constraints = sorted(
@@ -415,7 +428,7 @@ def generate_complexity_benchmarks(
         args = case.get("args")
         kwargs = case.get("kwargs")
         generated_collection = _collection_for_length_path(case, request.size_path)
-        if not isinstance(generated_collection, list) or len(generated_collection) != size:
+        if not isinstance(generated_collection, (list, str)) or len(generated_collection) != size:
             raise ValueError("generated benchmark did not match its declared size")
         benchmarks.append(
             ComplexityBenchmarkSample(
