@@ -1,5 +1,5 @@
 {
-  "analyzer_commit": "28ca4d3e441aadb8a215c6b608d353b1f639be99",
+  "analyzer_commit": "a97d19fae3ef43cb243c420939802b35bd351748",
   "cases": [
     {
       "confidence": "low",
@@ -659,6 +659,6 @@
   "normalization": "O(V + E) => O(n) and O(V^2) => O(n^2) for these frozen labels",
   "partition": "calibration",
   "python_version": "3.14.3",
-  "run_at_utc": "2026-10-29T15:39:14.433070+00:00",
+  "run_at_utc": "2026-10-29T15:47:24.405645+00:00",
   "scope": "time complexity only; post-fix calibration replay; not held-out evaluation"
 }

@@ -93,23 +93,24 @@ No new wall-clock or memory benchmark is claimed by this release-candidate check
 
 ## Validation record
 
-Validation ran against analyzer commit `28ca4d3e441aadb8a215c6b608d353b1f639be99` on Windows 11 Home, build 26200, with Python 3.14.3, Node 24.20.0, npm 11.19.0, Docker Engine 29.9.1, and Eclipse Temurin 21.0.12 in the Java sandbox image.
+Clean-checkout validation ran against commit `a97d19fae3ef43cb243c420939802b35bd351748` on Windows 11 Home, build 26200, with Python 3.14.3, Node 24.20.0, npm 11.19.0, Docker Engine 29.9.1, and Eclipse Temurin 21.0.12 in the Java sandbox image.
 
 | Check | Result |
 |---|---|
-| API and worker suite, including Docker-backed sandbox tests | `173 passed, 1 skipped` in 34.77s. The skip was the PostgreSQL queue-lock test because the main SQLite run had no `AXIOMA_TEST_DATABASE_URL`. |
-| PostgreSQL migration and queue-lock integration | Passed separately on a new disposable `postgres:17.11` container bound to `127.0.0.1:55432`; Alembic applied both migrations and `test_postgres_worker_skips_a_locked_queued_job` passed. Container used no persistent volume and was removed afterward. |
+| Clean setup | Shallow clone from GitHub at the commit above; a new Python 3.14.3 virtual environment installed `requirements.lock` and both editable packages. `npm ci` installed 98 packages and reported 0 vulnerabilities. |
+| API and worker suite, including Docker-backed sandbox tests | `173 passed, 1 skipped` in 39.38s from the clean clone. The skip was the PostgreSQL queue-lock test because the SQLite run had no `AXIOMA_TEST_DATABASE_URL`. |
 | Mode 1 evaluator suite | `27 passed` in 0.61s. |
 | Python lint | Ruff passed across API, worker, and evaluator sources/tests. |
+| PostgreSQL migration and queue-lock integration | Passed from the clean clone on a new disposable `postgres:17.11` container bound to `127.0.0.1:55433`; Alembic applied both migrations and `test_postgres_worker_skips_a_locked_queued_job` passed. The container used no persistent volume and was removed afterward. |
 | Frontend | `npm test`: 7 passed; `npm run lint`: passed; `npm run build`: passed. |
-| SQLite setup and live demo | Both Alembic migrations applied to a new scratch DB. All six demo scenarios passed: ambiguous match rejection, Python sample, Java sample, Java compile failure, Python timeout, and inconclusive complexity. Five submitted jobs were persisted with completed status; the timeout job retained its timeout message and skipped case outcomes. |
-| Catalog import reproducibility | Two fresh imports each selected 1,000 packs from 2,448 eligible packs at pinned revision `182cd19fd53161efd70a1ef074fe1056b659bfa3`. Catalog JSON SHA-256 matched across imports and matched the existing local catalog: `9fe1dfef3c257cc0409c7eaabbcbdc1564a60bdb6647a7645c355018724c5a6b`. License and source metadata artifacts also matched byte-for-byte. Imports were written only under the system temp directory; catalog data remains excluded from Git. |
-| Complexity replay | 15/15 exact and 15/15 answered on calibration packets 01–03; not held-out evidence. |
+| SQLite setup, live demo, and persistence | Both Alembic migrations applied to a new scratch DB. All six demo scenarios passed: ambiguous match rejection, Python sample, Java sample, Java compile failure, Python timeout, and inconclusive complexity. Five submitted jobs were persisted with completed status; after stopping the original API and worker and starting a new API process on the same DB, all five jobs and reports remained readable. The timeout job retained its timeout message and skipped case outcomes. |
+| Catalog import reproducibility | Two fresh imports from the clean clone each selected 1,000 packs from 2,448 eligible packs at pinned revision `182cd19fd53161efd70a1ef074fe1056b659bfa3`. Catalog JSON SHA-256 matched across imports: `9fe1dfef3c257cc0409c7eaabbcbdc1564a60bdb6647a7645c355018724c5a6b`. License and source metadata artifacts also matched byte-for-byte. The demo used a local ignored catalog import; catalog data remains excluded from Git. |
+| Complexity replay | The replay script ran from the clean clone and matched 15/15 calibration cases (15/15 answered). This is not held-out evidence. |
 
 The PostgreSQL check is a single concurrency test on a disposable local server, not a broad PostgreSQL compatibility guarantee. The catalog hash result verifies deterministic output for this pinned importer/runtime, not dataset licensing for redistribution. No performance benchmark or public deployment claim is made.
 
 ### Remaining release gate
 
-- Run the documented install/test/demo path from a genuinely clean checkout using only tracked project files and the local-only catalog path.
+- Have someone other than the implementer reproduce the documented install/test/demo path from a clean checkout; this independent reproduction remains unverified.
 - Collect and review additional calibration cases, then freeze a separate untouched post-fix evaluation set before making broader complexity claims. The current 15-case result is below the evaluator minimum and all cases are calibration data.
 - Do not tag or advertise a public release until those checks and the separate sandbox security review are complete.

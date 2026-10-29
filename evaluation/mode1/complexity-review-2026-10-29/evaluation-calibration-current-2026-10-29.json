@@ -406,7 +406,7 @@
     "available": false,
     "reason": "Provide confidence-labeled records in both calibration and evaluation partitions, with a method and confidence category represented in both."
   },
-  "input_sha256": "b0f373d8fabd0fe3f16979822f37bcdc3afe9671a08a39c5fdbbf7fc46e0ea2f",
+  "input_sha256": "3af21b6929faf9e41a5223dd5344ca7dfe959c6150672e18314d4bb23c2664bb",
   "interval_method": "two-sided 95% Wilson score interval (z=1.95996)",
   "interval_note": "Wilson intervals are record-level binomial intervals; records from different methods for the same solution are correlated, so compare method-specific intervals and treat combined intervals as descriptive.",
   "minimum_distinct_solutions": 50,
