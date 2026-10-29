@@ -1,0 +1,5 @@
+{"id":"axioma-20261029-11","method":"static_ast_loop_depth","predicted":"O(n)","confidence":"low","report_sha256":"ede7afd128d5cd172767fb5bd25bd04c7388c392558ad39197349f702d9681e4"}
+{"id":"axioma-20261029-12","method":"static_java_token_loop_depth","predicted":"unknown","confidence":"low","report_sha256":"ede7afd128d5cd172767fb5bd25bd04c7388c392558ad39197349f702d9681e4"}
+{"id":"axioma-20261029-13","method":"static_ast_loop_depth","predicted":"unknown","confidence":"low","report_sha256":"ede7afd128d5cd172767fb5bd25bd04c7388c392558ad39197349f702d9681e4"}
+{"id":"axioma-20261029-14","method":"static_java_token_loop_depth","predicted":"unknown","confidence":"low","report_sha256":"ede7afd128d5cd172767fb5bd25bd04c7388c392558ad39197349f702d9681e4"}
+{"id":"axioma-20261029-15","method":"static_ast_loop_depth","predicted":"O(n^2)","confidence":"low","report_sha256":"ede7afd128d5cd172767fb5bd25bd04c7388c392558ad39197349f702d9681e4"}

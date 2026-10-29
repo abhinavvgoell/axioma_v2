@@ -1,6 +1,6 @@
 {
   "dataset_id": "axioma-20261029-review-packet-03",
-  "status": "awaiting_human_labels",
+  "status": "labels_frozen_before_analysis",
   "partition": "calibration",
   "case_count": 5,
   "languages": {
@@ -15,7 +15,7 @@
     "dynamic_programming"
   ],
   "case_file": "review-set-03.jsonl",
-  "case_file_sha256": "17c96c526b54f1f7ef21e5cefdc3db21d31dc41c9feb285c00908734fccfb3c7",
+  "case_file_sha256": "4b7a28e2d08d89246f192e7639832e2c3b0953a68b8dcb154a1850193dab8365",
   "packet_file": "packet-03.md",
   "case_source_sha256": {
     "axioma-20261029-11": "94c63276aed4e13d7c9de6ac06aa5cbf78384ebf8cdded2af7ad8a4ad2ae7538",
@@ -24,11 +24,22 @@
     "axioma-20261029-14": "c9802e17e6ad29f71a7c99686537959f95f027f6b2f36dabd247a9b23e306380",
     "axioma-20261029-15": "ebe1b91c79c6dabd9a2833244b578aa1afefbdc33f3542ee3bb2ded954297edb"
   },
-  "analyzer_run": "none",
-  "freshness_note": "Axioma has not analyzed these cases. Human labels and rationales must be supplied and frozen first. These are calibration cases, not untouched holdout data.",
-  "reviewed_by": null,
-  "review_date": null,
+  "analyzer_run": "evaluation-report-03.json",
+  "freshness_note": "Labels were frozen before analysis. This run uses the current analyzer and is calibration data; it is not untouched holdout evaluation.",
+  "reviewed_by": "user",
+  "review_date": "2026-10-29",
   "label_file": "gold-reviewed-03.jsonl",
-  "label_file_sha256": null,
-  "scored_dimension": "worst-case time complexity"
+  "label_file_sha256": "37f6045fb4cffdec182dbb75ce102478c46bf4e2728a79678382e24f33a89681",
+  "scored_dimension": "worst-case time complexity",
+  "label_normalization": "O(V^2) is normalized to O(n^2) for this evaluator; original wording is preserved in reviewed_complexity.",
+  "analysis_output_file": "analysis-output-03.json",
+  "analysis_output_sha256": "ede7afd128d5cd172767fb5bd25bd04c7388c392558ad39197349f702d9681e4",
+  "predictions_file": "predictions-03.jsonl",
+  "predictions_sha256": "b0c0d75ac477fa2e1c2cf0e08862038eed5783a526d6d21732c31ef5b70a74e3",
+  "joined_evaluation_file": "joined-evaluation-03.jsonl",
+  "joined_evaluation_sha256": "afb2170b986e3a585b20bf19e48390f8662f18f8b9c4b6c10595542bd8b3dc10",
+  "evaluation_report_file": "evaluation-report-03.json",
+  "evaluation_report_sha256": "6d19da6e3f465202b4e2210dcc177739252603f23c326e381a53ba43e6c25a73",
+  "analyzer_commit": "adb20e30c6c5d35ec2f932060cbcad7817d31438",
+  "analyzer_run_date": "2026-10-29"
 }

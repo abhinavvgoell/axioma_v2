@@ -1,0 +1,173 @@
+{
+  "dataset_id": "axioma-20261029-review-packet-03",
+  "analyzer_commit": "adb20e30c6c5d35ec2f932060cbcad7817d31438",
+  "partition": "calibration",
+  "static_only": true,
+  "cases": [
+    {
+      "id": "axioma-20261029-11",
+      "title": "Balanced brackets",
+      "language": "python",
+      "family": "stack",
+      "source_sha256": "94c63276aed4e13d7c9de6ac06aa5cbf78384ebf8cdded2af7ad8a4ad2ae7538",
+      "expected_time": "O(n)",
+      "reviewed_complexity": "O(n)",
+      "predicted_time": "O(n)",
+      "prediction_raw": "O(n)",
+      "exact_match": true,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 4
+        },
+        {
+          "kind": "membership",
+          "label": "Membership check; cost depends on the container",
+          "line": 5
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 6
+        },
+        {
+          "kind": "collection_operation",
+          "label": "Collection method call; concrete type and cost are not inferred",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "id": "axioma-20261029-12",
+      "title": "Palindrome check",
+      "language": "java",
+      "family": "two_pointers",
+      "source_sha256": "1fbe7b671ff6022567df5bdf633bf4f1636ba4963f92232d36cc2f977dba4d22",
+      "expected_time": "O(n)",
+      "reviewed_complexity": "O(n)",
+      "predicted_time": "unknown",
+      "prediction_raw": "unknown (data-dependent or incomplete loop)",
+      "exact_match": false,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "while loop",
+          "line": null
+        }
+      ]
+    },
+    {
+      "id": "axioma-20261029-13",
+      "title": "Subset-sum search",
+      "language": "python",
+      "family": "backtracking",
+      "source_sha256": "fff882938a6c77ceb9e31ab4946216c9493dc1ff1216215e8eebced77e41dd50",
+      "expected_time": "O(2^n)",
+      "reviewed_complexity": "O(2^n)",
+      "predicted_time": "unknown",
+      "prediction_raw": "unknown (recursion detected)",
+      "exact_match": false,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Recursive helper behavior is not inferred by this analyzer. Called helper functions are not included; this estimate is not a proof.",
+      "signals": [
+        {
+          "kind": "recursion",
+          "label": "Direct self-call; recurrence is not solved",
+          "line": 6
+        },
+        {
+          "kind": "recursion",
+          "label": "Direct self-call; recurrence is not solved",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "axioma-20261029-14",
+      "title": "Reachable vertices with an adjacency matrix",
+      "language": "java",
+      "family": "graph_matrix_bfs",
+      "source_sha256": "c9802e17e6ad29f71a7c99686537959f95f027f6b2f36dabd247a9b23e306380",
+      "expected_time": "O(n^2)",
+      "reviewed_complexity": "O(V^2)",
+      "predicted_time": "unknown",
+      "prediction_raw": "unknown (data-dependent or incomplete loop)",
+      "exact_match": false,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "signals": [
+        {
+          "kind": "loop",
+          "label": "while loop",
+          "line": null
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": null
+        },
+        {
+          "kind": "collection_operation",
+          "label": ".add() call; concrete type and cost are not inferred",
+          "line": null
+        },
+        {
+          "kind": "collection_operation",
+          "label": ".remove() call; concrete type and cost are not inferred",
+          "line": null
+        },
+        {
+          "kind": "collection_operation",
+          "label": ".add() call; concrete type and cost are not inferred",
+          "line": null
+        },
+        {
+          "kind": "indexing",
+          "label": "Array or indexed access; concrete access cost is not inferred",
+          "line": null
+        }
+      ]
+    },
+    {
+      "id": "axioma-20261029-15",
+      "title": "Count paths in a square grid",
+      "language": "python",
+      "family": "dynamic_programming",
+      "source_sha256": "ebe1b91c79c6dabd9a2833244b578aa1afefbdc33f3542ee3bb2ded954297edb",
+      "expected_time": "O(n^2)",
+      "reviewed_complexity": "O(n^2)",
+      "predicted_time": "O(n^2)",
+      "prediction_raw": "O(n^2)",
+      "exact_match": true,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum data-dependent loop or comprehension nesting depth: 2. Loops with source-level constant bounds are not counted as input growth. Called helper functions are not included; this estimate is not a proof.",
+      "signals": [
+        {
+          "kind": "comprehension",
+          "label": "1-level comprehension",
+          "line": 3
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 4
+        },
+        {
+          "kind": "loop",
+          "label": "for loop",
+          "line": 5
+        }
+      ]
+    }
+  ]
+}
