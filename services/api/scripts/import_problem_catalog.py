@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from axioma_api.catalog_selection import select_catalog_packs
+from axioma_api.problem_constraints import constraints_match_samples, parse_problem_constraints
 
 
 REPOSITORY = "https://github.com/newfacade/LeetCodeDataset"
@@ -152,16 +153,20 @@ def _to_pack(row: dict[str, Any]) -> dict[str, Any] | None:
     samples = _samples(row, argument_order)
     if len(samples) < MIN_CASES_PER_PROBLEM:
         return None
+    description = str(row.get("problem_description", ""))
+    constraints = constraints_match_samples(
+        parse_problem_constraints(description, argument_order), samples
+    )
     title = re.sub(r"\s+", " ", slug.replace("-", " ").title()).strip()
     return {
         "slug": slug,
         "question_id": row.get("question_id"),
         "title": title,
-        "description": str(row.get("problem_description", "")),
+        "description": description,
         "difficulty": row.get("difficulty"),
         "topics": row.get("tags", []),
         "entrypoint": entrypoint,
-        "constraints": [],
+        "constraints": [constraint.model_dump(mode="json") for constraint in constraints],
         "samples": samples,
         "test_source": (
             "Imported from newfacade/LeetCodeDataset v0.3.1 at "

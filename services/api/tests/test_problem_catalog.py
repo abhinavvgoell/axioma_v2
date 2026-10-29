@@ -44,6 +44,46 @@ def test_catalog_recognizes_standard_permutation_statement_without_title() -> No
     assert match.test_count >= 3
 
 
+def test_imported_problem_pack_exposes_constraints_to_matching_clients(monkeypatch) -> None:
+    from axioma_api import problem_catalog
+
+    monkeypatch.setattr(
+        problem_catalog,
+        "_imported_packs",
+        lambda: (
+            {
+                "slug": "binary-search",
+                "title": "Binary Search",
+                "description": "Find a target in a sorted array.",
+                "topics": ["array", "binary search"],
+                "entrypoint": "Solution.search",
+                "constraints": [
+                    {
+                        "path": "args[0].length",
+                        "minimum": 1,
+                        "maximum": 10_000,
+                    }
+                ],
+                "samples": [
+                    {"name": "example", "args": [[1, 3, 5], 3], "kwargs": {}, "expected": 1}
+                ],
+            },
+        ),
+    )
+
+    match = match_problem_statement("704. Binary Search")
+
+    assert match.recognized is True
+    assert match.slug == "binary-search"
+    assert match.problem is not None
+    assert any(
+        constraint.path == "args[0].length"
+        and constraint.minimum == 1
+        and constraint.maximum == 10_000
+        for constraint in match.problem.constraints
+    )
+
+
 def test_catalog_does_not_match_a_shorter_title_inside_a_longer_title(monkeypatch) -> None:
     from axioma_api import problem_catalog
 
