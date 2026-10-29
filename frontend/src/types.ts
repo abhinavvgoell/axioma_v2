@@ -10,6 +10,7 @@ export interface Job {
   created_at: string
   updated_at: string
   progress_message: string | null
+  error_code: string | null
 }
 
 export interface EvidenceClaim {
@@ -41,12 +42,21 @@ export interface AnalysisReport {
   claims: EvidenceClaim[]
   complexity: ComplexityResult | null
   tests: { total: number; passed: number; failed: number; skipped: number }
+  test_cases: TestCaseResult[]
   verification_gates: {
     order: number
     name: string
     state: 'passed' | 'failed' | 'not_run'
     evidence_claim_ids: string[]
   }[]
+}
+
+export interface TestCaseResult {
+  name: string
+  outcome: 'passed' | 'failed' | 'skipped'
+  origin: 'catalog_sample' | 'generated_differential' | 'reference_validation' | 'property_check' | 'program_execution' | 'unknown'
+  duration_ms: number | null
+  details: Record<string, unknown>
 }
 
 export interface OptimizationProposal {
@@ -66,6 +76,8 @@ export interface OptimizationProposalResponse {
 
 export interface ProblemMatch {
   recognized: boolean
+  match_state: 'matched' | 'not_found' | 'ambiguous'
+  candidate_titles: string[]
   slug: string | null
   title: string | null
   topics: string[]

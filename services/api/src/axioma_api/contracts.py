@@ -101,6 +101,7 @@ class JobView(BaseModel):
     created_at: datetime
     updated_at: datetime
     progress_message: str | None = None
+    error_code: str | None = None
 
 
 class JobEventView(BaseModel):
@@ -111,6 +112,21 @@ class JobEventView(BaseModel):
     created_at: datetime
 
 
+class TestCaseView(BaseModel):
+    name: str
+    outcome: Literal["passed", "failed", "skipped"]
+    origin: Literal[
+        "catalog_sample",
+        "generated_differential",
+        "reference_validation",
+        "property_check",
+        "program_execution",
+        "unknown",
+    ] = "unknown"
+    duration_ms: int | None = None
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
 class AnalysisReport(BaseModel):
     job_id: str
     claims: list[EvidenceClaim] = Field(default_factory=list)
@@ -118,6 +134,7 @@ class AnalysisReport(BaseModel):
     tests: TestResultSummary = Field(
         default_factory=lambda: TestResultSummary(total=0, passed=0, failed=0, skipped=0)
     )
+    test_cases: list[TestCaseView] = Field(default_factory=list)
     verification_gates: list[VerificationGate] = Field(default_factory=list)
 
 
@@ -207,6 +224,8 @@ class ProblemCatalogMatchRequest(BaseModel):
 
 class ProblemCatalogMatchResponse(BaseModel):
     recognized: bool
+    match_state: Literal["matched", "not_found", "ambiguous"] = "not_found"
+    candidate_titles: list[str] = Field(default_factory=list)
     slug: str | None = None
     title: str | None = None
     topics: list[str] = Field(default_factory=list)

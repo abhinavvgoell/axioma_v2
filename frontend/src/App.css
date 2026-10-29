@@ -330,6 +330,31 @@ h1 { font-size: 34px; }
 .report-section-heading h3 { font-size: 16px; }
 .complexity-head h3 { font-size: 28px; }
 .complexity-card details pre { font-size: 12px; }
+.problem-match ul { margin: 6px 0 0; padding-left: 20px; }
+.problem-match li { margin: 3px 0; color: var(--text); }
+.claim-origin { display: block; margin: -5px 0 9px; color: var(--muted); font: 11px var(--mono); }
+.job-status small { display: block; margin-top: 5px; color: #f1a7a8; font: 11px var(--mono); }
+.test-case-list { display: grid; gap: 7px; }
+.test-case { border: 1px solid var(--line); padding: 9px 10px; background: #101213; }
+.test-case-heading { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.test-case-heading > span { font: 10px var(--mono); color: var(--muted); }
+.test-failed .test-case-heading > span { color: #f06472; }
+.test-passed .test-case-heading > span { color: #86c7a3; }
+.test-skipped .test-case-heading > span { color: #dbb66d; }
+.test-case > small { display: block; margin-top: 5px; color: var(--muted); font: 10px var(--mono); }
+.test-case details { margin-top: 6px; }
+.test-case details pre { max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 11px var(--mono); }
+.test-case-values { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 4px 8px; margin: 8px 0; font-size: 11px; }
+.test-case-values dt { color: var(--muted); font: 10px var(--mono); }
+.test-case-values dd { margin: 0; overflow-wrap: anywhere; font-family: var(--mono); }
+.empirical-measurements, .space-observation { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.empirical-measurements h4, .space-observation h4 { margin: 0 0 5px; font-size: 13px; }
+.empirical-measurements > small, .space-observation > small, .space-observation > span { color: var(--muted); font-size: 11px; }
+.empirical-measurements ul { padding: 0; margin: 8px 0 0; list-style: none; }
+.empirical-measurements li { display: flex; align-items: baseline; gap: 8px; border-top: 1px solid var(--line); padding: 6px 0; font-size: 11px; }
+.empirical-measurements li code { color: var(--text); font: 11px var(--mono); }
+.empirical-measurements li small { margin-left: auto; color: var(--muted); }
+.space-observation > b, .space-observation > span, .space-observation > small { display: block; margin-top: 4px; }
 
 @media (max-width: 680px) {
   .workspace-label { font-size: 10px; }

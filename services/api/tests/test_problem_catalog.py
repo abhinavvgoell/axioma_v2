@@ -27,6 +27,7 @@ def test_catalog_recognizes_standard_two_sum_statement_without_title() -> None:
     )
 
     assert match.recognized is True
+    assert match.match_state == "matched"
     assert match.slug == "two-sum"
     assert match.problem is not None
     assert match.test_count >= 3
@@ -39,6 +40,7 @@ def test_catalog_recognizes_standard_permutation_statement_without_title() -> No
     )
 
     assert match.recognized is True
+    assert match.match_state == "matched"
     assert match.slug == "permutation-in-string"
     assert match.problem is not None
     assert match.test_count >= 3
@@ -157,6 +159,9 @@ def test_catalog_matches_a_titleless_description_from_imported_packs(monkeypatch
     assert match.recognized is True
     assert match.slug == "minimum-size-subarray-sum"
     assert match.test_count == 1
+    from axioma_api.main import catalog_source_for_problem
+
+    assert catalog_source_for_problem(match.problem) == match.test_source
 
 
 def test_catalog_does_not_guess_for_vague_statement(monkeypatch) -> None:
@@ -181,3 +186,35 @@ def test_catalog_does_not_guess_for_vague_statement(monkeypatch) -> None:
     match = match_problem_statement("Given an array of integers, return the maximum result.")
 
     assert match.recognized is False
+    assert match.match_state == "not_found"
+
+
+def test_catalog_reports_ambiguous_description_matches_without_selecting_a_pack(monkeypatch) -> None:
+    from axioma_api import problem_catalog
+
+    description = (
+        "Given an integer array and a target value, find the maximum length of a contiguous "
+        "subarray whose sum equals the target value. Return the length of that subarray."
+    )
+    monkeypatch.setattr(
+        problem_catalog,
+        "_imported_packs",
+        lambda: tuple(
+            {
+                "slug": slug,
+                "title": title,
+                "description": description,
+                "topics": ["array"],
+                "entrypoint": "Solution.solve",
+                "constraints": [],
+                "samples": [{"name": "example", "args": [[1, 2], 3], "kwargs": {}, "expected": 2}],
+            }
+            for slug, title in (("first", "First Similar Problem"), ("second", "Second Similar Problem"))
+        ),
+    )
+
+    match = match_problem_statement(description)
+
+    assert match.recognized is False
+    assert match.match_state == "ambiguous"
+    assert set(match.candidate_titles) == {"First Similar Problem", "Second Similar Problem"}

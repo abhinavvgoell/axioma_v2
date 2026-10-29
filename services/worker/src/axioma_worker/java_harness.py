@@ -414,13 +414,18 @@ public class Harness {{
     }}
 
     static String result(String name, String outcome, String reason) {{
-        return result(name, outcome, reason, "");
+        return result(name, outcome, reason, "", "none");
     }}
 
     static String result(String name, String outcome, String reason, String strategy) {{
+        return result(name, outcome, reason, strategy, "none");
+    }}
+
+    static String result(String name, String outcome, String reason, String strategy, String failureKind) {{
         String value = "{{\\\"name\\\":" + quote(name) + ",\\\"outcome\\\":" + quote(outcome)
             + ",\\\"details\\\":{{\\\"reason\\\":" + quote(reason);
         if (!strategy.isEmpty()) value += ",\\\"input_strategy\\\":" + quote(strategy);
+        if (!failureKind.isEmpty()) value += ",\\\"failure_kind\\\":" + quote(failureKind);
         return value + "}}}}";
     }}
 
@@ -448,17 +453,19 @@ public class Harness {{
         boolean allExecutionChecksPassed = true;
         for (Case test : cases) {{
             String outcome = "failed", reason = "wrong answer";
+            String failureKind = "incorrect_output";
             try {{
                 Object actual = invokeQuietly({_java_string(class_name)}, {_java_string(method_name)}, test.args());
                 if (equal(actual, test.expected())) {{ outcome = "passed"; reason = ""; }}
             }} catch (Throwable error) {{
+                failureKind = "runtime_error";
                 Throwable cause = error instanceof java.lang.reflect.InvocationTargetException && error.getCause() != null ? error.getCause() : error;
                 reason = cause.getClass().getSimpleName() + ": " + String.valueOf(cause.getMessage());
                 if (reason.length() > 300) reason = reason.substring(0, 300);
             }}
             sampleOutcomes.add(outcome);
             allExecutionChecksPassed &= outcome.equals("passed");
-            results.add(result(test.name(), outcome, reason, test.strategy()));
+            results.add(result(test.name(), outcome, reason, test.strategy(), outcome.equals("passed") ? "none" : failureKind));
         }}
         boolean referenceValid = !referenceCases.isEmpty();
         for (Case test : referenceCases) {{
@@ -478,10 +485,11 @@ public class Harness {{
             }}
             referenceValid &= outcome.equals("passed");
             allExecutionChecksPassed &= outcome.equals("passed");
-            results.add(result("reference/" + test.name(), outcome, reason));
+            results.add(result("reference/" + test.name(), outcome, reason, "", outcome.equals("passed") ? "none" : "oracle_error"));
         }}
         for (Case test : generatedCases) {{
             String outcome = "skipped", reason = "reference did not pass all provided samples";
+            String failureKind = "oracle_error";
             if (referenceValid) {{
                 try {{
                     Object expected = invokeQuietly("Reference", {_java_string(method_name)}, test.args());
@@ -491,8 +499,10 @@ public class Harness {{
                         outcome = "skipped";
                         reason = "independent references disagree; candidate comparison not run";
                     }} else {{
+                        failureKind = "runtime_error";
                         Object actual = invokeQuietly({_java_string(class_name)}, {_java_string(method_name)}, test.args());
                         outcome = equal(actual, expected) ? "passed" : "failed";
+                        failureKind = outcome.equals("passed") ? "none" : "incorrect_output";
                         reason = outcome.equals("passed") ? "" : {_java_string('candidate differs from corroborated user-supplied references' if independent_reference_enabled else 'candidate differs from user-supplied reference')};
                     }}
                     allExecutionChecksPassed &= outcome.equals("passed");
@@ -506,7 +516,7 @@ public class Harness {{
             }}
             allExecutionChecksPassed &= outcome.equals("passed");
             generatedOutcomes.add(outcome);
-            results.add(result(test.name(), outcome, reason, test.strategy()));
+            results.add(result(test.name(), outcome, reason, test.strategy(), failureKind));
         }}
         if ({str(mutation_tests_requested > 0).lower()}) {{
             List<String> mutationOutcomes = new ArrayList<>();

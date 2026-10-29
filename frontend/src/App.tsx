@@ -447,12 +447,7 @@ function AnalyzerApp() {
               <div className="panel-heading"><span>01</span><h2>Problem</h2><span className="panel-meta">PASTE STATEMENT</span></div>
               <label className="field-label" htmlFor="problem-statement">PROBLEM STATEMENT</label>
               <textarea id="problem-statement" className="text-input statement-input" value={statement} onChange={(event) => { setStatement(event.target.value); setProblemMatch(null); setProposal(null); setProposalMessage(null) }} onBlur={() => { if (statement.trim()) void identifyStatement(statement).catch(() => setProblemMatch(null)) }} rows={7} placeholder="Paste the full problem statement here. Axioma will look for a matching test pack." />
-              <div className={`problem-match${problemMatch?.recognized ? ' matched' : problemMatch ? ' unmatched' : ''}`} aria-live="polite">
-                {matching ? <><span className="match-pip" />Looking for a supported problem…</> : problemMatch?.recognized
-                  ? <><b>{problemMatch.title}</b><span>{problemMatch.test_count} Axioma checks ready</span><details><summary>TEST PACK SOURCE</summary><small>{problemMatch.test_source}</small></details></>
-                  : problemMatch ? <><b>Problem not recognized yet</b><span>Check that the problem title is included in the pasted statement.</span></>
-                    : <><span className="match-pip idle" />Test cases and problem details will be filled in when Axioma recognizes the statement.</>}
-              </div>
+              <ProblemMatchCard matching={matching} problemMatch={problemMatch} />
               <div className="input-note"><span>i</span><p>Only the statement and your solution are needed. Test cases are supplied by Axioma for supported problems.</p></div>
             </section>
 
@@ -479,6 +474,10 @@ function AnalyzerApp() {
                     <div className="report-section-heading"><h3 id="complexity-heading">Time complexity</h3><span>ESTIMATE</span></div>
                     <Complexity result={report.complexity} />
                   </section>
+                  <section className="report-section" aria-labelledby="checks-heading">
+                    <div className="report-section-heading"><h3 id="checks-heading">Configured checks</h3><span>{report.test_cases.length} CASES</span></div>
+                    <TestCaseList cases={report.test_cases} summary={report.tests} />
+                  </section>
                   <section className="report-section" aria-labelledby="claims-heading">
                     <div className="report-section-heading"><h3 id="claims-heading">Evidence</h3><span>{report.claims.length} {report.claims.length === 1 ? 'CLAIM' : 'CLAIMS'}</span></div>
                     <Claims claims={report.claims} />
@@ -496,15 +495,15 @@ function AnalyzerApp() {
   )
 }
 
-function JobStatusView({ job }: { job: Job | null }) {
+export function JobStatusView({ job }: { job: Job | null }) {
   if (!job) return null
   const label: Record<JobStatus, string> = {
-    queued: 'QUEUED', running: 'RUNNING', completed: 'COMPLETE', failed: 'FAILED', cancelled: 'CANCELLED',
+    queued: 'QUEUED', running: 'RUNNING', completed: 'COMPLETE', failed: 'WORKER FAILURE', cancelled: 'CANCELLED',
   }
-  return <div className={`job-status status-${job.status}`}><span className="status-pip" /><div><b>{label[job.status]}</b><p>{job.progress_message ?? 'Job accepted by the API.'}</p></div><code title="Job ID">{job.id.slice(0, 8)}</code></div>
+  return <div className={`job-status status-${job.status}`}><span className="status-pip" /><div><b>{label[job.status]}</b><p>{job.progress_message ?? 'Job accepted by the API.'}</p>{job.status === 'failed' && job.error_code && <small>Failure category: {failureLabel(job.error_code)}</small>}</div><code title="Job ID">{job.id.slice(0, 8)}</code></div>
 }
 
-function EmptyResults({ job }: { job: Job | null }) {
+export function EmptyResults({ job }: { job: Job | null }) {
   const copy = job?.status === 'failed'
     ? 'The worker could not complete this run. Check that the API, worker, and sandbox are available.'
     : job?.status === 'cancelled'
@@ -515,15 +514,43 @@ function EmptyResults({ job }: { job: Job | null }) {
   return <div className="empty-results"><span className="empty-glyph">A.</span><p>{copy}</p>{job && <span className="empty-id">JOB {job.id}</span>}</div>
 }
 
-function EvidenceBadge({ type, confidence }: { type: string; confidence: string }) {
-  return <div className="evidence-badges"><span className={`evidence-type type-${type}`}>{type.replaceAll('_', ' ')}</span><span className={`confidence confidence-${confidence}`}>{confidence} confidence</span></div>
+function evidenceLabel(type: string) {
+  return ({ executed: 'Executed check', static: 'Static heuristic', statistical: 'Statistical evidence', model: 'Model prediction', unverified: 'Unverified' } as Record<string, string>)[type] ?? 'Unknown evidence'
 }
 
-function Claims({ claims }: { claims: AnalysisReport['claims'] }) {
+export function ProblemMatchCard({ matching, problemMatch }: { matching: boolean; problemMatch: ProblemMatch | null }) {
+  return <div className={`problem-match${problemMatch?.recognized ? ' matched' : problemMatch ? ' unmatched' : ''}`} aria-live="polite">
+    {matching ? <><span className="match-pip" />Looking for a supported problem…</> : problemMatch?.recognized
+      ? <><b>{problemMatch.title}</b><span>{problemMatch.test_count} Axioma checks ready</span><details><summary>TEST PACK SOURCE</summary><small>{problemMatch.test_source}</small></details></>
+      : problemMatch?.match_state === 'ambiguous'
+        ? <><b>More than one problem may match</b><span>No pack was selected. Add the exact problem title to narrow it down.</span><ul>{problemMatch.candidate_titles.map((title) => <li key={title}>{title}</li>)}</ul></>
+        : problemMatch ? <><b>No supported problem match</b><span>The current catalog could not find a sufficiently reliable match. No tests will be selected automatically.</span></>
+          : <><span className="match-pip idle" />Test cases and problem details will be filled in when Axioma recognizes the statement.</>}
+  </div>
+}
+
+function originLabel(claim: AnalysisReport['claims'][number]) {
+  const tool = claim.provenance.tool ?? ''
+  if (tool.includes('benchmark')) return 'Empirical benchmark'
+  if (tool.includes('optimization-checker')) return 'Rule-based candidate verification'
+  if (tool.includes('catalog')) return 'Imported problem examples'
+  if (tool.includes('generated') || tool.includes('differential')) return 'Generated differential check'
+  if (tool.includes('mutation')) return 'Mutation testing'
+  if (tool.includes('property')) return 'User-supplied property checks'
+  if (tool.includes('harness') || tool.includes('stdin-worker')) return 'Axioma test harness'
+  if (claim.type === 'model') return 'No model is configured in Mode 1'
+  return 'Origin recorded in provenance'
+}
+
+export function EvidenceBadge({ type, confidence }: { type: string; confidence: string }) {
+  return <div className="evidence-badges"><span className={`evidence-type type-${type}`}>{evidenceLabel(type)}</span><span className={`confidence confidence-${confidence}`}>{confidence} confidence</span></div>
+}
+
+export function Claims({ claims }: { claims: AnalysisReport['claims'] }) {
   if (claims.length === 0) return <div className="empty-claims">This run did not produce evidence claims.</div>
   return <div className="claim-list">{claims.map((claim) => {
     const optimization = claim.type === 'executed' && claim.provenance.tool?.includes('optimization-checker')
-    return <article className="claim-card" key={claim.id}><div className="claim-top"><span className="claim-id">{claim.id}</span><EvidenceBadge type={claim.type} confidence={claim.confidence} /></div><p>{claim.summary}</p>{optimization && <OptimizationReview details={claim.provenance.details as OptimizationReviewDetails} />}<details><summary>PROVENANCE</summary><dl><dt>TOOL</dt><dd>{claim.provenance.tool ?? 'Not recorded'}</dd><dt>VERSION</dt><dd>{claim.provenance.tool_version ?? 'Not recorded'}</dd>{claim.provenance.input_hash && <><dt>INPUT HASH</dt><dd className="hash-value">{claim.provenance.input_hash}</dd></>}</dl></details></article>
+    return <article className="claim-card" key={claim.id}><div className="claim-top"><span className="claim-id">{claim.id}</span><EvidenceBadge type={claim.type} confidence={claim.confidence} /></div><p>{claim.summary}</p><small className="claim-origin">{originLabel(claim)}</small>{optimization && <OptimizationReview details={claim.provenance.details as OptimizationReviewDetails} />}<details><summary>PROVENANCE</summary><dl><dt>TOOL</dt><dd>{claim.provenance.tool ?? 'Not recorded'}</dd><dt>VERSION</dt><dd>{claim.provenance.tool_version ?? 'Not recorded'}</dd>{claim.provenance.input_hash && <><dt>INPUT HASH</dt><dd className="hash-value">{claim.provenance.input_hash}</dd></>}</dl></details></article>
   })}</div>
 }
 
@@ -549,7 +576,7 @@ function OptimizationReview({ details }: { details: OptimizationReviewDetails })
   return <section className="optimization-review" aria-label="Optimization candidate review"><div className={`optimization-state optimization-${details.state ?? 'inconclusive'}`}>{(details.state ?? 'inconclusive').toUpperCase()} EQUIVALENCE</div>{details.checks && <div className="optimization-counts"><span>{details.checks.passed ?? 0} passed</span><span>{details.checks.failed ?? 0} failed</span><span>{details.checks.skipped ?? 0} skipped</span><span>{details.checks.checked ?? 0}/{details.checks.requested ?? 0} checked</span></div>}{details.optimization_notes && <p className="optimization-notes">{details.optimization_notes}</p>}<div className="optimization-complexity"><div><span>BEFORE</span><b>{details.complexity_before?.estimate ?? '—'}</b><small>{details.complexity_before?.method ?? 'No estimate'}</small></div><div><span>AFTER</span><b>{details.complexity_after?.estimate ?? '—'}</b><small>{details.complexity_after?.method ?? 'No estimate'}</small></div></div>{details.measurements?.length ? <details><summary>MEASUREMENTS · {details.measurement_method ?? 'method not recorded'}</summary><pre>{JSON.stringify(details.measurements, null, 2)}</pre></details> : <p className="field-hint">{details.measurement_skipped_reason ?? 'No measurements were produced for this run.'}</p>}<details><summary>BEFORE AND ALTERNATE SOURCE</summary><div className="optimization-source"><span>ORIGINAL</span><pre>{details.original_code ?? 'Not recorded'}</pre><span>USER-PROVIDED CANDIDATE</span><pre>{details.optimized_code ?? 'Not recorded'}</pre></div></details>{limit && <p className="field-hint">{limit}{details.warmups && details.trials ? ` Trials: ${details.trials}; warmups: ${details.warmups}.` : ''}</p>}</section>
 }
 
-function Complexity({ result }: { result: AnalysisReport['complexity'] }) {
+export function Complexity({ result }: { result: AnalysisReport['complexity'] }) {
   if (!result) return <div className="complexity-unavailable">Axioma could not produce a complexity estimate for this solution.</div>
   const analysis = result.details.code_analysis as {
     signals?: { kind: string; label: string; line?: number | null }[]
@@ -558,10 +585,38 @@ function Complexity({ result }: { result: AnalysisReport['complexity'] }) {
     scope?: string
     limitations?: string[]
   } | undefined
-  return <article className="complexity-card"><div className="complexity-head"><div><span className="field-label">ESTIMATE</span><h3>{result.estimate}</h3></div><span className={`confidence confidence-${result.confidence}`}>{result.confidence} confidence</span></div><div className="method-line"><span>METHOD</span><code>{result.method}</code></div>{result.methods_disagree && <div className="disagree-note"><b>METHODS DISAGREE</b><p>The available estimates did not agree. Review the measurements before relying on this class.</p></div>}{result.explanation && <p className="complexity-explanation">{result.explanation}</p>}{analysis && <section className="code-analysis-signals" aria-label="Detected code patterns"><div className="signals-heading"><b>WHAT AXIOMA FOUND</b><span>{analysis.loop_count ?? 0} loops · max nesting {analysis.maximum_loop_nesting ?? 0}</span></div>{analysis.signals?.length ? <ul>{analysis.signals.map((signal, index) => <li key={`${signal.kind}-${signal.line ?? 'na'}-${index}`}><span>{signal.label}</span>{signal.line ? <code>LINE {signal.line}</code> : null}</li>)}</ul> : <p>No listed patterns were detected in the selected function.</p>}{analysis.scope && <small>{analysis.scope}.</small>}{analysis.limitations?.length ? <details><summary>LIMITS OF THIS ANALYSIS</summary><ul>{analysis.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul></details> : null}</section>}<details><summary>MEASUREMENT DETAILS</summary><pre>{JSON.stringify(result.details, null, 2)}</pre></details></article>
+  const points = Array.isArray(result.details.points) ? result.details.points as Record<string, unknown>[] : []
+  const space = typeof result.details.space_measurement === 'object' && result.details.space_measurement !== null ? result.details.space_measurement as Record<string, unknown> : null
+  const hasStaticEstimate = !result.estimate.startsWith('unknown')
+  const storedStaticEstimate = typeof result.details.static_estimate === 'string' ? result.details.static_estimate : null
+  const legacyCombinedEstimate = points.length > 0 && result.method.includes('+dynamic') && storedStaticEstimate === null
+  const staticEstimate = storedStaticEstimate ?? (legacyCombinedEstimate ? null : result.estimate)
+  return <article className="complexity-card"><div className="complexity-head"><div><span className="field-label">STATIC ESTIMATE · HEURISTIC</span><h3>{staticEstimate ? staticEstimate : hasStaticEstimate ? 'Not stored separately for this saved run' : 'Unable to estimate reliably'}</h3></div><span className={`confidence confidence-${result.confidence}`}>{result.confidence} confidence</span></div><div className="method-line"><span>METHOD</span><code>{result.method}</code></div>{result.methods_disagree && <div className="disagree-note"><b>METHODS DISAGREE</b><p>The available estimates did not agree. Review the measurements before relying on this class.</p></div>}{result.explanation && <p className="complexity-explanation">{result.explanation}</p>}{analysis && <section className="code-analysis-signals" aria-label="Detected code patterns"><div className="signals-heading"><b>WHAT AXIOMA FOUND</b><span>{analysis.loop_count ?? 0} loops · max nesting {analysis.maximum_loop_nesting ?? 0}</span></div>{analysis.signals?.length ? <ul>{analysis.signals.map((signal, index) => <li key={`${signal.kind}-${signal.line ?? 'na'}-${index}`}><span>{signal.label}</span>{signal.line ? <code>LINE {signal.line}</code> : null}</li>)}</ul> : <p>No listed patterns were detected in the selected function.</p>}{analysis.scope && <small>{analysis.scope}.</small>}{analysis.limitations?.length ? <details><summary>LIMITS OF THIS ANALYSIS</summary><ul>{analysis.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul></details> : null}</section>}{points.length > 0 && <section className="empirical-measurements"><h4>Empirical benchmark · not an asymptotic proof</h4><small>{String(result.details.measurement_method ?? 'Measurement method not recorded')}{typeof result.details.fit === 'string' ? ` · observed growth fit: ${result.details.fit}` : ''}</small><ul>{points.map((point, index) => <li key={`${String(point.size)}-${index}`}><span>Input size {String(point.size ?? 'not recorded')}</span><code>{formatMeasurement(point)}</code>{typeof point.input_strategy === 'string' && <small>{point.input_strategy}</small>}</li>)}</ul></section>}<section className="space-observation"><h4>Auxiliary space</h4>{space?.state === 'estimated' && typeof space.estimate === 'string' ? <><b>{space.estimate}</b><span>Low-confidence measured growth · not an asymptotic proof</span><small>{String(space.measurement ?? space.method ?? 'Memory observation')}</small></> : <span>No auxiliary-space estimate was produced for this run.</span>}</section><details><summary>RAW ANALYSIS DETAILS</summary><pre>{JSON.stringify(result.details, null, 2)}</pre></details></article>
 }
 
-function GateList({ gates }: { gates: AnalysisReport['verification_gates'] }) {
+function formatMeasurement(point: Record<string, unknown>) {
+  if (typeof point.line_events === 'number') return `${point.line_events} source-line events`
+  if (typeof point.median_elapsed_ns === 'number') return `${point.median_elapsed_ns} ns median`
+  if (typeof point.elapsed_ns === 'number') return `${point.elapsed_ns} ns`
+  return 'Measurement value unavailable'
+}
+
+function failureLabel(kind: string) {
+  return ({ compile_error: 'Compiler error', runtime_error: 'Runtime error', timeout: 'Timed out', incorrect_output: 'Incorrect output', oracle_error: 'Reference/oracle check failed', worker_error: 'Worker error', sandbox_unavailable: 'Sandbox unavailable' } as Record<string, string>)[kind] ?? kind.replaceAll('_', ' ')
+}
+
+export function TestCaseList({ cases, summary }: { cases: AnalysisReport['test_cases']; summary: AnalysisReport['tests'] }) {
+  if (cases.length === 0) return <div className="empty-claims">No per-case results were recorded. Summary: {summary.passed} passed, {summary.failed} failed, {summary.skipped} skipped.</div>
+  return <div className="test-case-list">{cases.map((test, index) => {
+    const kind = typeof test.details.failure_kind === 'string' ? test.details.failure_kind : null
+    const origin = ({ catalog_sample: 'Imported sample', generated_differential: 'Generated differential', reference_validation: 'Reference validation', property_check: 'Property check', program_execution: 'Program execution', unknown: 'Origin unknown' } as Record<string, string>)[test.origin]
+    const expected = test.details.expected ?? test.details.expected_stdout
+    const observed = test.details.actual ?? test.details.actual_stdout
+    return <article className={`test-case test-${test.outcome}`} key={`${test.name}-${index}`}><div className="test-case-heading"><b>{test.name}</b><span>{test.outcome.toUpperCase()}</span></div><small>{origin}{kind ? ` · ${failureLabel(kind)}` : ''}{test.duration_ms !== null ? ` · ${test.duration_ms} ms` : ''}</small>{test.details.truncated === true && <small>Output truncated by Axioma; showing a bounded preview.</small>}{expected !== undefined && <dl className="test-case-values"><dt>EXPECTED</dt><dd>{JSON.stringify(expected)}</dd><dt>OBSERVED</dt><dd>{observed === undefined ? 'Not recorded' : JSON.stringify(observed)}</dd></dl>}<details><summary>CASE DETAILS</summary><pre>{JSON.stringify(test.details, null, 2)}</pre></details></article>
+  })}</div>
+}
+
+export function GateList({ gates }: { gates: AnalysisReport['verification_gates'] }) {
   const labels = { passed: 'PASSED', failed: 'FAILED', not_run: 'NOT RUN' }
   return <div className="gate-list"><h3>VERIFICATION GATES</h3>{gates.map((gate) => <div className="gate-row" key={`${gate.order}-${gate.name}`}><span className="gate-order">{String(gate.order + 1).padStart(2, '0')}</span><span>{gate.name}</span><b className={`gate-state gate-${gate.state}`}>{labels[gate.state]}</b></div>)}</div>
 }

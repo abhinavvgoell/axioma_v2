@@ -1,4 +1,5 @@
 import asyncio
+import json
 from collections.abc import AsyncIterator
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
@@ -32,6 +33,7 @@ from axioma_api.contracts import (
     JobStatus,
     JobView,
     TestResultSummary,
+    TestCaseView,
     VerificationGate,
 )
 from axioma_api.database import get_session, get_session_factory
@@ -64,6 +66,15 @@ def health() -> dict[str, str]:
 @app.post("/v1/problem-specs/match", response_model=ProblemCatalogMatchResponse)
 def match_problem(payload: ProblemCatalogMatchRequest) -> ProblemCatalogMatchResponse:
     return match_problem_statement(payload.statement)
+
+
+def catalog_source_for_problem(problem: ProblemSpec) -> str | None:
+    match = match_problem_statement(problem.statement)
+    if not match.recognized or match.problem is None:
+        return None
+    if match.problem.model_dump(mode="json") != problem.model_dump(mode="json"):
+        return None
+    return match.test_source
 
 
 @app.post("/v1/problem-specs/validate", response_model=ProblemSpecValidation)
@@ -126,6 +137,7 @@ def submit_python_function_job(
     validation = validate_problem_spec(payload.problem)
     if not validation.valid:
         raise HTTPException(status_code=422, detail=validation.model_dump(mode="json"))
+    test_pack_source = catalog_source_for_problem(payload.problem)
     request = JobCreate(
         mode=JobMode.DSA_ANALYSIS,
         language="python",
@@ -136,6 +148,7 @@ def submit_python_function_job(
             "property_code": payload.property_code,
             "property_tests": payload.property_tests,
             "problem": payload.problem.model_dump(mode="json"),
+            "test_pack_source": test_pack_source,
             "reference_code": payload.reference_code,
             "independent_reference_code": payload.independent_reference_code,
             "generated_tests": payload.generated_tests,
@@ -175,6 +188,7 @@ def submit_java_function_job(
     validation = validate_problem_spec(payload.problem)
     if not validation.valid:
         raise HTTPException(status_code=422, detail=validation.model_dump(mode="json"))
+    test_pack_source = catalog_source_for_problem(payload.problem)
     request = JobCreate(
         mode=JobMode.DSA_ANALYSIS,
         language="java",
@@ -183,6 +197,7 @@ def submit_java_function_job(
             "optimization_code": payload.optimization_code,
             "optimization_notes": payload.optimization_notes,
             "problem": payload.problem.model_dump(mode="json"),
+            "test_pack_source": test_pack_source,
             "reference_code": payload.reference_code,
             "independent_reference_code": payload.independent_reference_code,
             "generated_tests": payload.generated_tests,
@@ -351,6 +366,39 @@ def get_job_result(job_id: str, session: Session = Depends(get_session)) -> Anal
     passed = case_counts.get("passed", 0)
     failed = case_counts.get("failed", 0)
     skipped = case_counts.get("skipped", 0)
+    test_case_rows = session.scalars(
+        select(TestCaseRecord)
+        .where(TestCaseRecord.job_id == job_id)
+        .order_by(TestCaseRecord.name, TestCaseRecord.id)
+    ).all()
+
+    def test_case_origin(name: str, details: dict) -> str:
+        recorded_origin = details.get("origin")
+        if recorded_origin in {
+            "catalog_sample",
+            "generated_differential",
+            "reference_validation",
+            "property_check",
+            "program_execution",
+            "unknown",
+        }:
+            return recorded_origin
+        if name.startswith("reference/"):
+            return "reference_validation"
+        if name.startswith("generated_"):
+            return "generated_differential"
+        if name.startswith("property/"):
+            return "property_check"
+        if name == "program_exit":
+            return "program_execution"
+        return "unknown"
+
+    def safe_case_details(details: dict) -> dict:
+        serialized = json.dumps(details, ensure_ascii=True, separators=(",", ":"), default=str)
+        if len(serialized) <= 4096:
+            return details
+        return {"truncated": True, "preview": serialized[:4000]}
+
     return AnalysisReport(
         job_id=job_id,
         claims=[
@@ -382,6 +430,16 @@ def get_job_result(job_id: str, session: Session = Depends(get_session)) -> Anal
             failed=failed,
             skipped=skipped,
         ),
+        test_cases=[
+            TestCaseView(
+                name=row.name,
+                outcome=row.outcome,
+                origin=test_case_origin(row.name, row.details or {}),
+                duration_ms=row.duration_ms,
+                details=safe_case_details(row.details or {}),
+            )
+            for row in test_case_rows
+        ],
         verification_gates=[
             VerificationGate(
                 order=row.gate_order,

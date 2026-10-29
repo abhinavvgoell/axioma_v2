@@ -89,9 +89,9 @@ def test_report_counts_come_from_test_case_rows_and_gates_are_ordered(
                     provenance={"tool": "pytest"},
                     artifact_ids=[],
                 ),
-                CaseRow(id="test-1", job_id=job_id, name="case 1", outcome="passed"),
-                CaseRow(id="test-2", job_id=job_id, name="case 2", outcome="failed"),
-                CaseRow(id="test-3", job_id=job_id, name="case 3", outcome="skipped"),
+                CaseRow(id="test-1", job_id=job_id, name="example", outcome="passed", details={"origin": "catalog_sample", "stdout": "x" * 5000}),
+                CaseRow(id="test-2", job_id=job_id, name="generated_1", outcome="failed", details={"failure_kind": "incorrect_output", "expected": 3, "actual": 2}),
+                CaseRow(id="test-3", job_id=job_id, name="property/example", outcome="skipped", details={"reason": "property did not run"}),
                 ComplexityRecord(
                     job_id=job_id,
                     method="static_loop_analysis",
@@ -126,6 +126,11 @@ def test_report_counts_come_from_test_case_rows_and_gates_are_ordered(
     assert result["complexity"]["details"]["measurement_method"] == "executed_source_line_events"
     assert [gate["order"] for gate in result["verification_gates"]] == [0, 2]
     assert result["claims"][0]["type"] == "executed"
+    assert [case["origin"] for case in result["test_cases"]] == [
+        "catalog_sample", "generated_differential", "property_check"
+    ]
+    assert result["test_cases"][1]["details"]["failure_kind"] == "incorrect_output"
+    assert result["test_cases"][0]["details"]["truncated"] is True
 
 
 def test_problem_spec_validation_checks_function_samples(client: TestClient) -> None:

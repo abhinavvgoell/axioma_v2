@@ -15,8 +15,12 @@ class PythonAdapter:
     image: str = "python:3.13-slim"
     filename: str = "main.py"
     execute_script: str = (
-        "umask 077; python -I /work/main.py > /tmp/stdout 2> /tmp/stderr; "
-        "code=$?; printf '%s' \"$code\" > /tmp/exit-code; exit 0"
+        "umask 077; python -I -m py_compile /work/main.py > /tmp/stdout 2> /tmp/stderr; "
+        "code=$?; if [ \"$code\" -ne 0 ]; then printf '%s' compile_error > /tmp/axioma-failure-kind; "
+        "else python -I /work/main.py > /tmp/stdout 2> /tmp/stderr; code=$?; "
+        "if [ \"$code\" -eq 0 ]; then printf '%s' none > /tmp/axioma-failure-kind; "
+        "else printf '%s' runtime_error > /tmp/axioma-failure-kind; fi; fi; "
+        "printf '%s' \"$code\" > /tmp/exit-code; exit 0"
     )
 
 
@@ -26,9 +30,12 @@ class JavaAdapter:
     image: str = "eclipse-temurin:21-jdk"
     filename: str = "Main.java"
     execute_script: str = (
-        "umask 077; javac -d /work /work/Main.java > /tmp/stdout 2> /tmp/stderr; "
-        'code=$?; if [ "$code" -eq 0 ]; then java -cp /work Main >> /tmp/stdout 2>> /tmp/stderr; '
-        "code=$?; fi; printf '%s' \"$code\" > /tmp/exit-code; exit 0"
+        "umask 077; javac -d /work /work/Main.java > /tmp/stdout 2> /tmp/stderr; code=$?; "
+        'if [ "$code" -ne 0 ]; then printf "%s" compile_error > /tmp/axioma-failure-kind; '
+        'else java -cp /work Main >> /tmp/stdout 2>> /tmp/stderr; code=$?; '
+        'if [ "$code" -eq 0 ]; then printf "%s" none > /tmp/axioma-failure-kind; '
+        'else printf "%s" runtime_error > /tmp/axioma-failure-kind; fi; fi; '
+        "printf '%s' \"$code\" > /tmp/exit-code; exit 0"
     )
 
 

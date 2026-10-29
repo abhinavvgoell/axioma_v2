@@ -24,6 +24,17 @@ class FakeSandbox:
         return SandboxResult(exit_code=0, stdout="42\n", stderr="")
 
 
+class FakeHarnessTimeoutSandbox:
+    def run(self, adapter, source, cancellation_requested=None, **kwargs):
+        return SandboxResult(
+            exit_code=None,
+            stdout="",
+            stderr="",
+            timed_out=True,
+            failure_kind="timeout",
+        )
+
+
 class FakeHarnessSandbox:
     def run(self, adapter, source, cancellation_requested=None, **kwargs):
         assert adapter.language == "python"
@@ -147,7 +158,7 @@ class FakeJavaExhaustiveSandbox:
         assert adapter.language == "java"
         harness = kwargs["extra_files"]["Harness.java"].decode()
         assert '"exhaustive_integer_domain"' in harness
-        assert 'result(test.name(), outcome, reason, test.strategy())' in harness
+        assert 'result(test.name(), outcome, reason, test.strategy(),' in harness
         return SandboxResult(
             exit_code=0,
             stdout=(
@@ -157,6 +168,17 @@ class FakeJavaExhaustiveSandbox:
                 '{"name":"exhaustive_2","outcome":"passed","details":{}}]\n'
             ),
             stderr="",
+        )
+
+
+class FakeJavaCompileFailureSandbox:
+    def run(self, adapter, source, cancellation_requested=None, **kwargs):
+        assert adapter.language == "java"
+        return SandboxResult(
+            exit_code=1,
+            stdout="",
+            stderr="Solution.java:1: error: illegal start of expression",
+            failure_kind="compile_error",
         )
 
 
@@ -314,6 +336,7 @@ def test_function_harness_persists_one_result_per_sample() -> None:
                 language="python",
                 input={
                     "code": "def solve(value): return value * 2",
+                    "test_pack_source": "Axioma test pack",
                     "problem": {
                         "statement": "Double the input.",
                         "interface": {"kind": "function", "entrypoint": "solve"},
@@ -338,6 +361,7 @@ def test_function_harness_persists_one_result_per_sample() -> None:
             ("sample-1", "passed"),
             ("sample-2", "failed"),
         ]
+        assert all(case.details["origin"] == "catalog_sample" for case in cases)
         claim = session.query(EvidenceClaimRecord).filter_by(job_id=job_id).one()
         assert claim.summary == "1 of 2 sample tests passed; 1 failed, 0 skipped"
         complexity = session.get(ComplexityRecord, job_id)
@@ -460,6 +484,75 @@ def test_java_exhaustive_differential_checks_use_the_shared_test_ledger() -> Non
         cases = session.query(CaseRow).filter_by(job_id=job_id).all()
         assert len(cases) == 4
         assert all(case.outcome == "passed" for case in cases)
+
+
+def test_java_compile_failure_is_a_failed_check_not_a_worker_failure() -> None:
+    session_factory = make_session_factory()
+    with session_factory() as session:
+        job, _ = create_job(
+            session,
+            JobCreate(
+                mode=JobMode.DSA_ANALYSIS,
+                language="java",
+                input={
+                    "code": "class Solution { int solve(int value) { return value; } }",
+                    "problem": {
+                        "statement": "Return the integer.",
+                        "interface": {"kind": "function", "entrypoint": "Solution.solve"},
+                        "samples": [{"kind": "function", "name": "example", "args": [1], "expected": 1}],
+                    },
+                },
+            ),
+        )
+        job_id = job.id
+        claim_next_job(session, "worker-java-compile-test")
+
+    run_claimed_job(session_factory, job_id, "worker-java-compile-test", FakeJavaCompileFailureSandbox())
+
+    with session_factory() as session:
+        job = session.get(Job, job_id)
+        cases = session.query(CaseRow).filter_by(job_id=job_id).all()
+        assert job is not None and job.status == "completed"
+        assert len(cases) == 1
+        assert cases[0].outcome == "failed"
+        assert cases[0].details["failure_kind"] == "compile_error"
+        assert "illegal start" in cases[0].details["stderr"]
+
+
+def test_function_harness_timeout_does_not_claim_unobserved_samples_failed() -> None:
+    session_factory = make_session_factory()
+    with session_factory() as session:
+        job, _ = create_job(
+            session,
+            JobCreate(
+                mode=JobMode.DSA_ANALYSIS,
+                language="python",
+                input={
+                    "code": "def solve(value): return value",
+                    "problem": {
+                        "statement": "Return the integer.",
+                        "interface": {"kind": "function", "entrypoint": "solve"},
+                        "samples": [
+                            {"kind": "function", "name": "one", "args": [1], "expected": 1},
+                            {"kind": "function", "name": "two", "args": [2], "expected": 2},
+                        ],
+                    },
+                },
+            ),
+        )
+        job_id = job.id
+        claim_next_job(session, "worker-timeout-test")
+
+    run_claimed_job(session_factory, job_id, "worker-timeout-test", FakeHarnessTimeoutSandbox())
+
+    with session_factory() as session:
+        job = session.get(Job, job_id)
+        cases = session.query(CaseRow).filter_by(job_id=job_id).all()
+        assert job is not None and job.status == "completed"
+        assert job.progress_message == "Analysis timed out before per-case outcomes were recorded"
+        assert len(cases) == 2
+        assert all(case.outcome == "skipped" for case in cases)
+        assert all(case.details["failure_kind"] == "timeout" for case in cases)
 
 
 def test_optimization_evidence_stores_both_versions_without_changing_test_totals() -> None:

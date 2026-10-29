@@ -35,7 +35,11 @@ def double(value):
         {
             "name": "incorrect",
             "outcome": "failed",
-            "details": {"expected": 11, "actual": 10},
+                "details": {
+                    "expected": 11,
+                    "actual": 10,
+                    "failure_kind": "incorrect_output",
+                },
         },
     ]
 

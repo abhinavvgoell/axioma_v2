@@ -176,6 +176,12 @@ results = []
 reference_results = []
 optimization_checks = []
 reference_valid = reference is not None and reference_error is None
+candidate_failure_kind = (
+    "compile_error"
+    if candidate_error
+    and candidate_error.split(":", 1)[0] in {{"SyntaxError", "IndentationError", "TabError"}}
+    else "runtime_error"
+)
 if independent_reference is not None:
     reference_valid = reference_valid and independent_reference_error is None
 mutation_samples = []
@@ -183,15 +189,16 @@ for sample in spec["samples"]:
     result = {{"name": sample["name"], "outcome": "failed", "details": {{}}}}
     if candidate_error:
         result["details"]["error"] = candidate_error
+        result["details"]["failure_kind"] = candidate_failure_kind
     else:
         try:
             actual = call(candidate, sample)
             expected = sample["expected"]
             result["outcome"] = "passed" if equal(actual, expected) else "failed"
             if result["outcome"] == "failed":
-                result["details"] = {{"expected": expected, "actual": actual}}
+                result["details"] = {{"expected": expected, "actual": actual, "failure_kind": "incorrect_output"}}
         except BaseException as exc:
-            result["details"] = {{"error": type(exc).__name__ + ": " + str(exc)[:300]}}
+            result["details"] = {{"error": type(exc).__name__ + ": " + str(exc)[:300], "failure_kind": "runtime_error"}}
     results.append(result)
 
     if optimized is not None:
@@ -246,6 +253,7 @@ for sample in spec["samples"]:
                         else "reference output differs from provided sample"
                     )
                     check["details"]["references_agree"] = references_agree
+                    check["details"]["failure_kind"] = "oracle_error"
                     reference_valid = False
                 if independent_reference is not None:
                     check["details"]["independent_reference_outcome"] = (
@@ -253,6 +261,7 @@ for sample in spec["samples"]:
                     )
             except BaseException as exc:
                 check["details"]["error"] = type(exc).__name__ + ": " + str(exc)[:300]
+                check["details"]["failure_kind"] = "oracle_error"
                 reference_valid = False
         reference_results.append(check)
 
@@ -282,6 +291,7 @@ if reference is not None:
                         "reason": "independent references disagree; candidate comparison not run",
                         "references_agree": False,
                         "input_strategy": sample.get("strategy", "unspecified"),
+                        "failure_kind": "oracle_error",
                     }}
                 else:
                     actual = call(candidate, sample)
@@ -292,10 +302,11 @@ if reference is not None:
                         else "candidate against user-supplied reference",
                         "references_agree": True,
                         "input_strategy": sample.get("strategy", "unspecified"),
+                        "failure_kind": "none" if result["outcome"] == "passed" else "incorrect_output",
                     }}
             except BaseException as exc:
                 result["outcome"] = "failed"
-                result["details"] = {{"error": type(exc).__name__ + ": " + str(exc)[:300]}}
+                result["details"] = {{"error": type(exc).__name__ + ": " + str(exc)[:300], "failure_kind": "runtime_error"}}
             else:
                 if references_agree and result["outcome"] == "passed":
                     mutation_samples.append(sample)

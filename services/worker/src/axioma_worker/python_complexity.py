@@ -52,6 +52,7 @@ def add_line_event_fit(
         ),
         details={
             "code_analysis": static.details.get("code_analysis"),
+            "static_estimate": static.estimate,
             "measurement_method": "executed_source_line_events",
             "points": points,
             "input_sizes_are_user_declared": True,

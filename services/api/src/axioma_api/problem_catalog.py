@@ -188,16 +188,18 @@ def _description_index(
     return {token: tuple(indices) for token, indices in postings.items()}, sum(bool(doc) for doc in tokens)
 
 
-def _match_by_description(statement: str, packs: tuple[dict, ...]) -> dict | None:
+def _match_by_description(
+    statement: str, packs: tuple[dict, ...]
+) -> tuple[dict | None, list[dict]]:
     query_tokens = _description_tokens(statement)
     if len(query_tokens) < 5:
-        return None
+        return None, []
 
     postings, document_count = _description_index(
         tuple(str(pack.get("description", "")) for pack in packs)
     )
     if not document_count:
-        return None
+        return None, []
 
     query_weights = {
         token: math.log((document_count + 1) / (len(postings.get(token, ())) + 1)) + 1
@@ -205,7 +207,7 @@ def _match_by_description(statement: str, packs: tuple[dict, ...]) -> dict | Non
     }
     query_weight = sum(query_weights.values())
     if not query_weight:
-        return None
+        return None, []
     matched_weights: dict[int, float] = {}
     for token, token_weight in query_weights.items():
         for index in postings.get(token, ()):
@@ -216,10 +218,10 @@ def _match_by_description(statement: str, packs: tuple[dict, ...]) -> dict | Non
     ]
     candidates.sort(key=lambda candidate: candidate[0], reverse=True)
     if not candidates or candidates[0][0] < 0.58:
-        return None
+        return None, []
     if len(candidates) > 1 and candidates[0][0] - candidates[1][0] < 0.08:
-        return None
-    return candidates[0][1]
+        return None, [pack for _, pack in candidates[:3]]
+    return candidates[0][1], []
 
 
 def _problem_from_pack(statement: str, pack: dict) -> ProblemSpec:
@@ -247,34 +249,41 @@ def match_problem_statement(statement: str) -> ProblemCatalogMatchResponse:
     first_word_match = re.match(r"[a-z0-9]+", heading_text.strip(), flags=re.IGNORECASE)
     first_word = first_word_match.group(0).casefold() if first_word_match else ""
     imported_packs = _imported_packs()
-    for pack in (*_PACKS, *imported_packs):
+    packs = (*_PACKS, *imported_packs)
+    title_matches: dict[str, dict] = {}
+    for pack in packs:
         if _matches_pack(normalized, first_word, statement, pack):
-            problem = _problem_from_pack(statement, pack)
-            return ProblemCatalogMatchResponse(
-                recognized=True,
-                slug=pack["slug"],
-                title=pack["title"],
-                topics=pack["topics"],
-                test_count=len(pack["samples"]),
-                test_source=pack.get(
-                    "test_source",
-                    "Axioma curated pack; these are not LeetCode hidden judge tests.",
-                ),
-                problem=problem,
-            )
-    pack = _match_by_description(statement, imported_packs)
-    if pack is not None:
-        problem = _problem_from_pack(statement, pack)
+            title_matches.setdefault(str(pack.get("slug", pack.get("title", ""))), pack)
+    if len(title_matches) > 1:
         return ProblemCatalogMatchResponse(
-            recognized=True,
-            slug=pack["slug"],
-            title=pack["title"],
-            topics=pack["topics"],
-            test_count=len(pack["samples"]),
-            test_source=pack.get(
-                "test_source",
-                "Axioma curated pack; these are not LeetCode hidden judge tests.",
-            ),
-            problem=problem,
+            recognized=False,
+            match_state="ambiguous",
+            candidate_titles=[str(pack.get("title", "Unknown problem")) for pack in title_matches.values()][:3],
         )
-    return ProblemCatalogMatchResponse(recognized=False)
+
+    pack = next(iter(title_matches.values()), None)
+    ambiguous_candidates: list[dict] = []
+    if pack is None:
+        pack, ambiguous_candidates = _match_by_description(statement, imported_packs)
+    if ambiguous_candidates:
+        return ProblemCatalogMatchResponse(
+            recognized=False,
+            match_state="ambiguous",
+            candidate_titles=[str(candidate.get("title", "Unknown problem")) for candidate in ambiguous_candidates],
+        )
+    if pack is None:
+        return ProblemCatalogMatchResponse(recognized=False, match_state="not_found")
+    problem = _problem_from_pack(statement, pack)
+    return ProblemCatalogMatchResponse(
+        recognized=True,
+        match_state="matched",
+        slug=pack["slug"],
+        title=pack["title"],
+        topics=pack["topics"],
+        test_count=len(pack["samples"]),
+        test_source=pack.get(
+            "test_source",
+            "Axioma curated pack; these are not LeetCode hidden judge tests.",
+        ),
+        problem=problem,
+    )

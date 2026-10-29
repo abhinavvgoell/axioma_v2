@@ -96,7 +96,7 @@ def test_java_harness_checks_user_property_on_examples_then_generated_cases() ->
     assert '\\"requested\\":2' in source
     assert "propertyCases.size()" in source
     assert "property did not pass its example checks" in source
-    assert 'result("reference/" + test.name(), outcome, reason)' in source
+    assert 'result("reference/" + test.name(), outcome, reason, "", outcome.equals("passed") ? "none" : "oracle_error")' in source
     assert 'result("generated_" + (index + 1), "skipped"' in source
     assert "candidate differs from user-supplied reference" in source
     assert 'invokeQuietly("Solution", "solve", test.args())' in source

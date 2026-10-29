@@ -53,6 +53,8 @@ def test_run_lifecycle_uses_prebuilt_image_and_cleans_up(monkeypatch: pytest.Mon
         docker_calls.append((args, input))
         if "create" in args:
             return subprocess.CompletedProcess(args, 0, b"container-1", b"")
+        if any("cat /tmp/axioma-failure-kind" in arg for arg in args):
+            return subprocess.CompletedProcess(args, 0, b"unknown", b"")
         if any("cat" in arg for arg in args):
             return subprocess.CompletedProcess(args, 0, b"0", b"")
         return subprocess.CompletedProcess(args, 0, b"", b"")

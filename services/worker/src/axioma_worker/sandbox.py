@@ -31,6 +31,7 @@ class SandboxResult:
     timed_out: bool = False
     cancelled: bool = False
     output_limited: bool = False
+    failure_kind: str | None = None
 
 
 class DockerSandbox:
@@ -101,6 +102,17 @@ class DockerSandbox:
                 timeout=10,
                 input=self._source_archive_files(files),
             )
+            self._docker(
+                [
+                    self.docker_binary,
+                    "exec",
+                    container_id,
+                    "sh",
+                    "-c",
+                    "printf '%s' unknown > /tmp/axioma-failure-kind",
+                ],
+                timeout=5,
+            )
             try:
                 execution = self._run_user_code(
                     container_id,
@@ -110,12 +122,18 @@ class DockerSandbox:
             except subprocess.TimeoutExpired:
                 self._try_docker(["kill", container_id])
                 return SandboxResult(
-                    None, "", "Execution exceeded the wall-clock limit", timed_out=True
+                    None,
+                    "",
+                    "Execution exceeded the wall-clock limit",
+                    timed_out=True,
+                    failure_kind="timeout",
                 )
 
             if isinstance(execution, SandboxResult) and execution.cancelled:
                 self._try_docker(["kill", container_id])
-                return SandboxResult(None, "", "Execution cancelled", cancelled=True)
+                return SandboxResult(
+                    None, "", "Execution cancelled", cancelled=True, failure_kind="cancelled"
+                )
 
             exit_code_result = self._docker(
                 ["exec", container_id, "sh", "-c", "cat /tmp/exit-code"], timeout=5
@@ -127,11 +145,26 @@ class DockerSandbox:
 
             stdout, stdout_limited = self._read_output(container_id, "/tmp/stdout")
             stderr, stderr_limited = self._read_output(container_id, "/tmp/stderr")
+            failure_result = self._docker(
+                [
+                    self.docker_binary,
+                    "exec",
+                    container_id,
+                    "sh",
+                    "-c",
+                    "cat /tmp/axioma-failure-kind 2>/dev/null || true",
+                ],
+                timeout=5,
+            )
+            failure_kind = failure_result.stdout.decode("ascii", errors="ignore").strip() or None
+            if failure_kind in {"none", "unknown"}:
+                failure_kind = None
             return SandboxResult(
                 exit_code=exit_code,
                 stdout=stdout,
                 stderr=stderr,
                 output_limited=stdout_limited or stderr_limited,
+                failure_kind=failure_kind,
             )
         except FileNotFoundError as exc:
             raise SandboxUnavailable("Docker CLI is not installed or is not on PATH") from exc

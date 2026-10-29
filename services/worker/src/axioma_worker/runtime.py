@@ -52,11 +52,21 @@ def is_cancelled(session_factory: sessionmaker, job_id: str) -> bool:
 
 def _stdin_execute_script(language: str) -> str:
     if language == "python":
-        command = "python -I /work/main.py < /work/input.txt"
+        command = (
+            "python -I -m py_compile /work/main.py > /tmp/stdout 2> /tmp/stderr; code=$?; "
+            'if [ "$code" -ne 0 ]; then printf "%s" compile_error > /tmp/axioma-failure-kind; '
+            'else python -I /work/main.py < /work/input.txt > /tmp/stdout 2> /tmp/stderr; code=$?; '
+            'if [ "$code" -eq 0 ]; then printf "%s" none > /tmp/axioma-failure-kind; '
+            'else printf "%s" runtime_error > /tmp/axioma-failure-kind; fi; fi; '
+            "printf '%s' \"$code\" > /tmp/exit-code; exit 0"
+        )
     elif language == "java":
         command = (
             "javac -d /work /work/Main.java > /tmp/stdout 2> /tmp/stderr; code=$?; "
-            'if [ "$code" -eq 0 ]; then java -cp /work Main < /work/input.txt >> /tmp/stdout 2>> /tmp/stderr; code=$?; fi; '
+            'if [ "$code" -ne 0 ]; then printf "%s" compile_error > /tmp/axioma-failure-kind; '
+            'else java -cp /work Main < /work/input.txt >> /tmp/stdout 2>> /tmp/stderr; code=$?; '
+            'if [ "$code" -eq 0 ]; then printf "%s" none > /tmp/axioma-failure-kind; '
+            'else printf "%s" runtime_error > /tmp/axioma-failure-kind; fi; fi; '
             "printf '%s' \"$code\" > /tmp/exit-code; exit 0"
         )
         return f"umask 077; {command}"
@@ -327,7 +337,10 @@ def run_claimed_job(
                         "execute_script": (
                             f"umask 077; javac -d /work {' '.join(source_paths)} "
                             "> /tmp/stdout 2> /tmp/stderr; code=$?; "
-                            'if [ "$code" -eq 0 ]; then java -cp /work Harness >> /tmp/stdout 2>> /tmp/stderr; code=$?; fi; '
+                            'if [ "$code" -ne 0 ]; then printf "%s" compile_error > /tmp/axioma-failure-kind; '
+                            'else java -cp /work Harness >> /tmp/stdout 2>> /tmp/stderr; code=$?; '
+                            'if [ "$code" -eq 0 ]; then printf "%s" none > /tmp/axioma-failure-kind; '
+                            'else printf "%s" runtime_error > /tmp/axioma-failure-kind; fi; fi; '
                             "printf '%s' \"$code\" > /tmp/exit-code; exit 0"
                         ),
                     }
@@ -462,6 +475,7 @@ def run_claimed_job(
                                 "stderr": result.stderr,
                                 "timed_out": result.timed_out,
                                 "output_limited": result.output_limited,
+                            "failure_kind": result.failure_kind,
                             },
                         }
                     )
@@ -548,12 +562,23 @@ def run_claimed_job(
             sample_results = [
                 {
                     "name": sample.name,
-                    "outcome": "failed",
+                    "outcome": "skipped" if result.timed_out else "failed",
                     "details": {
+                        "reason": (
+                            "The harness timed out before this case outcome could be recorded."
+                            if result.timed_out
+                            else None
+                        ),
                         "timed_out": result.timed_out,
                         "exit_code": result.exit_code,
                         "stderr": result.stderr,
                         "output_limited": result.output_limited,
+                        "failure_kind": (
+                            "timeout"
+                            if result.timed_out
+                            else result.failure_kind
+                            or ("runtime_error" if result.exit_code else "incorrect_output")
+                        ),
                     },
                 }
                 for sample in problem.samples
@@ -568,6 +593,11 @@ def run_claimed_job(
             passed_count = 0
             failed_count = 0
             skipped_count = 0
+            catalog_sample_names = (
+                {sample.name for sample in problem.samples}
+                if problem is not None and input_payload.get("test_pack_source")
+                else set()
+            )
             for sample_result in sample_results:
                 outcome = sample_result.get("outcome")
                 if outcome not in {"passed", "failed", "skipped"}:
@@ -575,6 +605,15 @@ def run_claimed_job(
                 details = sample_result.get("details", {})
                 if not isinstance(details, dict):
                     details = {"message": str(details)[:500]}
+                if str(sample_result.get("name", "")) in catalog_sample_names:
+                    details.setdefault("origin", "catalog_sample")
+                if "failure_kind" not in details:
+                    if outcome == "failed" and str(sample_result.get("name", "")).startswith(
+                        "reference/"
+                    ):
+                        details["failure_kind"] = "oracle_error"
+                    elif outcome == "failed":
+                        details["failure_kind"] = "incorrect_output"
                 passed_count += outcome == "passed"
                 failed_count += outcome == "failed"
                 skipped_count += outcome == "skipped"
@@ -1146,7 +1185,14 @@ def run_claimed_job(
                         )
             job.lease_owner = None
             job.lease_expires_at = None
-            transition_job(session, job, JobStatus.COMPLETED, "Sample tests finished")
+            transition_job(
+                session,
+                job,
+                JobStatus.COMPLETED,
+                "Analysis timed out before per-case outcomes were recorded"
+                if result.timed_out and problem is not None and sample_results is not None
+                else "Sample tests finished",
+            )
             return
 
         outcome = "passed" if result.exit_code == 0 and not result.timed_out else "failed"
@@ -1169,6 +1215,15 @@ def run_claimed_job(
                     "stdout": result.stdout,
                     "stderr": result.stderr,
                     "output_limited": result.output_limited,
+                    "failure_kind": (
+                        "timeout"
+                        if result.timed_out
+                        else result.failure_kind
+                        if result.failure_kind not in (None, "none", "unknown")
+                        else "execution_only"
+                        if result.exit_code == 0
+                        else "runtime_error"
+                    ),
                 },
             )
         )
