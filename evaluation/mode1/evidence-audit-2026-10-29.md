@@ -2,7 +2,7 @@
 
 Date: 2026-10-29
 
-Scope: current implementation at `0494e3c` (Java adjacency-matrix BFS complexity rule).
+Scope: Mode 1 evidence behavior, updated for exact benchmark input snapshots.
 
 Purpose: describe the evidence the existing workflow supports; this audit does not change analyzer behavior, scoring thresholds, or evaluation labels.
 
@@ -16,7 +16,7 @@ Purpose: describe the evidence the existing workflow supports; this audit does n
 | User property checks (`executed`, low confidence) | User-provided boolean predicate, first checked against provided examples, then on generated inputs. | The submitted predicate returned true on those finite examples and generated inputs. | That the predicate itself fully or correctly describes the problem, or that the candidate is universally correct. |
 | Mutation analysis (`statistical`, low confidence) | Generated single-operator mutants are compared against a supplied reference over sample/generated inputs. | The test set distinguished some generated reference mutants from the reference. | General test quality or correctness. Mutants are a limited deterministic subset, not a representative sample of all defects. |
 | Optimization output-equivalence (`executed`) | Both original and candidate outputs are checked against the supplied reference on configured examples/generated inputs. | The two versions matched the reference on each completed check. | Universal semantic equivalence or correctness of a shared reference. |
-| Static complexity (`static`) | Language-specific pattern/heuristic analysis; no runtime oracle. | The listed code shape supports the reported estimate under the stated assumptions. | A proof of asymptotic behavior, especially for unsupported control flow or callees. |
+| Static complexity (`static`) | Language-specific pattern/heuristic analysis; no runtime oracle. | The listed code shape supports the reported estimate under the stated assumptions. For bounded BFS rules, structured evidence records queue traversal, visited-state behavior, adjacency-list versus matrix or grid representation, and the V/E or R/C work argument. The Java monotonic-stack rule separately records its one-push bound and amortized O(n) argument. | A proof of asymptotic behavior, especially for unsupported control flow or callees. BFS and monotonic-stack recognizers are intentionally narrow and remain low-confidence. |
 | Python work benchmark (`statistical`, low confidence) | Counts executed source-line events and CPython opcode events; optional traced peak Python allocation. | Relative work/allocation observations for those exact inputs and interpreter. | Wall-clock speed, asymptotic proof, native/JVM memory, or stable results across environments. |
 | Java benchmark (`statistical`, low confidence) | Reflective invocation elapsed nanoseconds and JVM heap-pool peak growth. | Median observations for those exact inputs and JVM process. | Asymptotic proof or a portable speed/memory comparison. Reflection, JIT/GC state, and host scheduling affect observations. |
 | Job latency evaluator (`statistical`) | Persisted job/event timestamps; nearest-rank empirical percentiles over completed jobs with valid timing events. | Descriptive local queue, worker-lifecycle, and end-to-end latencies for included jobs. | A controlled load test, CPU time, production SLO, or stable tail-latency estimate from a small sample. |
@@ -29,7 +29,9 @@ The worker writes test counts from the same recorded per-case results. For funct
 - Generated inputs use `random.Random(seed)`, deterministic boundary/adversarial construction, duplicate removal, and a final `validate_problem_spec` check. Numeric ranges and collection lengths are checked against the constraints that the problem schema actually represents. This is not validation of omitted, misunderstood, or semantically relational constraints.
 - Generation starts from a stored example and mutates supported paths. For arrays, values are copied from the example; several adversarial patterns reorder or repeat those values. A requested count can be only partially fulfilled when no further distinct valid case is generated; skipped cases are reported.
 - Benchmark inputs start from the first function example, use a requested size path/pattern, verify the generated collection length equals the requested size, and validate against declared constraints. They do not establish that the pattern is a worst case. Sizes are user-selected (API limits the list to 4–6 increasing sizes).
-- The seed and requested/generated counts are retained in job input/evidence. Per-case names, outcomes, and strategies are retained, but **the automatically generated argument values are not persisted in the analysis result/evidence**. Benchmark request inputs live in the persisted job input; benchmark evidence retains sizes, strategy, and measurements rather than copying all arguments into the claim. The follow-up provenance change records generator version `problem-input-generator-v1` with worker-generated differential/property checks, and records benchmark generator version, seed, size path, sizes, strategies, and configured runtime image with the complexity result. Benchmark metadata is labeled as coming from the job request rather than attested server output. This identifies the submitted generation/runtime context, but historical generator code is not retained, so it does not guarantee exact replay after future generator changes; the analyzer commit and full OS/architecture/JVM fingerprint are still absent.
+- Each job now stores immutable-by-worker input snapshots in `input_snapshots`: generated differential/property cases, imported or user examples, generated benchmarks, user-supplied benchmarks, and replayed benchmarks have distinct origins. Snapshots include exact argument values and SHA-256, job/language/problem-pack identity, generator version and source artifact hash when applicable, seed, size path, strategy, and configured sandbox runtime. A unique `(job_id, snapshot_key)` plus insert-on-conflict-do-nothing and post-insert content verification prevents retried/concurrent workers from overwriting or mixing cases.
+- `POST /v1/jobs/{job_id}/benchmarks/replay` queues a new job from the source job's persisted benchmark snapshot values. It verifies each snapshot hash and never invokes the current input generator for replay inputs. The new report includes source snapshot IDs and hashes, original generator/runtime provenance, and the actual replay runtime configuration. Result reports label a benchmark set `replayable` only when all requested snapshots exist; a historical job without retained snapshots is labeled `non_replayable`, and replay returns `409`. A generator version string or benchmark metadata by itself is not treated as exact inputs.
+- Replay reproduces the recorded inputs, not timing. Measurements can vary across runs, machines, container/runtime versions, JVM state, and host scheduling. The captured Docker configuration is not a complete hardware/OS/JVM fingerprint, and analyzer source revision is not currently attached to every runtime claim.
 - Python work counts and traced allocation use three repetitions and the median, with no explicit warm-up. Java wall time and heap-pool peak increase use five warm-ups and nine measured trials, taking the median. Java invocation is reflective; report metadata contains method, sizes, warmups/trials, and measurements, but not a complete machine/runtime/JVM fingerprint.
 - Python line/opcode counters measure interpreter events, not elapsed time. Both benchmark approaches are sensitive to runtime, input shape, JIT/GC, process state, and host scheduling. The current limitation text acknowledges this; comparisons remain low-confidence observations.
 
@@ -41,12 +43,11 @@ The offline detection evaluator separately treats any failed check as a detectio
 
 ## Current gaps and next priority
 
-1. Persist generated argument values or retain versioned generator implementations so generated checks can be exactly replayed after the generator changes.
+1. Attach the analyzer source revision to each runtime evidence claim and consider capturing a fuller OS/architecture/runtime/JVM fingerprint. These improve provenance, but will not make timing portable or deterministic.
 2. Ensure the UI/API never renders the plain `program_exit` success outcome as correctness. Existing wording is “Program exited successfully,” but generic outcome fields still use `passed` in that fallback.
-3. Include an environment fingerprint with benchmark evidence (language/runtime version, OS/architecture, and relevant JVM settings). The configured container image is now recorded, but current method/size/repetition metadata is not enough to reproduce machine-specific timings.
-4. Attach the analyzer commit to each runtime evidence claim and keep benchmark and mutation summaries explicitly qualified as evidence on this input/mutant set, not proof or a universal quality score.
+3. Keep benchmark and mutation summaries qualified as evidence on this recorded input/mutant set, not proof or a universal quality score.
 
-No thresholds, analyzer behavior, or database schema were changed for this follow-up. The API generation responses and accepted benchmark sample schema gained additive provenance fields.
+This milestone adds the `input_snapshots` table with an additive migration and the benchmark replay endpoint. Existing historical rows remain untouched and are non-replayable when their argument values were not retained. No thresholds or complexity scoring behavior changed.
 
 ## Source paths inspected
 
@@ -60,3 +61,10 @@ No thresholds, analyzer behavior, or database schema were changed for this follo
 - `evaluation/mode1/evaluate_detection.py`
 - `evaluation/mode1/evaluate_optimization.py`
 - `evaluation/mode1/evaluate_latency.py`
+
+
+## Fresh independent BFS v2 packet preparation — 2026-10-30
+
+A 28-case candidate packet (14 Java, 14 Python) is awaiting human label review in `evaluation/mode1/bfs-fresh-v2-review-2026-10-30/`. Candidate packet SHA-256: `d7f997fee6a1317e164f20e59dac5f2edd0da6398f0c6d8a33b9f8f455ab29b1`. All 28 per-case source hashes were verified. The readable review sheet contains the source, proposed mathematical complexity, rationale, assumptions, expected response category, and blank reviewer fields. No analyzer predictions/evidence are included and no analyzer was run on the packet. The previous BFS evaluation, diagnostic cases, analyzer tests used for rule development, and relevant stack/recurrence/graph calibration cases are listed as exclusions in the packet directory.
+
+This is a candidate review packet, not an approved gold set or evaluation result. The analyzer must not be run against it until each retained case has an explicit human decision and any ambiguous labels have been corrected or excluded. Analyzer source hashes and rule versions at packet preparation are recorded separately in its manifest. See the packet's `evidence-audit-entry.md` for the phase details.

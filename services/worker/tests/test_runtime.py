@@ -1,18 +1,21 @@
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from axioma_api.contracts import JobCreate, JobMode, JobStatus
-from axioma_api.jobs import create_job
+from axioma_api.jobs import canonical_hash, create_job, transition_job
 from axioma_api.models import (
     Base,
     ComplexityRecord,
     EvidenceClaimRecord,
+    InputSnapshotRecord,
     Job,
     TestCaseRecord as CaseRow,
 )
 from axioma_api.queue import claim_next_job
-from axioma_worker.runtime import run_claimed_job
+from axioma_api.problem_generation import generator_artifact_sha256
+from axioma_worker.runtime import _persist_input_snapshots, run_claimed_job
 from axioma_worker.sandbox import SandboxResult
 
 
@@ -64,6 +67,24 @@ class FakeBenchmarkSandbox:
                 '{"size":40,"line_events":120,"opcode_events":360},'
                 '{"size":80,"line_events":240,"opcode_events":720}],'
                 '"skipped_reason":null}\n'
+            ),
+            stderr="",
+        )
+
+
+class FakeReplayBenchmarkSandbox:
+    def run(self, adapter, source, cancellation_requested=None, **kwargs):
+        harness = kwargs["extra_files"]["main.py"].decode()
+        assert '"args":[[101,202]]' in harness
+        assert '"args":[[303,404]]' in harness
+        return SandboxResult(
+            exit_code=0,
+            stdout=(
+                'AXIOMA_RESULT:[{"name":"sample","outcome":"passed","details":{}}]\n'
+                'AXIOMA_COMPLEXITY:{"measurements":[{"size":10,"line_events":30,"opcode_events":90},'
+                '{"size":20,"line_events":60,"opcode_events":180},'
+                '{"size":40,"line_events":120,"opcode_events":360},'
+                '{"size":80,"line_events":240,"opcode_events":720}],"skipped_reason":null}\n'
             ),
             stderr="",
         )
@@ -296,6 +317,59 @@ def make_session_factory() -> sessionmaker[Session]:
     return sessionmaker(bind=engine, expire_on_commit=False)
 
 
+def test_input_snapshots_are_isolated_by_job_and_immutable_on_retry() -> None:
+    session_factory = make_session_factory()
+    job_ids = []
+    with session_factory() as session:
+        for value in (11, 22):
+            job, _ = create_job(
+                session,
+                JobCreate(
+                    mode=JobMode.DSA_ANALYSIS,
+                    language="python",
+                    input={"code": "def solve(value): return value"},
+                ),
+            )
+            job_ids.append(job.id)
+
+    snapshots = [
+        {
+            "snapshot_key": "benchmark/000/1",
+            "origin": "generated_benchmark",
+            "language": "python",
+            "input_snapshot": {"size": 1, "args": [value], "kwargs": {}},
+            "runtime_configuration": {"memory_limit": "256m"},
+        }
+        for value in (11, 22)
+    ]
+    for job_id, snapshot in zip(job_ids, snapshots, strict=True):
+        _persist_input_snapshots(session_factory, job_id, [snapshot])
+
+    with session_factory() as session:
+        stored = {
+            job_id: session.query(InputSnapshotRecord).filter_by(
+                job_id=job_id, snapshot_key="benchmark/000/1"
+            ).one()
+            for job_id in job_ids
+        }
+        assert stored[job_ids[0]].input_snapshot == snapshots[0]["input_snapshot"]
+        assert stored[job_ids[1]].input_snapshot == snapshots[1]["input_snapshot"]
+        assert stored[job_ids[0]].id != stored[job_ids[1]].id
+
+    conflicting_retry = {
+        **snapshots[0],
+        "input_snapshot": {"size": 1, "args": [99], "kwargs": {}},
+    }
+    with pytest.raises(RuntimeError, match="Immutable input snapshot conflict"):
+        _persist_input_snapshots(session_factory, job_ids[0], [conflicting_retry])
+
+    with session_factory() as session:
+        stored = session.query(InputSnapshotRecord).filter_by(
+            job_id=job_ids[0], snapshot_key="benchmark/000/1"
+        ).one()
+        assert stored.input_snapshot == snapshots[0]["input_snapshot"]
+
+
 def test_claimed_job_runs_and_persists_execution_evidence() -> None:
     session_factory = make_session_factory()
     with session_factory() as session:
@@ -389,6 +463,7 @@ def test_python_benchmark_fit_and_measurements_are_persisted() -> None:
                             "args": [size],
                             "kwargs": {},
                             "generator_version": "problem-input-generator-v1",
+                            "generator_artifact_sha256": generator_artifact_sha256(),
                             "seed": 42,
                             "size_path": "args[0]",
                             "strategy": "descending",
@@ -412,7 +487,7 @@ def test_python_benchmark_fit_and_measurements_are_persisted() -> None:
 
     with session_factory() as session:
         complexity = session.get(ComplexityRecord, job_id)
-        assert complexity is not None
+        assert complexity is not None, session.get(Job, job_id).error_message
         assert complexity.method.endswith("+dynamic_line_event_fit+dynamic_opcode_count_fit")
         assert complexity.details["measurement_method"] == "executed_source_line_events"
         assert complexity.details["signals"]["opcode_count_fit"]["estimate"] == "O(n)"
@@ -421,12 +496,31 @@ def test_python_benchmark_fit_and_measurements_are_persisted() -> None:
             "state": "declared_generated",
             "metadata_source": "job_request",
             "generator_version": "problem-input-generator-v1",
+            "generator_artifact_sha256": generator_artifact_sha256(),
             "seed": 42,
             "size_path": "args[0]",
             "sizes": [10, 20, 40, 80],
             "strategies": ["descending", "descending", "descending", "descending"],
             "runtime_image": "python:3.13-slim",
+            "runtime_configuration": {
+                "container_image": "python:3.13-slim",
+                "timeout_seconds": 10,
+                "source_limit_bytes": 65536,
+                "output_limit_bytes": 1048576,
+                "memory_limit": "256m",
+                "cpu_limit": 1,
+                "process_limit": 64,
+                "network": "disabled",
+                "root_filesystem": "read_only",
+            },
         }
+        snapshots = session.query(InputSnapshotRecord).filter_by(job_id=job_id).all()
+        benchmark_snapshots = [row for row in snapshots if row.origin == "generated_benchmark"]
+        assert len(benchmark_snapshots) == 4
+        assert benchmark_snapshots[0].input_snapshot == {"size": 10, "args": [10], "kwargs": {}}
+        assert benchmark_snapshots[0].input_sha256 == canonical_hash(benchmark_snapshots[0].input_snapshot)
+        assert benchmark_snapshots[0].generator_artifact_sha256 == generator_artifact_sha256()
+        assert all(row.language == "python" for row in benchmark_snapshots)
 
 
 def test_exhaustive_differential_results_share_the_normal_test_ledger() -> None:
@@ -965,4 +1059,118 @@ def test_reference_guided_cases_are_persisted_separately() -> None:
         claim = session.query(EvidenceClaimRecord).filter_by(job_id=job_id).one()
         assert claim.provenance["details"]["seed"] == 42
         assert claim.provenance["details"]["generator_version"] == "problem-input-generator-v1"
+        assert claim.provenance["details"]["generator_artifact_sha256"] == generator_artifact_sha256()
         assert claim.provenance["details"]["generated_tests_actual"] == 1
+        generated_snapshot = session.query(InputSnapshotRecord).filter_by(
+            job_id=job_id, snapshot_key="generated/generated_1"
+        ).one()
+        assert generated_snapshot.origin == "generated_differential"
+        assert generated_snapshot.input_snapshot["kwargs"] == {}
+        assert 1 <= generated_snapshot.input_snapshot["args"][0] <= 10
+
+
+def test_replay_executes_original_benchmark_snapshots_and_records_runtime() -> None:
+    session_factory = make_session_factory()
+    problem = {
+        "statement": "Return the length of a list.",
+        "interface": {"kind": "function", "entrypoint": "solve"},
+        "samples": [
+            {"kind": "function", "name": "sample", "args": [[1]], "expected": 1}
+        ],
+    }
+    with session_factory() as session:
+        source, _ = create_job(
+            session,
+            JobCreate(
+                mode=JobMode.DSA_ANALYSIS,
+                language="python",
+                input={"code": "def solve(values): return len(values)", "problem": problem},
+            ),
+        )
+        source_id = source.id
+        for state in (JobStatus.RUNNING, JobStatus.COMPLETED):
+            transition_job(session, source, state, f"source {state.value}")
+        sizes = (10, 20, 40, 80)
+        source_snapshots = []
+        for index, size in enumerate(sizes):
+            values = [101, 202] if size == 10 else [303, 404] if size == 20 else list(range(size))
+            snapshot_input = {"size": size, "args": [values], "kwargs": {}}
+            snapshot_id = f"source-snapshot-{index}"
+            session.add(
+                InputSnapshotRecord(
+                    id=snapshot_id,
+                    job_id=source_id,
+                    snapshot_key=f"benchmark/{index:03d}/{size}",
+                    origin="generated_benchmark",
+                    language="python",
+                    problem_pack_identity={"slug": "length-pack", "source": "test source"},
+                    input_snapshot=snapshot_input,
+                    input_sha256=canonical_hash(snapshot_input),
+                    generator_version="old-generator-v1",
+                    generator_artifact_sha256="b" * 64,
+                    seed=19,
+                    size_path="args[0].length",
+                    strategy="descending",
+                    runtime_configuration={"container_image": "python:old-image"},
+                )
+            )
+            source_snapshots.append(
+                {
+                    "snapshot_id": snapshot_id,
+                    "snapshot_key": f"benchmark/{index:03d}/{size}",
+                    "origin": "generated_benchmark",
+                    "input_sha256": canonical_hash(snapshot_input),
+                    "original_runtime_configuration": {"container_image": "python:old-image"},
+                }
+            )
+        session.commit()
+
+        replay_benchmarks = []
+        for size in sizes:
+            values = [101, 202] if size == 10 else [303, 404] if size == 20 else list(range(size))
+            replay_benchmarks.append(
+                {
+                    "size": size,
+                    "args": [values],
+                    "kwargs": {},
+                    "generator_version": "old-generator-v1",
+                    "generator_artifact_sha256": "b" * 64,
+                    "seed": 19,
+                    "size_path": "args[0].length",
+                    "strategy": "descending",
+                }
+            )
+
+        replay_input = {
+            "code": "def solve(values): return len(values)",
+            "problem": problem,
+            "generated_tests": 0,
+            "complexity_benchmarks": replay_benchmarks,
+            "benchmark_replay": {"source_job_id": source_id, "snapshots": source_snapshots},
+        }
+        replay_job, _ = create_job(
+            session,
+            JobCreate(mode=JobMode.DSA_ANALYSIS, language="python", input=replay_input),
+        )
+        replay_id = replay_job.id
+        claim_next_job(session, "worker-benchmark-replay")
+
+    run_claimed_job(
+        session_factory, replay_id, "worker-benchmark-replay", FakeReplayBenchmarkSandbox()
+    )
+
+    with session_factory() as session:
+        complexity = session.get(ComplexityRecord, replay_id)
+        assert complexity is not None
+        replay_provenance = complexity.details["benchmark_provenance"]
+        assert replay_provenance["generator_version"] == "old-generator-v1"
+        assert replay_provenance["generator_artifact_sha256"] == "b" * 64
+        assert replay_provenance["runtime_configuration"]["container_image"] == "python:3.13-slim"
+        assert replay_provenance["replay"]["source_job_id"] == source_id
+        replay_snapshots = session.query(InputSnapshotRecord).filter_by(
+            job_id=replay_id, origin="benchmark_replay"
+        ).all()
+        assert len(replay_snapshots) == 4
+        assert {row.source_snapshot_id for row in replay_snapshots} == {
+            f"source-snapshot-{index}" for index in range(4)
+        }

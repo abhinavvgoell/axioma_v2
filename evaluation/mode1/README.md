@@ -10,17 +10,22 @@ The latency evaluator summarizes completed-job timing from the API database's pe
 
 ## Record format
 
-Create a UTF-8 JSON Lines file, one record per expected/predicted comparison:
+Create a UTF-8 JSON Lines file, one record per expected/predicted comparison. Use a separate record for each evaluated dimension:
 
 ```json
 {"id":"python-merge-01","method":"static_ast_loop_depth","expected":"O(n log n)","predicted":"O(n log n)","confidence":"low","partition":"calibration"}
 {"id":"java-search-01","method":"static_java_token_loop_depth","expected":"O(log n)","predicted":"O(n)","confidence":"low","partition":"evaluation"}
 {"id":"python-scan-01","method":"static_ast_loop_depth","expected":"O(n)","predicted":"unknown","partition":"evaluation"}
+{"id":"python-scan-01","method":"static_ast_loop_depth","dimension":"auxiliary_space","expected":"O(1)","predicted":"O(1)","partition":"evaluation"}
 ```
 
 `id` identifies the gold-set solution. `method` identifies the Axioma signal being evaluated; use one record for each signal when a report contains both static and measured fits. `expected` is the class assigned by human review, and `predicted` is the class emitted by that signal. The supported ordered classes are `O(1)`, `O(log n)`, `O(n)`, `O(n log n)`, `O(n^2)`, `O(n^3)`, and `O(2^n)`. `predicted` may instead be the literal `unknown` when Axioma abstains; `expected` must be one of the supported classes. An expected or predicted estimate outside the supported classes must be mapped under a documented rule before scoring; the script intentionally does not guess.
 
 `confidence` is optional and accepts `high`, `medium`, or `low`. `partition` is optional and accepts `calibration` or `evaluation`; it defaults to `evaluation` for older files. Keep every record for one solution ID in the same partition, even when that ID has rows for multiple methods. The evaluator rejects cross-partition IDs.
+
+`dimension` is optional and accepts `time` or `auxiliary_space`; it defaults to `time` for existing records. An ID/method pair may appear once in each dimension. When both dimensions are present, metrics are reported independently under `dimensions.time` and `dimensions.auxiliary_space`; no combined accuracy score is produced across unlike dimensions. Each dimension retains its own family, language, method, confidence, and partition breakdowns.
+
+Optional `family` and `language` strings can be included on human-reviewed gold records. The preparation script carries them into joined records, and the evaluator reports `by_family` and `by_language` slices for records that provide those fields. All method rows for one solution ID must agree on its family and language. Older records without either field remain valid; absent metadata is omitted from that slice rather than inferred.
 
 Overall accuracy counts an abstention as not correct. Reports also show coverage and selective accuracy among non-unknown predictions; read those together so abstaining on difficult examples cannot make accuracy look better by itself. The confusion matrix includes an `unknown` prediction column. Confidence calibration excludes abstentions.
 
@@ -37,16 +42,18 @@ services/api/.venv/Scripts/python evaluation/mode1/prepare_complexity_evaluation
 services/api/.venv/Scripts/python evaluation/mode1/evaluate_complexity.py path/to/joined-evaluation.jsonl --output path/to/report.json
 ```
 
-Keep reviewed labels and Axioma predictions in separate files until review is complete. The gold file has one record per unique solution:
+Keep reviewed labels and Axioma predictions in separate files until review is complete. The gold file has one record per unique solution. Existing time-only labels use `expected`; labels for both dimensions can use `expected_time` and `expected_auxiliary_space`:
 
 ```json
 {"id":"python-merge-01","expected":"O(n log n)","partition":"calibration","reviewer":"reviewer-1","rationale":"Merge sort divides and merges each level.","source_sha256":"<64 lowercase hex characters>"}
+{"id":"java-merge-01","expected_time":"O(n log n)","expected_auxiliary_space":"O(n)","partition":"evaluation","reviewer":"reviewer-1","rationale":"Merge work is n log n and the temporary buffer is linear.","source_sha256":"<64 lowercase hex characters>"}
 ```
 
-The predictions file has one record per solution and method, using values from saved Axioma reports. Normalize any Axioma estimate beginning with `unknown` to the literal `unknown`; retain its full reason in the original report:
+The predictions file has one record per solution, method, and dimension, using values from saved Axioma reports. Omit `dimension` for legacy time records. Normalize any Axioma estimate beginning with `unknown` to the literal `unknown`; retain its full reason in the original report:
 
 ```json
 {"id":"python-merge-01","method":"static_ast_loop_depth","predicted":"O(n log n)","confidence":"medium","report_sha256":"<64 lowercase hex characters>"}
+{"id":"java-merge-01","method":"static_java_token_loop_depth","dimension":"auxiliary_space","predicted":"O(n)","confidence":"low","report_sha256":"<64 lowercase hex characters>"}
 ```
 
 Compute `source_sha256` from the exact source file reviewed, and `report_sha256` from the saved report file. The preparation script rejects duplicate gold IDs, duplicate solution/method rows, unknown IDs, missing predictions, unsupported classes, invalid hashes, and incomplete coverage. It sorts the joined JSONL deterministically and includes hashes of both input files on every joined row. Then the evaluator's JSON report includes the joined file SHA-256 and evaluator version. These hashes make the artifacts traceable; they do not establish that a reviewer was independent or that a label is correct.

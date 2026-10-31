@@ -9,14 +9,18 @@ from sqlalchemy.pool import StaticPool
 from axioma_api.database import get_session
 from axioma_api.database import get_session_factory
 from axioma_api.main import app
+from axioma_api.contracts import JobCreate, JobMode, JobStatus
+from axioma_api.jobs import create_job, transition_job, canonical_hash
 from axioma_api.models import (
     Base,
     ComplexityRecord,
     EvidenceClaimRecord,
     Job,
+    InputSnapshotRecord,
     TestCaseRecord as CaseRow,
     VerificationGateRecord,
 )
+from axioma_api.problem_generation import generator_artifact_sha256
 
 
 @pytest.fixture
@@ -41,6 +45,88 @@ def client(test_session_factory: sessionmaker[Session]) -> Generator[TestClient,
     app.dependency_overrides.clear()
 
 
+def test_result_links_verified_saved_inputs_to_cases_without_guessing_ambiguous_names(
+    client: TestClient, test_session_factory: sessionmaker[Session]
+) -> None:
+    with test_session_factory() as session:
+        job, _ = create_job(
+            session,
+            JobCreate(mode=JobMode.DSA_ANALYSIS, language="python", input={"code": "pass"}),
+        )
+        transition_job(session, job, JobStatus.RUNNING, "test running")
+        transition_job(session, job, JobStatus.COMPLETED, "test completed")
+        session.add_all(
+            [
+                CaseRow(
+                    id="case-example",
+                    job_id=job.id,
+                    name="example",
+                    outcome="passed",
+                    duration_ms=1,
+                    details={"origin": "catalog_sample"},
+                ),
+                CaseRow(
+                    id="case-generated",
+                    job_id=job.id,
+                    name="generated_1",
+                    outcome="passed",
+                    duration_ms=1,
+                    details={},
+                ),
+                CaseRow(
+                    id="case-ambiguous",
+                    job_id=job.id,
+                    name="duplicate",
+                    outcome="passed",
+                    duration_ms=1,
+                    details={},
+                ),
+                CaseRow(
+                    id="case-large",
+                    job_id=job.id,
+                    name="large-example",
+                    outcome="passed",
+                    duration_ms=1,
+                    details={},
+                ),
+            ]
+        )
+        snapshots = [
+            ("sample-1", "sample/001/example", "imported_sample", {"args": [[2, 7]], "kwargs": {}, "expected": 9}),
+            ("generated-1", "generated/generated_1", "generated_differential", {"args": [[4, 5]], "kwargs": {}}),
+            ("sample-3", "sample/003/duplicate", "user_sample", {"args": [1], "kwargs": {}, "expected": 1}),
+            ("sample-4", "sample/004/duplicate", "user_sample", {"args": [2], "kwargs": {}, "expected": 2}),
+            ("sample-large", "sample/005/large-example", "user_sample", {"args": ["x" * 3000], "kwargs": {}, "expected": "x"}),
+        ]
+        for snapshot_id, key, origin, input_value in snapshots:
+            session.add(
+                InputSnapshotRecord(
+                    id=snapshot_id,
+                    job_id=job.id,
+                    snapshot_key=key,
+                    origin=origin,
+                    language="python",
+                    problem_pack_identity=None,
+                    input_snapshot=input_value,
+                    input_sha256=canonical_hash(input_value),
+                    runtime_configuration={},
+                )
+            )
+        job_id = job.id
+        session.commit()
+
+    response = client.get(f"/v1/jobs/{job_id}/result")
+
+    assert response.status_code == 200
+    cases = {case["name"]: case for case in response.json()["test_cases"]}
+    assert cases["example"]["input_preview"]["data"] == {"args": [[2, 7]], "kwargs": {}}
+    assert cases["example"]["input_preview"]["sha256"] == canonical_hash(snapshots[0][3])
+    assert cases["generated_1"]["input_preview"]["data"] == {"args": [[4, 5]], "kwargs": {}}
+    assert cases["duplicate"]["input_preview"] is None
+    assert cases["large-example"]["input_preview"]["truncated"] is True
+    assert len(cases["large-example"]["input_preview"]["data"]["preview"]) <= 2001
+
+
 def test_job_submission_is_idempotent_and_cancellation_is_streamable(
     client: TestClient,
 ) -> None:
@@ -63,6 +149,249 @@ def test_job_submission_is_idempotent_and_cancellation_is_streamable(
     stream = client.get(f"/v1/jobs/{job_id}/events")
     assert "event: job_status" in stream.text
     assert '"status":"cancelled"' in stream.text
+
+
+def test_benchmark_replay_uses_persisted_snapshot_and_marks_source(
+    client: TestClient, test_session_factory: sessionmaker[Session]
+) -> None:
+    payload = {
+        "code": "def solve(values): return len(values)",
+        "problem": {
+            "statement": "Return the length.",
+            "interface": {"kind": "function", "entrypoint": "solve"},
+            "samples": [
+                {"kind": "function", "name": "sample", "args": [[1]], "expected": 1}
+            ],
+        },
+        "complexity_benchmarks": [
+            {"size": 10, "args": [[101, 202]], "kwargs": {}}
+        ],
+    }
+    with test_session_factory() as session:
+        source, _ = create_job(
+            session,
+            JobCreate(mode=JobMode.DSA_ANALYSIS, language="python", input=payload),
+        )
+        transition_job(session, source, JobStatus.RUNNING, "test running")
+        transition_job(session, source, JobStatus.COMPLETED, "test completed")
+        session.add(
+            ComplexityRecord(
+                job_id=source.id,
+                method="legacy",
+                estimate="O(n)",
+                confidence="low",
+                methods_disagree=False,
+                details={"benchmark_provenance": {"state": "declared_generated"}},
+            )
+        )
+        snapshot_input = {"size": 10, "args": [[101, 202]], "kwargs": {}}
+        session.add(
+            InputSnapshotRecord(
+                id="snapshot-1",
+                job_id=source.id,
+                snapshot_key="benchmark/000/10",
+                origin="generated_benchmark",
+                language="python",
+                problem_pack_identity={"slug": "test-pack", "source": "test"},
+                input_snapshot=snapshot_input,
+                input_sha256=canonical_hash(snapshot_input),
+                generator_version="old-generator-v1",
+                generator_artifact_sha256="a" * 64,
+                seed=77,
+                size_path="args[0].length",
+                strategy="descending",
+                runtime_configuration={"container_image": "python:3.13-slim"},
+            )
+        )
+        session.commit()
+        source_id = source.id
+
+    response = client.post(f"/v1/jobs/{source_id}/benchmarks/replay")
+
+    assert response.status_code == 202
+    source_report = client.get(f"/v1/jobs/{source_id}/result")
+    assert source_report.status_code == 200
+    assert source_report.json()["complexity"]["details"]["benchmark_provenance"][
+        "replay_state"
+    ] == "replayable"
+    replay_job = client.get(f"/v1/jobs/{response.json()['id']}")
+    assert replay_job.status_code == 200
+    with test_session_factory() as session:
+        replay = session.get(Job, response.json()["id"])
+        assert replay is not None
+        benchmark = replay.input_payload["complexity_benchmarks"][0]
+        assert benchmark["args"] == [[101, 202]]
+        assert benchmark["generator_version"] == "old-generator-v1"
+        assert benchmark["generator_artifact_sha256"] == "a" * 64
+        assert replay.input_payload["generated_tests"] == 0
+        assert replay.input_payload["benchmark_replay"]["source_job_id"] == source_id
+        assert replay.input_payload["benchmark_replay"]["snapshots"][0]["snapshot_id"] == "snapshot-1"
+
+
+@pytest.mark.parametrize(
+    "snapshot_keys",
+    [
+        ["benchmark/000/10"],
+        [
+            "benchmark/000/10",
+            "benchmark/001/20",
+            "benchmark/002/30",
+            "benchmark/003/999",
+        ],
+    ],
+    ids=["missing-declared-input", "same-count-wrong-key"],
+)
+def test_benchmark_replay_requires_exact_snapshot_coverage(
+    client: TestClient,
+    test_session_factory: sessionmaker[Session],
+    snapshot_keys: list[str],
+) -> None:
+    sizes = (10, 20, 30, 40)
+    payload = {
+        "code": "def solve(values): return len(values)",
+        "complexity_benchmarks": [
+            {"size": size, "args": [[size]], "kwargs": {}} for size in sizes
+        ],
+    }
+    with test_session_factory() as session:
+        source, _ = create_job(
+            session,
+            JobCreate(mode=JobMode.DSA_ANALYSIS, language="python", input=payload),
+        )
+        transition_job(session, source, JobStatus.RUNNING, "test running")
+        transition_job(session, source, JobStatus.COMPLETED, "test completed")
+        session.add(
+            ComplexityRecord(
+                job_id=source.id,
+                method="test",
+                estimate="O(n)",
+                confidence="low",
+                methods_disagree=False,
+                details={"benchmark_provenance": {"state": "declared_generated"}},
+            )
+        )
+        for index, snapshot_key in enumerate(snapshot_keys):
+            size = sizes[index]
+            snapshot_input = {"size": size, "args": [[size]], "kwargs": {}}
+            session.add(
+                InputSnapshotRecord(
+                    id=f"snapshot-{index}",
+                    job_id=source.id,
+                    snapshot_key=snapshot_key,
+                    origin="generated_benchmark",
+                    language="python",
+                    problem_pack_identity=None,
+                    input_snapshot=snapshot_input,
+                    input_sha256=canonical_hash(snapshot_input),
+                    runtime_configuration={},
+                )
+            )
+        session.commit()
+        source_id = source.id
+
+    replay_response = client.post(f"/v1/jobs/{source_id}/benchmarks/replay")
+    assert replay_response.status_code == 409
+    assert "do not exactly match" in replay_response.json()["detail"]
+
+    report = client.get(f"/v1/jobs/{source_id}/result")
+    assert report.status_code == 200
+    provenance = report.json()["complexity"]["details"]["benchmark_provenance"]
+    assert provenance["replay_state"] == "non_replayable"
+    assert provenance["snapshot_count"] == len(snapshot_keys)
+
+
+def test_legacy_completed_job_without_snapshots_is_not_replayable(
+    client: TestClient, test_session_factory: sessionmaker[Session]
+) -> None:
+    with test_session_factory() as session:
+        source, _ = create_job(
+            session,
+            JobCreate(
+                mode=JobMode.DSA_ANALYSIS,
+                language="python",
+                input={
+                    "code": "def solve(value): return value",
+                    "complexity_benchmarks": [{"size": 1, "args": [1], "kwargs": {}}],
+                },
+            ),
+        )
+        session.add(
+            ComplexityRecord(
+                job_id=source.id,
+                method="legacy",
+                estimate="O(n)",
+                confidence="low",
+                methods_disagree=False,
+                details={"benchmark_provenance": {"state": "user_supplied_or_legacy"}},
+            )
+        )
+        transition_job(session, source, JobStatus.RUNNING, "test running")
+        transition_job(session, source, JobStatus.COMPLETED, "test completed")
+        source_id = source.id
+
+    response = client.post(f"/v1/jobs/{source_id}/benchmarks/replay")
+
+    assert response.status_code == 409
+    assert "non-replayable" in response.json()["detail"]
+    report = client.get(f"/v1/jobs/{source_id}/result")
+    assert report.status_code == 200
+    assert report.json()["complexity"]["details"]["benchmark_provenance"][
+        "replay_state"
+    ] == "non_replayable"
+
+
+def test_benchmark_replay_rejects_snapshot_integrity_failure(
+    client: TestClient, test_session_factory: sessionmaker[Session]
+) -> None:
+    with test_session_factory() as session:
+        source, _ = create_job(
+            session,
+            JobCreate(
+                mode=JobMode.DSA_ANALYSIS,
+                language="python",
+                input={
+                    "code": "def solve(value): return value",
+                    "complexity_benchmarks": [{"size": 1, "args": [1], "kwargs": {}}],
+                },
+            ),
+        )
+        transition_job(session, source, JobStatus.RUNNING, "test running")
+        transition_job(session, source, JobStatus.COMPLETED, "test completed")
+        session.add(
+            ComplexityRecord(
+                job_id=source.id,
+                method="test",
+                estimate="O(n)",
+                confidence="low",
+                methods_disagree=False,
+                details={"benchmark_provenance": {"state": "user_supplied_or_legacy"}},
+            )
+        )
+        session.add(
+            InputSnapshotRecord(
+                id="tampered-snapshot",
+                job_id=source.id,
+                snapshot_key="benchmark/000/1",
+                origin="user_benchmark",
+                language="python",
+                problem_pack_identity=None,
+                input_snapshot={"size": 1, "args": [1], "kwargs": {}},
+                input_sha256="0" * 64,
+                runtime_configuration={},
+            )
+        )
+        session.commit()
+        source_id = source.id
+
+    response = client.post(f"/v1/jobs/{source_id}/benchmarks/replay")
+
+    assert response.status_code == 409
+    assert "integrity check" in response.json()["detail"]
+    report = client.get(f"/v1/jobs/{source_id}/result")
+    assert report.status_code == 200
+    assert report.json()["complexity"]["details"]["benchmark_provenance"][
+        "replay_state"
+    ] == "non_replayable"
 
 
 def test_report_counts_come_from_test_case_rows_and_gates_are_ordered(
@@ -615,6 +944,7 @@ def test_generated_inputs_are_seeded_and_obey_numeric_and_length_constraints(
     assert first.json() == second.json()
     result = first.json()
     assert result["generator_version"] == "problem-input-generator-v1"
+    assert len(result["generator_artifact_sha256"]) == 64
     assert result["generated"] == 11
     assert all(2 <= len(case["args"][0]) <= 6 for case in result["cases"])
     assert all(-5 <= case["args"][0][0] <= 5 for case in result["cases"])
@@ -703,6 +1033,7 @@ def test_complexity_benchmark_generator_returns_copyable_patterned_inputs(
     result = first.json()
     assert result["pattern"] == "descending"
     assert result["generator_version"] == "problem-input-generator-v1"
+    assert result["generator_artifact_sha256"] == generator_artifact_sha256()
     benchmarks = result["benchmarks"]
     assert all(item["strategy"] == "descending" for item in benchmarks)
     assert all(item["generator_version"] == result["generator_version"] for item in benchmarks)

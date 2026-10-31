@@ -111,6 +111,33 @@ class TestCaseRecord(Base):
     details: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
 
 
+class InputSnapshotRecord(Base):
+    __tablename__ = "input_snapshots"
+    __table_args__ = (
+        UniqueConstraint("job_id", "snapshot_key", name="uq_input_snapshot_job_key"),
+        Index("ix_input_snapshots_job_origin", "job_id", "origin"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    job_id: Mapped[str] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False)
+    source_snapshot_id: Mapped[str | None] = mapped_column(
+        ForeignKey("input_snapshots.id", ondelete="SET NULL")
+    )
+    snapshot_key: Mapped[str] = mapped_column(String(160), nullable=False)
+    origin: Mapped[str] = mapped_column(String(32), nullable=False)
+    language: Mapped[str] = mapped_column(String(16), nullable=False)
+    problem_pack_identity: Mapped[dict | None] = mapped_column(JSON)
+    input_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
+    input_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    generator_version: Mapped[str | None] = mapped_column(String(80))
+    generator_artifact_sha256: Mapped[str | None] = mapped_column(String(64))
+    seed: Mapped[int | None] = mapped_column(Integer)
+    size_path: Mapped[str | None] = mapped_column(String(120))
+    strategy: Mapped[str | None] = mapped_column(String(80))
+    runtime_configuration: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
 class ComplexityRecord(Base):
     __tablename__ = "complexity_results"
     __table_args__ = (

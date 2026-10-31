@@ -57,6 +57,34 @@ def test_recognizes_binary_search_as_logarithmic() -> None:
     assert any(signal["kind"] == "binary_search" for signal in estimate.details["code_analysis"]["signals"])
 
 
+def test_recognizes_insertion_sort_and_rejects_shift_near_miss() -> None:
+    source = (
+        "def solve(collection):\n"
+        "    for insert_index in range(1, len(collection)):\n"
+        "        insert_value = collection[insert_index]\n"
+        "        while insert_index > 0 and insert_value < collection[insert_index - 1]:\n"
+        "            collection[insert_index] = collection[insert_index - 1]\n"
+        "            insert_index -= 1\n"
+        "        collection[insert_index] = insert_value\n"
+        "    return collection\n"
+    )
+    estimate = analyze_python_complexity(source, "solve")
+    near_miss = analyze_python_complexity(
+        source.replace("            collection[insert_index] = collection[insert_index - 1]\n", ""),
+        "solve",
+    )
+
+    assert estimate.method == "static_ast_insertion_sort"
+    assert estimate.estimate == "O(n^2)"
+    assert estimate.confidence == "low"
+    assert any(
+        signal["kind"] == "insertion_sort"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+    assert near_miss.estimate == "unknown (data-dependent loop bound)"
+    assert near_miss.method == "static_ast_loop_depth"
+
+
 def test_recognizes_lower_bound_binary_search_and_bisect() -> None:
     lower_bound = analyze_python_complexity(
         "def solve(values, target):\n"
@@ -481,6 +509,116 @@ def test_recognizes_adjacency_list_bfs_with_queue_and_visited_guard() -> None:
         signal["kind"] == "graph_bfs"
         for signal in estimate.details["code_analysis"]["signals"]
     )
+    evidence = estimate.details["code_analysis"]["bfs"]
+    assert evidence["input_size"]["vertices"] == "V"
+    assert evidence["input_size"]["adjacency_entries"] == "E"
+    assert "directed adjacency entries" in evidence["input_size"]["edge_count_measure"]
+    assert evidence["neighbor_enumeration"]["representation"] == "adjacency_list"
+    assert evidence["complexity"] == "O(V + E)"
+    assert evidence["inference_kind"] == "heuristic_static_bounded_argument"
+
+
+def test_recognizes_frozen_islands_grid_bfs_as_quadratic() -> None:
+    from pathlib import Path
+    import json
+
+    packet = Path(__file__).parents[3] / "evaluation/mode1/complexity-review-2026-10-29/review-set-04.jsonl"
+    case = next(
+        json.loads(line) for line in packet.read_text(encoding="utf-8").splitlines()
+        if json.loads(line)["id"] == "axioma-20261029-19"
+    )
+    estimate = analyze_python_complexity(case["source"], case["entrypoint"])
+
+    assert estimate.method == "static_ast_grid_bfs_v1"
+    assert estimate.estimate == "O(n^2)"
+    evidence = estimate.details["code_analysis"]["bfs"]
+    assert evidence["input_size"]["symbolic_bounds"] == ["n", "n"]
+    assert evidence["visited_state"]["mark_before_neighbor_enqueue"] is True
+    assert evidence["visited_state"]["initial_cell_marked_before_queue_processing"] is True
+    assert evidence["visited_state"]["shared_across_component_scans"] is True
+    assert evidence["neighbor_enumeration"]["fixed_neighbors_per_cell"] == 4
+    assert "O(R*C)" in evidence["bounded_work_argument"]
+    assert isinstance(evidence["source_locations"]["dequeue_line"], int)
+    assert isinstance(evidence["source_locations"]["neighbor_enqueue_line"], int)
+
+
+def test_grid_bfs_supports_rectangular_ranges_and_reports_dimensions() -> None:
+    estimate = analyze_python_complexity(
+        "from collections import deque\n"
+        "def solve(grid):\n"
+        "    rows = len(grid); cols = len(grid[0]); seen = set()\n"
+        "    for r in range(rows):\n"
+        "        for c in range(cols):\n"
+        "            if grid[r][c] != 1 or (r,c) in seen: continue\n"
+        "            q = deque([(r,c)]); seen.add((r,c))\n"
+        "            while q:\n"
+        "                cr,cc = q.popleft()\n"
+        "                for nr,nc in ((cr-1,cc),(cr+1,cc),(cr,cc-1),(cr,cc+1)):\n"
+        "                    if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == 1 and (nr,nc) not in seen:\n"
+        "                        seen.add((nr,nc)); q.append((nr,nc))\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "O(R * C)"
+    evidence = estimate.details["code_analysis"]["bfs"]
+    assert evidence["input_size"]["symbolic_bounds"] == ["rows", "cols"]
+
+
+def test_grid_bfs_without_enqueue_time_visited_mark_remains_unknown() -> None:
+    estimate = analyze_python_complexity(
+        "from collections import deque\n"
+        "def solve(grid):\n"
+        "    n=len(grid); seen=set()\n"
+        "    for r in range(n):\n"
+        "        for c in range(n):\n"
+        "            if grid[r][c] != 1 or (r,c) in seen: continue\n"
+        "            q=deque([(r,c)]); seen.add((r,c))\n"
+        "            while q:\n"
+        "                cr,cc=q.popleft()\n"
+        "                for nr,nc in ((cr-1,cc),(cr+1,cc),(cr,cc-1),(cr,cc+1)):\n"
+        "                    if grid[nr][nc] == 1 and (nr,nc) not in seen:\n"
+        "                        q.append((nr,nc))\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "unknown (data-dependent loop bound)"
+    assert "bfs" not in estimate.details["code_analysis"]
+
+
+def test_grid_bfs_with_an_independent_full_grid_scan_is_not_bounded_to_one_pass() -> None:
+    estimate = analyze_python_complexity(
+        "from collections import deque\n"
+        "def solve(grid):\n"
+        "    n=len(grid); seen=set()\n"
+        "    for r in range(n):\n"
+        "        for c in range(n):\n"
+        "            if grid[r][c] != 1 or (r,c) in seen: continue\n"
+        "            q=deque([(r,c)]); seen.add((r,c))\n"
+        "            while q:\n"
+        "                cr,cc=q.popleft()\n"
+        "                for nr,nc in ((cr-1,cc),(cr+1,cc),(cr,cc-1),(cr,cc+1)):\n"
+        "                    for x in range(n):\n"
+        "                        for y in range(n): pass\n"
+        "                    if 0 <= nr < n and 0 <= nc < n and grid[nr][nc] == 1 and (nr,nc) not in seen:\n"
+        "                        seen.add((nr,nc)); q.append((nr,nc))\n",
+        "solve",
+    )
+
+    assert estimate.estimate == "unknown (data-dependent loop bound)"
+    assert "bfs" not in estimate.details["code_analysis"]
+
+
+def test_queue_usage_unrelated_to_graph_or_grid_stays_unclassified() -> None:
+    estimate = analyze_python_complexity(
+        "from collections import deque\n"
+        "def solve(values):\n"
+        "    queue=deque(values); result=[]\n"
+        "    while queue: result.append(queue.popleft())\n"
+        "    return result\n",
+        "solve",
+    )
+
+    assert "bfs" not in estimate.details["code_analysis"]
 
 
 def test_unvisited_adjacency_queue_loop_remains_unknown() -> None:
@@ -498,6 +636,23 @@ def test_unvisited_adjacency_queue_loop_remains_unknown() -> None:
     assert estimate.estimate == "unknown (data-dependent loop bound)"
 
 
+def test_adjacency_list_bfs_inside_outer_loop_is_not_flattened() -> None:
+    estimate = analyze_python_complexity(
+        "from collections import deque\n"
+        "def solve(graph, n):\n"
+        "    for start in range(n):\n"
+        "        seen={start}; q=deque([start])\n"
+        "        while q:\n"
+        "            node=q.popleft()\n"
+        "            for neighbor in graph[node]:\n"
+        "                if neighbor not in seen: seen.add(neighbor); q.append(neighbor)\n",
+        "solve",
+    )
+
+    assert estimate.estimate != "O(V + E)"
+    assert "bfs" not in estimate.details["code_analysis"]
+
+
 def test_recognizes_recursive_binary_tree_walk() -> None:
     estimate = analyze_python_complexity(
         "def solve(node):\n"
@@ -512,6 +667,42 @@ def test_recognizes_recursive_binary_tree_walk() -> None:
         signal["kind"] == "tree_recursion"
         for signal in estimate.details["code_analysis"]["signals"]
     )
+
+
+def test_recursive_tree_generator_accounts_for_yield_from_delegation() -> None:
+    estimate = analyze_python_complexity(
+        "def preorder(root):\n"
+        "    if root is None: return\n"
+        "    yield root.value\n"
+        "    yield from preorder(root.left)\n"
+        "    yield from preorder(root.right)\n",
+        "preorder",
+    )
+
+    assert estimate.method == "static_ast_recursive_generator_delegation"
+    assert estimate.estimate == "O(n^2)"
+    assert "O(n*h)" in estimate.explanation
+    assert estimate.details["code_analysis"]["recursive_generator"][
+        "delegation_cost_is_inside_generator"
+    ] is True
+    assert any(
+        signal["kind"] == "recursive_generator_delegation"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
+def test_non_tree_recursive_generator_keeps_scalar_recurrence_estimate() -> None:
+    estimate = analyze_python_complexity(
+        "def generate(n):\n"
+        "    if n <= 0: return\n"
+        "    yield n\n"
+        "    yield from generate(n - 1)\n",
+        "generate",
+    )
+
+    assert estimate.estimate == "O(n)"
+    assert estimate.method == "static_ast_recurrence_v1"
+    assert "recursive_generator" not in estimate.details["code_analysis"]
 
 
 def test_recognizes_recursive_adjacency_list_dfs() -> None:
@@ -579,6 +770,101 @@ def test_memoized_top_level_binary_recursion_is_not_exponential() -> None:
     )
 
     assert not estimate.estimate.startswith("O(2^n)")
+
+
+def _assert_python_recurrence(estimate, expected: str, recurrence: str) -> None:
+    assert estimate.estimate == expected
+    evidence = estimate.details["code_analysis"]["recurrence"]
+    assert evidence["rule_version"] == "bounded_recurrence_v1"
+    assert evidence["recurrence"] == recurrence
+    assert evidence["solving_rule"]
+    assert evidence["assumptions"]
+    assert evidence["inference_kind"] == "heuristic_pattern_match"
+    assert any(signal["kind"] == "recurrence" for signal in estimate.details["code_analysis"]["signals"])
+
+
+def test_python_bounded_scalar_recurrences() -> None:
+    decrement = analyze_python_complexity(
+        "def solve(n):\n    if n <= 0: return 0\n    return solve(n - 1) + 1\n", "solve"
+    )
+    halve = analyze_python_complexity(
+        "def solve(n):\n    if n <= 1: return 1\n    return solve(n // 2)\n", "solve"
+    )
+    halve_with_linear_work = analyze_python_complexity(
+        "def solve(n):\n    if n <= 1: return 1\n"
+        "    for i in range(n):\n        value = i\n"
+        "    return solve(n // 2)\n",
+        "solve",
+    )
+    two_halves = analyze_python_complexity(
+        "def solve(n):\n    if n <= 1: return 1\n"
+        "    return solve(n // 2) + solve(n // 2)\n",
+        "solve",
+    )
+    two_halves_with_linear_work = analyze_python_complexity(
+        "def solve(n):\n    if n <= 1: return 1\n"
+        "    for i in range(n):\n        value = i\n"
+        "    return solve(n // 2) + solve(n // 2)\n",
+        "solve",
+    )
+
+    _assert_python_recurrence(decrement, "O(n)", "T(n) = T(n - c) + O(1)")
+    _assert_python_recurrence(halve, "O(log n)", "T(n) = T(n / 2) + O(1)")
+    _assert_python_recurrence(halve_with_linear_work, "O(n)", "T(n) = T(n / 2) + O(n)")
+    _assert_python_recurrence(two_halves, "O(n)", "T(n) = 2T(n / 2) + O(1)")
+    _assert_python_recurrence(
+        two_halves_with_linear_work, "O(n log n)", "T(n) = 2T(n / 2) + O(n)"
+    )
+
+
+def test_python_unbounded_cached_fibonacci_counts_distinct_states() -> None:
+    estimate = analyze_python_complexity(
+        "from functools import lru_cache\n"
+        "@lru_cache(maxsize=None)\n"
+        "def fib(n):\n"
+        "    if n < 2: return n\n"
+        "    return fib(n - 1) + fib(n - 2)\n",
+        "fib",
+    )
+
+    _assert_python_recurrence(
+        estimate, "O(n)", "O(1) work for each of at most n + 1 distinct cached states"
+    )
+    evidence = estimate.details["code_analysis"]["recurrence"]
+    assert evidence["solving_rule"] == "memoized_monotone_scalar_states"
+    assert evidence["recursive_calls_per_level"] == 2
+    assert evidence["input_size_reduction"] == "constant_decrement"
+    assert "average O(1)" in " ".join(evidence["assumptions"])
+
+
+def test_python_unsupported_or_ambiguous_recurrences_remain_unknown() -> None:
+    irregular = analyze_python_complexity(
+        "def solve(n):\n    if n <= 1: return 1\n    return solve(n * n)\n", "solve"
+    )
+    ambiguous = analyze_python_complexity(
+        "def solve(n, choose):\n    if n <= 1: return 1\n"
+        "    if choose: return solve(n - 1, choose)\n"
+        "    return solve(n - 2, choose)\n",
+        "solve",
+    )
+    recursive_loop = analyze_python_complexity(
+        "def solve(n):\n    if n <= 1: return 1\n"
+        "    for i in range(n): solve(n // 2)\n"
+        "    return 0\n",
+        "solve",
+    )
+    bounded_cache = analyze_python_complexity(
+        "from functools import lru_cache\n"
+        "@lru_cache(maxsize=32)\n"
+        "def solve(n):\n"
+        "    if n < 2: return n\n"
+        "    return solve(n - 1) + solve(n - 2)\n",
+        "solve",
+    )
+
+    for estimate in (irregular, ambiguous, recursive_loop, bounded_cache):
+        assert estimate.estimate == "unknown (recursion detected)"
+        assert "recurrence" not in estimate.details["code_analysis"]
 
 
 def test_code_analysis_exposes_python_patterns_and_source_lines() -> None:
@@ -730,3 +1016,96 @@ def test_peak_traced_memory_does_not_fit_flat_or_decreasing_noise() -> None:
 
     assert result["state"] == "not_estimated"
     assert "measurement noise" in result["reason"]
+
+
+def test_grid_component_bfs_supports_delta_vectors_and_candidate_assignment() -> None:
+    estimate = analyze_python_complexity(
+        "from collections import deque\n"
+        "def count_regions(cells):\n"
+        "    height, width = len(cells), len(cells[0])\n"
+        "    visited = set()\n"
+        "    regions = 0\n"
+        "    for row in range(height):\n"
+        "        for col in range(width):\n"
+        "            if cells[row][col] == 0 or (row, col) in visited:\n"
+        "                continue\n"
+        "            regions += 1\n"
+        "            visited.add((row, col))\n"
+        "            queue = deque([(row, col)])\n"
+        "            while queue:\n"
+        "                current_row, current_col = queue.popleft()\n"
+        "                for row_step, col_step in ((0, 1), (1, 0), (0, -1), (-1, 0)):\n"
+        "                    next_row, next_col = current_row + row_step, current_col + col_step\n"
+        "                    if (0 <= next_row < height and 0 <= next_col < width\n"
+        "                            and cells[next_row][next_col] == 1\n"
+        "                            and (next_row, next_col) not in visited):\n"
+        "                        visited.add((next_row, next_col))\n"
+        "                        queue.append((next_row, next_col))\n"
+        "    return regions\n",
+        "count_regions",
+    )
+
+    assert estimate.method == "static_ast_grid_bfs_v1"
+    assert estimate.estimate == "O(R * C)"
+    assert estimate.details["code_analysis"]["bfs"]["neighbor_enumeration"][
+        "fixed_neighbors_per_cell"
+    ] == 4
+    assert estimate.details["code_analysis"]["bfs"]["neighbor_enumeration"][
+        "representation"
+    ] == "delta_vectors_with_candidate_coordinates"
+
+
+def test_grid_component_bfs_supports_tuple_initialized_visited_set() -> None:
+    estimate = analyze_python_complexity(
+        "from collections import deque\n"
+        "def regions(board):\n"
+        "    rows, cols = len(board), len(board[0])\n"
+        "    seen, total = set(), 0\n"
+        "    for r in range(rows):\n"
+        "        for c in range(cols):\n"
+        "            if not board[r][c] or (r, c) in seen:\n"
+        "                continue\n"
+        "            total += 1\n"
+        "            seen.add((r, c))\n"
+        "            q = deque([(r, c)])\n"
+        "            while q:\n"
+        "                x, y = q.popleft()\n"
+        "                for dx, dy in ((0, 1), (1, 0), (0, -1), (-1, 0)):\n"
+        "                    a, b = x + dx, y + dy\n"
+        "                    if (0 <= a < rows and 0 <= b < cols and board[a][b]\n"
+        "                            and (a, b) not in seen):\n"
+        "                        seen.add((a, b))\n"
+        "                        q.append((a, b))\n"
+        "    return total\n",
+        "regions",
+    )
+
+    assert estimate.method == "static_ast_grid_bfs_v1"
+    assert estimate.estimate == "O(R * C)"
+
+
+def test_grid_component_bfs_abstains_when_delta_vectors_are_incomplete() -> None:
+    estimate = analyze_python_complexity(
+        "from collections import deque\n"
+        "def regions(cells):\n"
+        "    height, width = len(cells), len(cells[0])\n"
+        "    seen = set()\n"
+        "    for row in range(height):\n"
+        "        for col in range(width):\n"
+        "            if not cells[row][col] or (row, col) in seen:\n"
+        "                continue\n"
+        "            seen.add((row, col))\n"
+        "            queue = deque([(row, col)])\n"
+        "            while queue:\n"
+        "                r, c = queue.popleft()\n"
+        "                for dr, dc in ((0, 1), (1, 0), (0, -1)):\n"
+        "                    nr, nc = r + dr, c + dc\n"
+        "                    if (0 <= nr < height and 0 <= nc < width\n"
+        "                            and cells[nr][nc] and (nr, nc) not in seen):\n"
+        "                        seen.add((nr, nc))\n"
+        "                        queue.append((nr, nc))\n"
+        "    return len(seen)\n",
+        "regions",
+    )
+
+    assert estimate.estimate.startswith("unknown")

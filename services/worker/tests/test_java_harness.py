@@ -22,6 +22,8 @@ def test_java_harness_generates_reflective_array_and_nested_value_checks() -> No
     )
     assert 'new Case("unicode \\"case\\""' in source
     assert "AXIOMA_RESULT:[" in source
+    assert "sourceLocation(cause, \"Solution\")" in source
+    assert "frame.getLineNumber()" in source
 
 
 def test_java_complexity_harness_reports_heap_pool_peak_increases() -> None:

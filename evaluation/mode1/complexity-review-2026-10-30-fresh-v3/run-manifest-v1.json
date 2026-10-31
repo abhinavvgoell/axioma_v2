@@ -1,0 +1,22 @@
+{
+  "analyzer_branch": "main",
+  "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "analyzer_source_sha256": {
+    "java_complexity.py": "1f5274157f51946c221c641e65091027e76d6f4cdb8cf969d6828f063f94d8bb",
+    "python_complexity.py": "548e6208484bd4c545afd300de232c436d52d430c3520b6db914e962a4119c6d",
+    "recurrence.py": "5c1a91dc9bd79fc2cf29e0577b615e5eab2ba3363f83343c53a2344aaf32cab9"
+  },
+  "approved_label_file_sha256": "cae42511139f4c38f8a383950e5494b06b2edcf7adc41af3dbf2cb1095046a31",
+  "approved_manifest_sha256": "475d9208071b6a3e2cf8d43ed11b9974b6a8c16acbd45991abbbc5c57db7975a",
+  "case_file_sha256": "c815bfcb50c869d2dec14d764cf44536f7170a996ab90484d4592da429610a25",
+  "dataset_id": "axioma-20261030-external-multifamily-pilot-v1",
+  "outputs": {
+    "analysis-output-v1.json": "3da24429f5ef6f98afac9326b3614639e1aaa87f924d4373200be7ef28726148",
+    "evaluation-report-v1.json": "02d5b4e8914d630abf11a15411ea7be9e4dd61e5466a8f6a0fb6a002a9e79068",
+    "joined-evaluation-v1.jsonl": "af8a18a58de76d7588d7e18f9482d303ed222565e0dd056031bc598c9cf0b1cd",
+    "predictions-v1.jsonl": "2a8b1ff31e73cc1d205b163c5018b2289ae877a136415f2690a08e662cbfb16b"
+  },
+  "owner_decisions_sha256": "a604ef7210c0449976ce6999dc5ca717750383ccd3ea7f7d29a366d41e53143f",
+  "partition": "calibration",
+  "runner_source_sha256": "76e0adbcbcc868f2d96fdc24f897e72122282b0167fe9ac4e599964cb8aca09b"
+}

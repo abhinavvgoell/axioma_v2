@@ -1,0 +1,182 @@
+{
+  "diagnostic_id": "java-adjacency-list-bfs-reviewed-cases-2026-10-29-v1",
+  "reviewed_label_artifact_sha256": "a6a8aaad56b0dc09141ec8e7ecb2db73d39870ed92628ac94743691493cb6eff",
+  "dataset_case_file_sha256": "ba79da949e040b42ff24426559b41cf88fa1417fcce99c597b136c058037af40",
+  "original_provisional_label_sha256": "9bda67401a794613b4ac01fd351af8f4e0e3904f0c9464d4254efef930d95298",
+  "analyzer_source_sha256": "d21679b5dc79f657db1ad8e58252580ff0db0a4de7169dc16debcb7c135b4228",
+  "git_head": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "rule_version": "bounded_bfs_traversal_v2",
+  "evaluation_status": "diagnostic_regression_only; reviewed examples were used for rule development and are not an untouched evaluation",
+  "cases": [
+    {
+      "case_id": "bfs-ind-001",
+      "source_sha256": "cef67e929bf22037f49af287285e905b3e6cace1e3046bf9211b70c151a5f51d",
+      "reviewed_complexity": "O(V + E)",
+      "original_output": {
+        "prediction": "unknown (data-dependent or incomplete loop)",
+        "method": "static_java_token_loop_depth",
+        "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f"
+      },
+      "new_output": {
+        "prediction": "O(V + E)",
+        "method": "static_java_graph_bfs_v2",
+        "confidence": "low",
+        "rule_version": "bounded_bfs_traversal_v2",
+        "assessment": "exact_match",
+        "explanation": "Each vertex is enqueued and processed at most once, contributing O(V); scanning all adjacency entries contributes O(E). This low-confidence tokenizer match is a heuristic static estimate, not a proof for arbitrary Java. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "evidence": {
+          "language": "java",
+          "rule_version": "bounded_bfs_traversal_v2",
+          "pattern_id": "java_adjacency_list_bfs_visited_guard",
+          "input_size": {
+            "vertices": "V",
+            "adjacency_entries": "E",
+            "edge_count_measure": "total directed adjacency entries; an undirected list commonly stores each edge twice"
+          },
+          "queue": {
+            "driver": "while queue is not empty",
+            "name": "frontier",
+            "initialized_before_traversal": true,
+            "dequeue_token_index": 58,
+            "initial_enqueue_token_index": 33
+          },
+          "visited_state": {
+            "name": "done",
+            "guard_body": "single_statement",
+            "bound": "each vertex enqueued at most once",
+            "guard_kind": "set_add_true_condition",
+            "mark_before_enqueue": true,
+            "one_enqueue_per_vertex": true
+          },
+          "enqueues": {
+            "guarded_enqueue_count": 1,
+            "same_neighbor_guarded_and_enqueued": true
+          },
+          "neighbor_enumeration": {
+            "representation": "adjacency_list",
+            "bound": "each adjacency entry is scanned once"
+          },
+          "adjacency_list_evidence": {
+            "parameter": "links",
+            "parameter_type": "List<List<Integer>>"
+          },
+          "seed_initialization": {
+            "input_entries": 1,
+            "bound": "O(1)",
+            "duplicates_deduplicated": false,
+            "duplicate_starts_deduplicated": false,
+            "simplification": null
+          },
+          "source_locations": {
+            "neighbor_loop_token_index": 67,
+            "neighbor_loop_line": 9,
+            "visited_guard_token_index": 79,
+            "visited_guard_line": 9,
+            "neighbor_enqueue_token_index": 88,
+            "neighbor_enqueue_line": 9,
+            "seed_loop_line": null,
+            "queue_loop_line": 7
+          },
+          "bounded_work_argument": "Each vertex is enqueued and processed at most once, contributing O(V); scanning all adjacency entries contributes O(E).",
+          "complexity": "O(V + E)",
+          "assumptions": [
+            "The graph parameter is a typed adjacency-list collection.",
+            "Set membership/insertion and queue operations are expected O(1).",
+            "No input-sized loop repeats the traversal or adds nested work."
+          ],
+          "limitations": [
+            "Tokenizer pattern matching is heuristic and does not resolve aliases or helpers."
+          ],
+          "inference_kind": "heuristic_static_bounded_argument"
+        }
+      }
+    },
+    {
+      "case_id": "bfs-ind-003",
+      "source_sha256": "5673b332087a5b75d87369b27941a74d2226ec11fa25655c2add9bf8493081f8",
+      "reviewed_complexity": "O(S + V + E)",
+      "original_output": {
+        "prediction": "unknown (data-dependent or incomplete loop)",
+        "method": "static_java_token_loop_depth",
+        "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f"
+      },
+      "new_output": {
+        "prediction": "O(S + V + E)",
+        "method": "static_java_graph_bfs_v2",
+        "confidence": "low",
+        "rule_version": "bounded_bfs_traversal_v2",
+        "assessment": "exact_match",
+        "explanation": "The multi-source initialization processes S start entries, costing O(S). Visited-state guards enqueue each vertex at most once (O(V)), and the traversal examines each adjacency entry at most once (O(E)), for O(S + V + E). This simplifies to O(V + E) only if S <= V. The result is a low-confidence heuristic static estimate, not a proof for arbitrary Java. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "evidence": {
+          "language": "java",
+          "rule_version": "bounded_bfs_traversal_v2",
+          "pattern_id": "java_adjacency_list_bfs_visited_guard",
+          "input_size": {
+            "vertices": "V",
+            "adjacency_entries": "E",
+            "edge_count_measure": "total directed adjacency entries; an undirected list commonly stores each edge twice",
+            "start_entries": "S"
+          },
+          "queue": {
+            "driver": "while queue is not empty",
+            "name": "work",
+            "initialized_before_traversal": true,
+            "dequeue_token_index": 62,
+            "initial_enqueue_token_index": 42
+          },
+          "visited_state": {
+            "name": "seen",
+            "guard_body": "single_statement",
+            "bound": "each vertex enqueued at most once",
+            "guard_kind": "set_add_true_condition",
+            "mark_before_enqueue": true,
+            "one_enqueue_per_vertex": true
+          },
+          "enqueues": {
+            "guarded_enqueue_count": 1,
+            "same_neighbor_guarded_and_enqueued": true
+          },
+          "neighbor_enumeration": {
+            "representation": "adjacency_list",
+            "bound": "each adjacency entry is scanned once"
+          },
+          "adjacency_list_evidence": {
+            "parameter": "links",
+            "parameter_type": "Map<Integer,List<Integer>>"
+          },
+          "seed_initialization": {
+            "input_entries": "S",
+            "bound": "O(S)",
+            "duplicates_deduplicated": true,
+            "duplicate_starts_deduplicated": true,
+            "simplification": {
+              "result": "O(V + E)",
+              "only_if": "S <= V"
+            }
+          },
+          "source_locations": {
+            "neighbor_loop_token_index": 68,
+            "neighbor_loop_line": 9,
+            "visited_guard_token_index": 80,
+            "visited_guard_line": 9,
+            "neighbor_enqueue_token_index": 89,
+            "neighbor_enqueue_line": 9,
+            "seed_loop_line": 6,
+            "queue_loop_line": 7
+          },
+          "bounded_work_argument": "Seed processing is O(S); each vertex is enqueued and processed at most once for O(V), and each adjacency entry is scanned once for O(E).",
+          "complexity": "O(S + V + E)",
+          "assumptions": [
+            "The graph parameter is a typed adjacency-list collection.",
+            "Set membership/insertion and queue operations are expected O(1).",
+            "No input-sized loop repeats the traversal or adds nested work."
+          ],
+          "limitations": [
+            "Tokenizer pattern matching is heuristic and does not resolve aliases or helpers."
+          ],
+          "inference_kind": "heuristic_static_bounded_argument"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,2312 @@
+{
+  "dataset_id": "axioma-independent-bfs-2026-10-29-v1",
+  "case_count": 22,
+  "language_counts": {
+    "java": 11,
+    "python": 11
+  },
+  "label_review_status": "provisional_not_human_reviewed",
+  "label_file": "gold-provisional.jsonl",
+  "label_file_sha256": "9bda67401a794613b4ac01fd351af8f4e0e3904f0c9464d4254efef930d95298",
+  "case_file": "cases.jsonl",
+  "case_file_sha256": "ba79da949e040b42ff24426559b41cf88fa1417fcce99c597b136c058037af40",
+  "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "analyzer_source_sha256": {
+    "java_complexity.py": "4e1d3778a140c9b55b22b34a0d17da734778a0e0acf09fdb1196b989ead4558b",
+    "python_complexity.py": "378ab6344620d1606f5a93ebbec96cba8bf9c259804ded3a6057aa87bf3774ea"
+  },
+  "rule_version": "bounded_bfs_traversal_v1",
+  "run_at_utc": "2026-10-29T17:46:08.809966+00:00",
+  "python_version": "3.14.3",
+  "metrics": {
+    "eligible_scorable": 20,
+    "answered": 6,
+    "abstentions": 14,
+    "execution_failures": 0,
+    "exact_predictions": 5,
+    "exact_accuracy_among_answered": 0.8333333333333334,
+    "coverage": 0.3,
+    "selective_accuracy": 0.8333333333333334,
+    "all_case_exact_rate": 0.25,
+    "supported_candidates": 10,
+    "supported_pattern_coverage": 0.5,
+    "expected_unknown_cases": 12,
+    "expected_abstention_agreement": 0.9166666666666666,
+    "negative_case_false_positives": 1,
+    "negative_false_positive_truth_matches": 0,
+    "negative_false_positive_truth_mismatches": 1,
+    "non_scorable_cases": 2
+  },
+  "metrics_by_language": {
+    "java": {
+      "eligible_scorable": 10,
+      "answered": 3,
+      "abstentions": 7,
+      "execution_failures": 0,
+      "exact_predictions": 2,
+      "exact_accuracy_among_answered": 0.6666666666666666,
+      "coverage": 0.3,
+      "selective_accuracy": 0.6666666666666666,
+      "all_case_exact_rate": 0.2,
+      "supported_candidates": 6,
+      "supported_pattern_coverage": 0.3333333333333333,
+      "expected_unknown_cases": 5,
+      "expected_abstention_agreement": 0.8,
+      "negative_case_false_positives": 1,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 1,
+      "non_scorable_cases": 1
+    },
+    "python": {
+      "eligible_scorable": 10,
+      "answered": 3,
+      "abstentions": 7,
+      "execution_failures": 0,
+      "exact_predictions": 3,
+      "exact_accuracy_among_answered": 1.0,
+      "coverage": 0.3,
+      "selective_accuracy": 1.0,
+      "all_case_exact_rate": 0.3,
+      "supported_candidates": 4,
+      "supported_pattern_coverage": 0.75,
+      "expected_unknown_cases": 7,
+      "expected_abstention_agreement": 1.0,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 1
+    }
+  },
+  "metrics_by_pattern": {
+    "adjacency_list_boolean_visited": {
+      "eligible_scorable": 1,
+      "answered": 1,
+      "abstentions": 0,
+      "execution_failures": 0,
+      "exact_predictions": 1,
+      "exact_accuracy_among_answered": 1.0,
+      "coverage": 1.0,
+      "selective_accuracy": 1.0,
+      "all_case_exact_rate": 1.0,
+      "supported_candidates": 1,
+      "supported_pattern_coverage": 1.0,
+      "expected_unknown_cases": 0,
+      "expected_abstention_agreement": null,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    },
+    "adjacency_list_mark_on_dequeue": {
+      "eligible_scorable": 1,
+      "answered": 0,
+      "abstentions": 1,
+      "execution_failures": 0,
+      "exact_predictions": 0,
+      "exact_accuracy_among_answered": null,
+      "coverage": 0.0,
+      "selective_accuracy": null,
+      "all_case_exact_rate": 0.0,
+      "supported_candidates": 1,
+      "supported_pattern_coverage": 0.0,
+      "expected_unknown_cases": 0,
+      "expected_abstention_agreement": null,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    },
+    "adjacency_list_multi_source": {
+      "eligible_scorable": 2,
+      "answered": 1,
+      "abstentions": 1,
+      "execution_failures": 0,
+      "exact_predictions": 1,
+      "exact_accuracy_among_answered": 1.0,
+      "coverage": 0.5,
+      "selective_accuracy": 1.0,
+      "all_case_exact_rate": 0.5,
+      "supported_candidates": 2,
+      "supported_pattern_coverage": 0.5,
+      "expected_unknown_cases": 0,
+      "expected_abstention_agreement": null,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    },
+    "adjacency_list_single_source": {
+      "eligible_scorable": 2,
+      "answered": 1,
+      "abstentions": 1,
+      "execution_failures": 0,
+      "exact_predictions": 1,
+      "exact_accuracy_among_answered": 1.0,
+      "coverage": 0.5,
+      "selective_accuracy": 1.0,
+      "all_case_exact_rate": 0.5,
+      "supported_candidates": 2,
+      "supported_pattern_coverage": 0.5,
+      "expected_unknown_cases": 0,
+      "expected_abstention_agreement": null,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    },
+    "adjacency_matrix": {
+      "eligible_scorable": 1,
+      "answered": 0,
+      "abstentions": 1,
+      "execution_failures": 0,
+      "exact_predictions": 0,
+      "exact_accuracy_among_answered": null,
+      "coverage": 0.0,
+      "selective_accuracy": null,
+      "all_case_exact_rate": 0.0,
+      "supported_candidates": 1,
+      "supported_pattern_coverage": 0.0,
+      "expected_unknown_cases": 0,
+      "expected_abstention_agreement": null,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    },
+    "adjacency_matrix_bfs": {
+      "eligible_scorable": 1,
+      "answered": 0,
+      "abstentions": 1,
+      "execution_failures": 0,
+      "exact_predictions": 0,
+      "exact_accuracy_among_answered": null,
+      "coverage": 0.0,
+      "selective_accuracy": null,
+      "all_case_exact_rate": 0.0,
+      "supported_candidates": 0,
+      "supported_pattern_coverage": null,
+      "expected_unknown_cases": 1,
+      "expected_abstention_agreement": 1.0,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    },
+    "grid_bfs_with_extra_full_scan": {
+      "eligible_scorable": 2,
+      "answered": 1,
+      "abstentions": 1,
+      "execution_failures": 0,
+      "exact_predictions": 0,
+      "exact_accuracy_among_answered": 0.0,
+      "coverage": 0.5,
+      "selective_accuracy": 0.0,
+      "all_case_exact_rate": 0.0,
+      "supported_candidates": 0,
+      "supported_pattern_coverage": null,
+      "expected_unknown_cases": 2,
+      "expected_abstention_agreement": 0.5,
+      "negative_case_false_positives": 1,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 1,
+      "non_scorable_cases": 0
+    },
+    "grid_eight_direction": {
+      "eligible_scorable": 2,
+      "answered": 0,
+      "abstentions": 2,
+      "execution_failures": 0,
+      "exact_predictions": 0,
+      "exact_accuracy_among_answered": null,
+      "coverage": 0.0,
+      "selective_accuracy": null,
+      "all_case_exact_rate": 0.0,
+      "supported_candidates": 1,
+      "supported_pattern_coverage": 0.0,
+      "expected_unknown_cases": 1,
+      "expected_abstention_agreement": 1.0,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    },
+    "grid_four_direction": {
+      "eligible_scorable": 1,
+      "answered": 1,
+      "abstentions": 0,
+      "execution_failures": 0,
+      "exact_predictions": 1,
+      "exact_accuracy_among_answered": 1.0,
+      "coverage": 1.0,
+      "selective_accuracy": 1.0,
+      "all_case_exact_rate": 1.0,
+      "supported_candidates": 1,
+      "supported_pattern_coverage": 1.0,
+      "expected_unknown_cases": 0,
+      "expected_abstention_agreement": null,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    },
+    "grid_four_direction_rectangular": {
+      "eligible_scorable": 1,
+      "answered": 1,
+      "abstentions": 0,
+      "execution_failures": 0,
+      "exact_predictions": 1,
+      "exact_accuracy_among_answered": 1.0,
+      "coverage": 1.0,
+      "selective_accuracy": 1.0,
+      "all_case_exact_rate": 1.0,
+      "supported_candidates": 1,
+      "supported_pattern_coverage": 1.0,
+      "expected_unknown_cases": 0,
+      "expected_abstention_agreement": null,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    },
+    "grid_neighbor_helper_representation": {
+      "eligible_scorable": 1,
+      "answered": 0,
+      "abstentions": 1,
+      "execution_failures": 0,
+      "exact_predictions": 0,
+      "exact_accuracy_among_answered": null,
+      "coverage": 0.0,
+      "selective_accuracy": null,
+      "all_case_exact_rate": 0.0,
+      "supported_candidates": 0,
+      "supported_pattern_coverage": null,
+      "expected_unknown_cases": 1,
+      "expected_abstention_agreement": 1.0,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    },
+    "missing_visited_bound": {
+      "eligible_scorable": 0,
+      "answered": 0,
+      "abstentions": 0,
+      "execution_failures": 0,
+      "exact_predictions": 0,
+      "exact_accuracy_among_answered": null,
+      "coverage": null,
+      "selective_accuracy": null,
+      "all_case_exact_rate": null,
+      "supported_candidates": 0,
+      "supported_pattern_coverage": null,
+      "expected_unknown_cases": 2,
+      "expected_abstention_agreement": 1.0,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 2
+    },
+    "queue_worklist_not_graph": {
+      "eligible_scorable": 2,
+      "answered": 0,
+      "abstentions": 2,
+      "execution_failures": 0,
+      "exact_predictions": 0,
+      "exact_accuracy_among_answered": null,
+      "coverage": 0.0,
+      "selective_accuracy": null,
+      "all_case_exact_rate": 0.0,
+      "supported_candidates": 0,
+      "supported_pattern_coverage": null,
+      "expected_unknown_cases": 2,
+      "expected_abstention_agreement": 1.0,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    },
+    "repeated_adjacency_list_bfs": {
+      "eligible_scorable": 2,
+      "answered": 0,
+      "abstentions": 2,
+      "execution_failures": 0,
+      "exact_predictions": 0,
+      "exact_accuracy_among_answered": null,
+      "coverage": 0.0,
+      "selective_accuracy": null,
+      "all_case_exact_rate": 0.0,
+      "supported_candidates": 0,
+      "supported_pattern_coverage": null,
+      "expected_unknown_cases": 2,
+      "expected_abstention_agreement": 1.0,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    },
+    "unfamiliar_neighbor_api": {
+      "eligible_scorable": 1,
+      "answered": 0,
+      "abstentions": 1,
+      "execution_failures": 0,
+      "exact_predictions": 0,
+      "exact_accuracy_among_answered": null,
+      "coverage": 0.0,
+      "selective_accuracy": null,
+      "all_case_exact_rate": 0.0,
+      "supported_candidates": 0,
+      "supported_pattern_coverage": null,
+      "expected_unknown_cases": 1,
+      "expected_abstention_agreement": 1.0,
+      "negative_case_false_positives": 0,
+      "negative_false_positive_truth_matches": 0,
+      "negative_false_positive_truth_mismatches": 0,
+      "non_scorable_cases": 0
+    }
+  },
+  "predictions": [
+    {
+      "id": "bfs-ind-001",
+      "language": "java",
+      "category": "adjacency_list_single_source",
+      "source_sha256": "cef67e929bf22037f49af287285e905b3e6cace1e3046bf9211b70c151a5f51d",
+      "time_complexity": "O(V + E)",
+      "rationale": "Each vertex is enqueued once and each listed neighbor entry is visited once.",
+      "supported_pattern_candidate": true,
+      "expected_analyzer_response": "estimate",
+      "expected_prediction": "O(V + E)",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "ListWalkA.count",
+      "source": "import java.util.*;\nclass ListWalkA {\n  int count(List<List<Integer>> links, int root) {\n    Set<Integer> done = new HashSet<>();\n    Queue<Integer> frontier = new ArrayDeque<>();\n    done.add(root); frontier.offer(root); int total = 0;\n    while (!frontier.isEmpty()) {\n      int u = frontier.poll(); total++;\n      for (int v : links.get(u)) if (done.add(v)) frontier.offer(v);\n    }\n    return total;\n  }\n}",
+      "raw_prediction": "unknown (data-dependent or incomplete loop)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": false,
+      "negative_case_false_positive": false,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "java",
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".get() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            }
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-002",
+      "language": "java",
+      "category": "adjacency_list_boolean_visited",
+      "source_sha256": "dce3ff58d5287d7012e8fc7d7c028cd5577a1939fb0ed64356bc16649506cac7",
+      "time_complexity": "O(V + E)",
+      "rationale": "The boolean array prevents each vertex from being enqueued more than once; adjacency entries are scanned once.",
+      "supported_pattern_candidate": true,
+      "expected_analyzer_response": "estimate",
+      "expected_prediction": "O(V + E)",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "ListWalkB.count",
+      "source": "import java.util.*;\nclass ListWalkB {\n  int count(List<List<Integer>> edges, int source) {\n    boolean[] marked = new boolean[edges.size()];\n    Deque<Integer> todo = new ArrayDeque<>();\n    marked[source] = true; todo.addLast(source); int total = 0;\n    while (!todo.isEmpty()) {\n      int current = todo.removeFirst(); total++;\n      for (int next : edges.get(current)) {\n        if (!marked[next]) { marked[next] = true; todo.addLast(next); }\n      }\n    }\n    return total;\n  }\n}",
+      "raw_prediction": "O(V + E)",
+      "predicted": "O(V+E)",
+      "prediction_state": "estimate",
+      "truth_exact": true,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_java_graph_bfs",
+      "confidence": "low",
+      "explanation": "Recognized queue-based traversal over adjacency lists with a visited-state guard. Assuming each vertex is enqueued once and each adjacency entry is scanned once, the work is O(V + E). Visited checks must be constant-time; the syntax match is a heuristic. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "java",
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".get() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "indexing",
+              "label": "Array or indexed access; concrete access cost is not inferred",
+              "line": null
+            },
+            {
+              "kind": "graph_bfs",
+              "label": "Queue traversal over adjacency lists with a visited guard",
+              "line": null
+            }
+          ],
+          "bfs": {
+            "language": "java",
+            "rule_version": "bounded_bfs_traversal_v1",
+            "pattern_id": "java_adjacency_list_bfs_visited_guard",
+            "input_size": {
+              "vertices": "V",
+              "adjacency_entries": "E",
+              "edge_count_measure": "total directed adjacency entries; an undirected list commonly stores each edge twice"
+            },
+            "queue": {
+              "driver": "while queue is not empty",
+              "dequeue_operations": [
+                "poll",
+                "remove",
+                "pollFirst",
+                "removeFirst"
+              ],
+              "traversal_token_index": 47
+            },
+            "source_locations": {
+              "queue_operation_token_indices": [
+                37,
+                62,
+                100
+              ],
+              "neighbor_loop_token_indices": [
+                69
+              ],
+              "visited_update_token_indices": [
+                33,
+                96
+              ]
+            },
+            "visited_state": {
+              "bound": "each vertex is enqueued at most once",
+              "mark_before_enqueue": true
+            },
+            "neighbor_enumeration": {
+              "representation": "adjacency_list",
+              "bound": "each adjacency entry is scanned once"
+            },
+            "bounded_work_argument": "Each vertex is enqueued and processed at most once, contributing O(V); scanning all adjacency entries contributes O(E), for O(V + E).",
+            "complexity": "O(V + E)",
+            "assumptions": [
+              "The graph is represented by adjacency lists.",
+              "The start vertex and each neighbor are marked before enqueue.",
+              "Queue and visited operations are O(1) under the chosen implementations.",
+              "No enclosing input-sized loop repeats the traversal."
+            ],
+            "limitations": [
+              "Token offsets are used because the lexer does not retain line numbers.",
+              "The syntax heuristic does not expand helpers, aliases, or mutation through other references."
+            ],
+            "inference_kind": "heuristic_static_bounded_argument"
+          },
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-003",
+      "language": "java",
+      "category": "adjacency_list_multi_source",
+      "source_sha256": "5673b332087a5b75d87369b27941a74d2226ec11fa25655c2add9bf8493081f8",
+      "time_complexity": "O(V + E)",
+      "rationale": "Each source and newly discovered vertex is marked before enqueue; the total adjacency entries are scanned once.",
+      "supported_pattern_candidate": true,
+      "expected_analyzer_response": "estimate",
+      "expected_prediction": "O(V + E)",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "MultiListWalk.spread",
+      "source": "import java.util.*;\nclass MultiListWalk {\n  void spread(Map<Integer,List<Integer>> links, List<Integer> starts) {\n    Set<Integer> seen = new HashSet<>();\n    Deque<Integer> work = new ArrayDeque<>();\n    for (int seed : starts) if (seen.add(seed)) work.add(seed);\n    while (!work.isEmpty()) {\n      int here = work.remove();\n      for (int there : links.get(here)) if (seen.add(there)) work.add(there);\n    }\n  }\n}",
+      "raw_prediction": "unknown (data-dependent or incomplete loop)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": false,
+      "negative_case_false_positive": false,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "java",
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".remove() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".get() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            }
+          ],
+          "loop_count": 3,
+          "maximum_loop_nesting": 2,
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-004",
+      "language": "java",
+      "category": "adjacency_matrix",
+      "source_sha256": "f531f01937418054941c7f123ad9f656b8b9877006f2fbc14d7d221c2c49bdc1",
+      "time_complexity": "O(V^2)",
+      "rationale": "At most V vertices enter the queue, and each processed vertex scans all V columns.",
+      "supported_pattern_candidate": true,
+      "expected_analyzer_response": "estimate",
+      "expected_prediction": "O(V^2)",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "MatrixWalk.count",
+      "source": "import java.util.*;\nclass MatrixWalk {\n  int count(boolean[][] arcs, int origin) {\n    int n = arcs.length; boolean[] seen = new boolean[n];\n    Queue<Integer> q = new ArrayDeque<>(); seen[origin] = true; q.add(origin);\n    int result = 0;\n    while (!q.isEmpty()) {\n      int u = q.remove(); result++;\n      for (int v = 0; v < n; v++)\n        if (arcs[u][v] && !seen[v]) { seen[v] = true; q.add(v); }\n    }\n    return result;\n  }\n}",
+      "raw_prediction": "unknown (data-dependent or incomplete loop)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": false,
+      "negative_case_false_positive": false,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "java",
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".remove() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "indexing",
+              "label": "Array or indexed access; concrete access cost is not inferred",
+              "line": null
+            }
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-005",
+      "language": "java",
+      "category": "repeated_adjacency_list_bfs",
+      "source_sha256": "286c6cf6917dbf204acd4088c94a0e61b9986e25eb333c7144187ec9ede3d20b",
+      "time_complexity": "O(V * (V + E))",
+      "rationale": "A full graph traversal is restarted from every vertex, so worst-case work is V times a traversal.",
+      "supported_pattern_candidate": false,
+      "expected_analyzer_response": "unknown",
+      "expected_prediction": "unknown",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "RepeatedListWalk.all",
+      "source": "import java.util.*;\nclass RepeatedListWalk {\n  void all(List<List<Integer>> links) {\n    int n = links.size();\n    for (int start = 0; start < n; start++) {\n      Set<Integer> seen = new HashSet<>(); Queue<Integer> q = new ArrayDeque<>();\n      seen.add(start); q.add(start);\n      while (!q.isEmpty()) {\n        int u = q.remove();\n        for (int v : links.get(u)) if (seen.add(v)) q.add(v);\n      }\n    }\n  }\n}",
+      "raw_prediction": "unknown (data-dependent or incomplete loop)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "java",
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".remove() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".get() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            }
+          ],
+          "loop_count": 3,
+          "maximum_loop_nesting": 3,
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-006",
+      "language": "java",
+      "category": "missing_visited_bound",
+      "source_sha256": "d8c8095260363dc8af0b5d1369d1597ef84c1a5e1cee962ac2be0fc1cdbb5148",
+      "time_complexity": null,
+      "rationale": "On a cyclic graph, vertices can be re-enqueued indefinitely; no finite traversal bound follows.",
+      "supported_pattern_candidate": false,
+      "expected_analyzer_response": "unknown",
+      "expected_prediction": "unknown",
+      "complexity_scorable": false,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "UnboundedListWalk.walk",
+      "source": "import java.util.*;\nclass UnboundedListWalk {\n  void walk(List<List<Integer>> links, int start) {\n    Queue<Integer> q = new ArrayDeque<>(); q.add(start);\n    while (!q.isEmpty()) {\n      int u = q.remove();\n      for (int v : links.get(u)) q.add(v);\n    }\n  }\n}",
+      "raw_prediction": "unknown (data-dependent or incomplete loop)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "java",
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".remove() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".get() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            }
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-007",
+      "language": "java",
+      "category": "unfamiliar_neighbor_api",
+      "source_sha256": "0a109a2085f6eacad3d927776dea559adc2082648b004ffdb726f1629a90ac73",
+      "time_complexity": "O(V + E)",
+      "rationale": "Assuming neighborsOf returns the current vertex adjacency list, each vertex is marked before enqueue and each edge is scanned once; the representation is hidden behind a helper.",
+      "supported_pattern_candidate": false,
+      "expected_analyzer_response": "unknown",
+      "expected_prediction": "unknown",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "HiddenNeighbors.walk",
+      "source": "import java.util.*;\nclass HiddenNeighbors {\n  interface Network { Iterable<Integer> neighborsOf(int v); }\n  void walk(Network net, int source, int n) {\n    boolean[] seen = new boolean[n]; Queue<Integer> q = new ArrayDeque<>();\n    seen[source] = true; q.add(source);\n    while (!q.isEmpty()) {\n      int u = q.remove();\n      for (int v : net.neighborsOf(u)) if (!seen[v]) { seen[v] = true; q.add(v); }\n    }\n  }\n}",
+      "raw_prediction": "unknown (data-dependent or incomplete loop)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "java",
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".remove() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "indexing",
+              "label": "Array or indexed access; concrete access cost is not inferred",
+              "line": null
+            }
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-008",
+      "language": "java",
+      "category": "grid_four_direction",
+      "source_sha256": "59a02ca91eb7039bd3223e2450e3297560eec2be4ef90fe6fcf2b22a35802914",
+      "time_complexity": "O(R * C)",
+      "rationale": "Each cell is marked before enqueue, and the fixed direction loop checks four neighbors per cell.",
+      "supported_pattern_candidate": true,
+      "expected_analyzer_response": "estimate",
+      "expected_prediction": "O(R * C)",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "GridFourA.fill",
+      "source": "import java.util.*;\nclass GridFourA {\n  void fill(int[][] board, int rows, int cols, int sr, int sc) {\n    boolean[][] seen = new boolean[rows][cols]; int[] dr = {-1,1,0,0}; int[] dc = {0,0,-1,1};\n    Queue<int[]> q = new ArrayDeque<>(); seen[sr][sc] = true; q.add(new int[]{sr,sc});\n    while (!q.isEmpty()) {\n      int[] cell = q.remove();\n      for (int d = 0; d < 4; d++) {\n        int nr = cell[0] + dr[d], nc = cell[1] + dc[d];\n        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && board[nr][nc] == 1 && !seen[nr][nc]) {\n          seen[nr][nc] = true; q.add(new int[]{nr,nc});\n        }\n      }\n    }\n  }\n}",
+      "raw_prediction": "O(R * C)",
+      "predicted": "O(R*C)",
+      "prediction_state": "estimate",
+      "truth_exact": true,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_java_grid_bfs_v1",
+      "confidence": "low",
+      "explanation": "Recognized queue-driven traversal over a grid with a fixed-size neighborhood. Each visited cell is marked before enqueue and is processed at most once; checking four or eight directions per cell gives O(R*C). This bounded tokenizer match is a heuristic, not a proof for arbitrary Java code. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "java",
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".remove() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "indexing",
+              "label": "Array or indexed access; concrete access cost is not inferred",
+              "line": null
+            },
+            {
+              "kind": "grid_bfs",
+              "label": "Queue traversal with a fixed-size grid neighborhood and visited-before-enqueue",
+              "line": null
+            }
+          ],
+          "bfs": {
+            "language": "java",
+            "rule_version": "bounded_bfs_traversal_v1",
+            "pattern_id": "java_grid_bfs_fixed_direction_loop",
+            "source_locations": {
+              "queue_loop_token_index": 88,
+              "dequeue_call_token_index": 103,
+              "neighbor_loop_token_index": 109,
+              "visited_guard_token_index": 149,
+              "initial_visited_mark_token_index": 63,
+              "initial_enqueue_token_index": 73,
+              "neighbor_visited_mark_token_index": 187,
+              "neighbor_enqueue_token_index": 197
+            },
+            "input_size": {
+              "rows": "R",
+              "columns": "C"
+            },
+            "queue": {
+              "driver": "q",
+              "dequeue": "remove/poll",
+              "token_index": 88
+            },
+            "visited_state": {
+              "container": "boolean[][]",
+              "name": "seen",
+              "mark_before_enqueue": true,
+              "one_enqueue_per_cell": true
+            },
+            "neighbor_enumeration": {
+              "fixed_neighbors_per_cell": 4,
+              "loop_index": "d",
+              "loop_token_index": 109
+            },
+            "bounded_work_argument": "Each cell is enqueued at most once because it is marked visited before enqueue; each dequeued cell checks 4 fixed directions. Queue and neighbor work is O(R*C).",
+            "complexity": "O(R * C)",
+            "assumptions": [
+              "The grid dimensions are R by C and the traversal is single-source.",
+              "The visited cell is marked before it is enqueued.",
+              "Queue operations and grid/visited accesses are O(1).",
+              "The direction loop executes exactly 4 times per cell."
+            ],
+            "limitations": [
+              "Only fixed-bound 4- or 8-direction loops are recognized.",
+              "Tokenizer offsets are used; this is a narrow static heuristic, not a proof.",
+              "Grid initialization and helper methods are not expanded."
+            ],
+            "inference_kind": "heuristic_static_bounded_argument"
+          },
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-009",
+      "language": "java",
+      "category": "grid_eight_direction",
+      "source_sha256": "a354cc68331f5080ee725b2e4cbbc7f2e718d1b6608fc085209c8d2ca4365033",
+      "time_complexity": "O(R * C)",
+      "rationale": "Each cell enters the queue at most once and the fixed eight-direction loop has constant work per cell.",
+      "supported_pattern_candidate": true,
+      "expected_analyzer_response": "estimate",
+      "expected_prediction": "O(R * C)",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "GridEightB.traverse",
+      "source": "import java.util.*;\nclass GridEightB {\n  void traverse(int[][] terrain, int height, int width, int y, int x) {\n    boolean[][] visited = new boolean[height][width];\n    int[] dy = {-1,-1,-1,0,0,1,1,1}; int[] dx = {-1,0,1,-1,1,-1,0,1};\n    Queue<int[]> pending = new ArrayDeque<>(); visited[y][x] = true; pending.add(new int[]{y,x});\n    while (!pending.isEmpty()) {\n      int[] p = pending.remove();\n      for (int k = 0; k < 8; k++) {\n        int yy = p[0] + dy[k], xx = p[1] + dx[k];\n        if (yy >= 0 && yy < height && xx >= 0 && xx < width && terrain[yy][xx] != 0 && !visited[yy][xx]) {\n          visited[yy][xx] = true; pending.add(new int[]{yy,xx});\n        }\n      }\n    }\n  }\n}",
+      "raw_prediction": "unknown (data-dependent or incomplete loop)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": false,
+      "negative_case_false_positive": false,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "java",
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".remove() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "indexing",
+              "label": "Array or indexed access; concrete access cost is not inferred",
+              "line": null
+            }
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-010",
+      "language": "java",
+      "category": "grid_bfs_with_extra_full_scan",
+      "source_sha256": "9d75899b2760a19d3aa3d6ac3287e3f3a784e04d7c9c898093c7314753a67551",
+      "time_complexity": "O((R * C)^2)",
+      "rationale": "For each dequeued cell, an additional complete grid scan runs before the fixed-neighbor checks, multiplying work by R*C.",
+      "supported_pattern_candidate": false,
+      "expected_analyzer_response": "unknown",
+      "expected_prediction": "unknown",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "GridExtraPass.traverse",
+      "source": "import java.util.*;\nclass GridExtraPass {\n  void traverse(int[][] map, int rows, int cols, int sr, int sc) {\n    boolean[][] seen = new boolean[rows][cols]; int[] dr={-1,1,0,0}; int[] dc={0,0,-1,1};\n    Queue<int[]> q=new ArrayDeque<>(); seen[sr][sc]=true; q.add(new int[]{sr,sc});\n    while(!q.isEmpty()) {\n      int[] p=q.remove();\n      for(int d=0; d<4; d++) {\n        for(int r=0; r<rows; r++) for(int c=0; c<cols; c++) { int ignored=map[r][c]; }\n        int nr=p[0]+dr[d], nc=p[1]+dc[d];\n        if(nr>=0 && nr<rows && nc>=0 && nc<cols && map[nr][nc]==1 && !seen[nr][nc]) {\n          seen[nr][nc]=true; q.add(new int[]{nr,nc});\n        }\n      }\n    }\n  }\n}",
+      "raw_prediction": "O(R * C)",
+      "predicted": "O(R*C)",
+      "prediction_state": "estimate",
+      "truth_exact": false,
+      "expected_response_agreement": false,
+      "negative_case_false_positive": true,
+      "method": "static_java_grid_bfs_v1",
+      "confidence": "low",
+      "explanation": "Recognized queue-driven traversal over a grid with a fixed-size neighborhood. Each visited cell is marked before enqueue and is processed at most once; checking four or eight directions per cell gives O(R*C). This bounded tokenizer match is a heuristic, not a proof for arbitrary Java code. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "java",
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".remove() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".add() call; concrete type and cost are not inferred",
+              "line": null
+            },
+            {
+              "kind": "indexing",
+              "label": "Array or indexed access; concrete access cost is not inferred",
+              "line": null
+            },
+            {
+              "kind": "grid_bfs",
+              "label": "Queue traversal with a fixed-size grid neighborhood and visited-before-enqueue",
+              "line": null
+            }
+          ],
+          "bfs": {
+            "language": "java",
+            "rule_version": "bounded_bfs_traversal_v1",
+            "pattern_id": "java_grid_bfs_fixed_direction_loop",
+            "source_locations": {
+              "queue_loop_token_index": 88,
+              "dequeue_call_token_index": 103,
+              "neighbor_loop_token_index": 109,
+              "visited_guard_token_index": 190,
+              "initial_visited_mark_token_index": 63,
+              "initial_enqueue_token_index": 73,
+              "neighbor_visited_mark_token_index": 228,
+              "neighbor_enqueue_token_index": 238
+            },
+            "input_size": {
+              "rows": "R",
+              "columns": "C"
+            },
+            "queue": {
+              "driver": "q",
+              "dequeue": "remove/poll",
+              "token_index": 88
+            },
+            "visited_state": {
+              "container": "boolean[][]",
+              "name": "seen",
+              "mark_before_enqueue": true,
+              "one_enqueue_per_cell": true
+            },
+            "neighbor_enumeration": {
+              "fixed_neighbors_per_cell": 4,
+              "loop_index": "d",
+              "loop_token_index": 109
+            },
+            "bounded_work_argument": "Each cell is enqueued at most once because it is marked visited before enqueue; each dequeued cell checks 4 fixed directions. Queue and neighbor work is O(R*C).",
+            "complexity": "O(R * C)",
+            "assumptions": [
+              "The grid dimensions are R by C and the traversal is single-source.",
+              "The visited cell is marked before it is enqueued.",
+              "Queue operations and grid/visited accesses are O(1).",
+              "The direction loop executes exactly 4 times per cell."
+            ],
+            "limitations": [
+              "Only fixed-bound 4- or 8-direction loops are recognized.",
+              "Tokenizer offsets are used; this is a narrow static heuristic, not a proof.",
+              "Grid initialization and helper methods are not expanded."
+            ],
+            "inference_kind": "heuristic_static_bounded_argument"
+          },
+          "loop_count": 4,
+          "maximum_loop_nesting": 4,
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-011",
+      "language": "java",
+      "category": "queue_worklist_not_graph",
+      "source_sha256": "a964985fb6b18fc307fd235e498a16dd2de37c8b63ccfe83a7a956f95966d1b2",
+      "time_complexity": "O(N)",
+      "rationale": "The queue only drains an input collection and has no graph/grid neighbor expansion; total work is linear in item count.",
+      "supported_pattern_candidate": false,
+      "expected_analyzer_response": "unknown",
+      "expected_prediction": "unknown",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "QueueDrain.total",
+      "source": "import java.util.*;\nclass QueueDrain {\n  int total(List<Integer> values) {\n    Queue<Integer> q = new ArrayDeque<>(values); int sum = 0;\n    while (!q.isEmpty()) sum += q.remove();\n    return sum;\n  }\n}",
+      "raw_prediction": "unknown (data-dependent or incomplete loop)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_java_token_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "java",
+          "scope": "selected method; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": null
+            },
+            {
+              "kind": "collection_operation",
+              "label": ".remove() call; concrete type and cost are not inferred",
+              "line": null
+            }
+          ],
+          "loop_count": 1,
+          "maximum_loop_nesting": 1,
+          "limitations": [
+            "Tokenizer-based signals are approximate and do not retain source line numbers.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-012",
+      "language": "python",
+      "category": "adjacency_list_single_source",
+      "source_sha256": "826a26165ce6683cf744d586f8ed5b048b0d4a6420be19de8e1d297bcc52bbf7",
+      "time_complexity": "O(V + E)",
+      "rationale": "Each vertex is added to the visited set before it is enqueued, and each adjacency list is scanned once.",
+      "supported_pattern_candidate": true,
+      "expected_analyzer_response": "estimate",
+      "expected_prediction": "O(V + E)",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "reach_count",
+      "source": "from collections import deque\n\ndef reach_count(adjacency, origin):\n    seen = {origin}\n    pending = deque([origin])\n    count = 0\n    while pending:\n        vertex = pending.popleft()\n        count += 1\n        for neighbor in adjacency[vertex]:\n            if neighbor not in seen:\n                seen.add(neighbor)\n                pending.append(neighbor)\n    return count",
+      "raw_prediction": "O(V + E)",
+      "predicted": "O(V+E)",
+      "prediction_state": "estimate",
+      "truth_exact": true,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_ast_graph_bfs",
+      "confidence": "low",
+      "explanation": "Recognized a graph traversal over adjacency lists with a visited guard. Assuming each vertex is processed once and each adjacency entry is scanned once, the work is O(V + E). This assumes constant-time visited-set operations; the syntax check is a heuristic. Called helper functions are not included; this estimate is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "python",
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "graph_bfs",
+              "label": "Queue traversal over adjacency lists with a visited guard",
+              "line": 7
+            },
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": 7
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 10
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 11
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 12
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 13
+            }
+          ],
+          "bfs": {
+            "language": "python",
+            "rule_version": "bounded_bfs_traversal_v1",
+            "pattern_id": "python_adjacency_list_bfs_visited_guard",
+            "input_size": {
+              "vertices": "V",
+              "adjacency_entries": "E",
+              "edge_count_measure": "total directed adjacency entries; an undirected list commonly stores each edge twice"
+            },
+            "queue": {
+              "driver": "while queue",
+              "operations": [
+                "popleft",
+                "append"
+              ],
+              "traversal_line": 7
+            },
+            "visited_state": {
+              "bound": "each vertex is enqueued at most once",
+              "mark_before_enqueue": true
+            },
+            "neighbor_enumeration": {
+              "representation": "adjacency_list",
+              "bound": "each adjacency entry is scanned once"
+            },
+            "source_locations": {
+              "queue_operations": [
+                8,
+                13
+              ],
+              "visited_updates": [
+                12
+              ],
+              "neighbor_loops": [
+                10
+              ]
+            },
+            "bounded_work_argument": "Each vertex is processed at most once and each adjacency entry is examined once, so queue/vertex work contributes O(V) and neighbor scanning O(E).",
+            "complexity": "O(V + E)",
+            "assumptions": [
+              "The graph is represented as adjacency lists.",
+              "The start vertex is marked visited and each neighbor is marked before enqueue.",
+              "Visited-set operations and queue operations are average O(1).",
+              "No enclosing input-sized loop repeats the traversal."
+            ],
+            "limitations": [
+              "Only the selected traversal structure is inspected; helpers and aliases are not expanded.",
+              "This is a heuristic static match, not a formal proof for arbitrary Python code."
+            ],
+            "inference_kind": "heuristic_static_bounded_argument"
+          },
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "maximum_data_dependent_loop_nesting": 2,
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-013",
+      "language": "python",
+      "category": "adjacency_list_multi_source",
+      "source_sha256": "3d456882e86731c3420e36b624335ade4028217d6b03d146b218a198aa1885a6",
+      "time_complexity": "O(V + E)",
+      "rationale": "All distinct start vertices are seeded once; each discovered vertex and adjacency entry is processed at most once.",
+      "supported_pattern_candidate": true,
+      "expected_analyzer_response": "estimate",
+      "expected_prediction": "O(V + E)",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "spread",
+      "source": "from collections import deque\n\ndef spread(adjacency, sources):\n    seen = set(sources)\n    queue = deque(sources)\n    while queue:\n        current = queue.popleft()\n        for nxt in adjacency[current]:\n            if nxt not in seen:\n                seen.add(nxt)\n                queue.append(nxt)\n    return seen",
+      "raw_prediction": "O(V + E)",
+      "predicted": "O(V+E)",
+      "prediction_state": "estimate",
+      "truth_exact": true,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_ast_graph_bfs",
+      "confidence": "low",
+      "explanation": "Recognized a graph traversal over adjacency lists with a visited guard. Assuming each vertex is processed once and each adjacency entry is scanned once, the work is O(V + E). This assumes constant-time visited-set operations; the syntax check is a heuristic. Called helper functions are not included; this estimate is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "python",
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "graph_bfs",
+              "label": "Queue traversal over adjacency lists with a visited guard",
+              "line": 6
+            },
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": 6
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 8
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 9
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 10
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 11
+            }
+          ],
+          "bfs": {
+            "language": "python",
+            "rule_version": "bounded_bfs_traversal_v1",
+            "pattern_id": "python_adjacency_list_bfs_visited_guard",
+            "input_size": {
+              "vertices": "V",
+              "adjacency_entries": "E",
+              "edge_count_measure": "total directed adjacency entries; an undirected list commonly stores each edge twice"
+            },
+            "queue": {
+              "driver": "while queue",
+              "operations": [
+                "popleft",
+                "append"
+              ],
+              "traversal_line": 6
+            },
+            "visited_state": {
+              "bound": "each vertex is enqueued at most once",
+              "mark_before_enqueue": true
+            },
+            "neighbor_enumeration": {
+              "representation": "adjacency_list",
+              "bound": "each adjacency entry is scanned once"
+            },
+            "source_locations": {
+              "queue_operations": [
+                7,
+                11
+              ],
+              "visited_updates": [
+                10
+              ],
+              "neighbor_loops": [
+                8
+              ]
+            },
+            "bounded_work_argument": "Each vertex is processed at most once and each adjacency entry is examined once, so queue/vertex work contributes O(V) and neighbor scanning O(E).",
+            "complexity": "O(V + E)",
+            "assumptions": [
+              "The graph is represented as adjacency lists.",
+              "The start vertex is marked visited and each neighbor is marked before enqueue.",
+              "Visited-set operations and queue operations are average O(1).",
+              "No enclosing input-sized loop repeats the traversal."
+            ],
+            "limitations": [
+              "Only the selected traversal structure is inspected; helpers and aliases are not expanded.",
+              "This is a heuristic static match, not a formal proof for arbitrary Python code."
+            ],
+            "inference_kind": "heuristic_static_bounded_argument"
+          },
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "maximum_data_dependent_loop_nesting": 2,
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-014",
+      "language": "python",
+      "category": "adjacency_list_mark_on_dequeue",
+      "source_sha256": "a9328c7a1806354f0d016a0259245bd2536ff3bfc2ff7042fe17a2e64f228cd3",
+      "time_complexity": "O(V + E)",
+      "rationale": "Each vertex is expanded only on its first dequeue; duplicate queue entries are bounded by scanned adjacency entries, so total operations remain O(V+E).",
+      "supported_pattern_candidate": true,
+      "expected_analyzer_response": "estimate",
+      "expected_prediction": "O(V + E)",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "reachable",
+      "source": "from collections import deque\n\ndef reachable(adjacency, start):\n    queue = deque([start])\n    visited = set()\n    while queue:\n        node = queue.popleft()\n        if node in visited:\n            continue\n        visited.add(node)\n        for neighbor in adjacency[node]:\n            queue.append(neighbor)\n    return visited",
+      "raw_prediction": "unknown (data-dependent loop bound)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": false,
+      "negative_case_false_positive": false,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "python",
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": 6
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 8
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 10
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 11
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 12
+            }
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "maximum_data_dependent_loop_nesting": 2,
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-015",
+      "language": "python",
+      "category": "adjacency_matrix_bfs",
+      "source_sha256": "6b7253f826f2043a5b13cd24d388838b090a34ec37a4b6193f19350bce179f37",
+      "time_complexity": "O(V^2)",
+      "rationale": "A vertex is processed at most once, but each dequeue scans a full matrix row; the current Python rules do not classify this representation.",
+      "supported_pattern_candidate": false,
+      "expected_analyzer_response": "unknown",
+      "expected_prediction": "unknown",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "matrix_reachable",
+      "source": "from collections import deque\n\ndef matrix_reachable(matrix, source):\n    n = len(matrix)\n    seen = {source}\n    q = deque([source])\n    while q:\n        node = q.popleft()\n        for candidate in range(n):\n            if matrix[node][candidate] and candidate not in seen:\n                seen.add(candidate)\n                q.append(candidate)\n    return seen",
+      "raw_prediction": "unknown (data-dependent loop bound)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "python",
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": 7
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 9
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 10
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 11
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 12
+            }
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "maximum_data_dependent_loop_nesting": 2,
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-016",
+      "language": "python",
+      "category": "repeated_adjacency_list_bfs",
+      "source_sha256": "31a0ddf6f7538f51fc19c942cf7e083f3917f2fc051204ddc87a96427d500142",
+      "time_complexity": "O(V * (V + E))",
+      "rationale": "The adjacency-list traversal is restarted for each vertex, giving V traversals in the worst case.",
+      "supported_pattern_candidate": false,
+      "expected_analyzer_response": "unknown",
+      "expected_prediction": "unknown",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "all_reachable",
+      "source": "from collections import deque\n\ndef all_reachable(adjacency):\n    n = len(adjacency)\n    results = []\n    for source in range(n):\n        seen = {source}\n        queue = deque([source])\n        while queue:\n            node = queue.popleft()\n            for neighbor in adjacency[node]:\n                if neighbor not in seen:\n                    seen.add(neighbor)\n                    queue.append(neighbor)\n        results.append(seen)\n    return results",
+      "raw_prediction": "unknown (data-dependent loop bound)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "python",
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 6
+            },
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": 9
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 11
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 12
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 13
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 14
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 15
+            }
+          ],
+          "loop_count": 3,
+          "maximum_loop_nesting": 3,
+          "maximum_data_dependent_loop_nesting": 3,
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-017",
+      "language": "python",
+      "category": "missing_visited_bound",
+      "source_sha256": "6b3b0c35a848411ea327c9429100251a178ef117e5beef3e957d549c00fd0626",
+      "time_complexity": null,
+      "rationale": "On a cyclic graph the same vertices are appended repeatedly, so the traversal need not terminate and has no finite worst-case bound.",
+      "supported_pattern_candidate": false,
+      "expected_analyzer_response": "unknown",
+      "expected_prediction": "unknown",
+      "complexity_scorable": false,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "walk",
+      "source": "from collections import deque\n\ndef walk(adjacency, start):\n    queue = deque([start])\n    while queue:\n        node = queue.popleft()\n        for neighbor in adjacency[node]:\n            queue.append(neighbor)",
+      "raw_prediction": "unknown (data-dependent loop bound)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "python",
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": 5
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 7
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 8
+            }
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "maximum_data_dependent_loop_nesting": 2,
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-018",
+      "language": "python",
+      "category": "queue_worklist_not_graph",
+      "source_sha256": "61cc1fe9d68c983e5f8922a3f1c5ba3230e0839e32d36dc64d85ac2c146ef7d0",
+      "time_complexity": "O(N)",
+      "rationale": "The queue processes independent jobs once each; no graph/grid neighbor relation is traversed.",
+      "supported_pattern_candidate": false,
+      "expected_analyzer_response": "unknown",
+      "expected_prediction": "unknown",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "finish",
+      "source": "from collections import deque\n\ndef finish(tasks):\n    queue = deque(tasks)\n    completed = []\n    while queue:\n        completed.append(queue.popleft())\n    return completed",
+      "raw_prediction": "unknown (data-dependent loop bound)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "python",
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": 6
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 7
+            }
+          ],
+          "loop_count": 1,
+          "maximum_loop_nesting": 1,
+          "maximum_data_dependent_loop_nesting": 1,
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-019",
+      "language": "python",
+      "category": "grid_four_direction_rectangular",
+      "source_sha256": "d0440a2cd58bbe98bae7b5b9709b07935421db4d714ebe05224db59d676eb61d",
+      "time_complexity": "O(R * C)",
+      "rationale": "The row and column scans cover each cell; a shared visited set and four explicit neighbors ensure each land cell is queued once.",
+      "supported_pattern_candidate": true,
+      "expected_analyzer_response": "estimate",
+      "expected_prediction": "O(R * C)",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "island_sizes",
+      "source": "from collections import deque\n\ndef island_sizes(board):\n    rows = len(board)\n    cols = len(board[0])\n    seen = set()\n    sizes = []\n    for y in range(rows):\n        for x in range(cols):\n            if board[y][x] != \"#\" or (y, x) in seen:\n                continue\n            queue = deque([(y, x)])\n            seen.add((y, x))\n            size = 0\n            while queue:\n                cy, cx = queue.popleft()\n                size += 1\n                for ny, nx in ((cy-1,cx),(cy+1,cx),(cy,cx-1),(cy,cx+1)):\n                    if 0 <= ny < rows and 0 <= nx < cols and board[ny][nx] == \"#\" and (ny,nx) not in seen:\n                        seen.add((ny, nx))\n                        queue.append((ny, nx))\n            sizes.append(size)\n    return sizes",
+      "raw_prediction": "O(R * C)",
+      "predicted": "O(R*C)",
+      "prediction_state": "estimate",
+      "truth_exact": true,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_ast_grid_bfs_v1",
+      "confidence": "low",
+      "explanation": "Recognized full-grid scanning with component BFS, shared visited state, and four constant-time neighbor checks per enqueued cell. Each cell is enqueued at most once across all component scans, yielding O(R * C). This is a bounded AST heuristic, not a proof for arbitrary Python control flow. Called helper functions are not included; this estimate is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "python",
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 8
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 9
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 10
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 13
+            },
+            {
+              "kind": "grid_bfs",
+              "label": "Queue traversal over a grid with shared visited state and four neighbors",
+              "line": 15
+            },
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": 15
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 18
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 19
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 20
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 21
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 22
+            }
+          ],
+          "bfs": {
+            "language": "python",
+            "rule_version": "bounded_bfs_traversal_v1",
+            "pattern_id": "python_grid_component_bfs_four_neighbors",
+            "source_locations": {
+              "queue_loop_line": 15,
+              "dequeue_line": 16,
+              "neighbor_loop_line": 18,
+              "visited_guard_line": 19,
+              "initial_queue_seed_line": 12,
+              "initial_visited_mark_lines": [
+                13
+              ],
+              "neighbor_visited_mark_line": 20,
+              "neighbor_enqueue_line": 21
+            },
+            "input_size": {
+              "rows": "R",
+              "columns": "C",
+              "symbolic_bounds": [
+                "rows",
+                "cols"
+              ]
+            },
+            "queue": {
+              "driver": "queue",
+              "dequeue": "popleft",
+              "line": 16
+            },
+            "visited_state": {
+              "container": "set",
+              "name": "seen",
+              "mark_before_neighbor_enqueue": true,
+              "initial_cell_marked_before_queue_processing": true,
+              "shared_across_component_scans": true
+            },
+            "neighbor_enumeration": {
+              "line": 18,
+              "fixed_neighbors_per_cell": 4,
+              "offsets": [
+                [
+                  -1,
+                  0
+                ],
+                [
+                  0,
+                  -1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            },
+            "bounded_work_argument": "The outer loops inspect R*C cells. The visited set is shared across all component scans, each land cell is enqueued at most once, and each dequeued cell checks exactly four neighbors; total queue and neighbor work is O(R*C).",
+            "complexity": "O(R * C)",
+            "assumptions": [
+              "The two outer loops enumerate each grid cell once.",
+              "The visited set is not cleared between component searches.",
+              "Set membership/addition and deque operations are average O(1).",
+              "Grid indexing and the four neighbor checks are O(1)."
+            ],
+            "limitations": [
+              "This recognizes only explicit four-neighbor component BFS with tuple coordinates.",
+              "This is a bounded syntax heuristic, not a proof for arbitrary Python control flow.",
+              "Called helper work and alias-based mutation are not expanded."
+            ],
+            "inference_kind": "heuristic_static_bounded_argument"
+          },
+          "loop_count": 4,
+          "maximum_loop_nesting": 4,
+          "maximum_data_dependent_loop_nesting": 4,
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-020",
+      "language": "python",
+      "category": "grid_eight_direction",
+      "source_sha256": "9bfd3e134f66309179292112e48e616f1bcceb3fe9df5850dd1b58fab0633fc1",
+      "time_complexity": "O(R * C)",
+      "rationale": "Each cell is marked once and eight neighbors are checked per cell, but the current Python grid rule only recognizes four explicit offsets.",
+      "supported_pattern_candidate": false,
+      "expected_analyzer_response": "unknown",
+      "expected_prediction": "unknown",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "flood_eight",
+      "source": "from collections import deque\n\ndef flood_eight(field, start):\n    rows, cols = len(field), len(field[0])\n    seen = {start}\n    queue = deque([start])\n    steps = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1))\n    while queue:\n        r, c = queue.popleft()\n        for dr, dc in steps:\n            rr, cc = r + dr, c + dc\n            if 0 <= rr < rows and 0 <= cc < cols and field[rr][cc] and (rr,cc) not in seen:\n                seen.add((rr,cc))\n                queue.append((rr,cc))",
+      "raw_prediction": "unknown (data-dependent loop bound)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "python",
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": 8
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 10
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 12
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 13
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 14
+            }
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "maximum_data_dependent_loop_nesting": 2,
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-021",
+      "language": "python",
+      "category": "grid_neighbor_helper_representation",
+      "source_sha256": "f028dd6c711247aa04111e774f98952d37a86dc303a6610de25218d51f10b934",
+      "time_complexity": "O(R * C)",
+      "rationale": "Each cell is marked before enqueue and the helper returns four neighbors, but the analyzer does not expand this neighbor-generation helper representation.",
+      "supported_pattern_candidate": false,
+      "expected_analyzer_response": "unknown",
+      "expected_prediction": "unknown",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "flood",
+      "source": "from collections import deque\n\ndef adjacent(r, c):\n    return ((r-1,c),(r+1,c),(r,c-1),(r,c+1))\n\ndef flood(grid, start):\n    rows, cols = len(grid), len(grid[0])\n    seen = {start}\n    queue = deque([start])\n    while queue:\n        r, c = queue.popleft()\n        for rr, cc in adjacent(r, c):\n            if 0 <= rr < rows and 0 <= cc < cols and grid[rr][cc] and (rr,cc) not in seen:\n                seen.add((rr,cc))\n                queue.append((rr,cc))",
+      "raw_prediction": "unknown (data-dependent loop bound)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "python",
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": 10
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 12
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 13
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 14
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 15
+            }
+          ],
+          "loop_count": 2,
+          "maximum_loop_nesting": 2,
+          "maximum_data_dependent_loop_nesting": 2,
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bfs-ind-022",
+      "language": "python",
+      "category": "grid_bfs_with_extra_full_scan",
+      "source_sha256": "2ab60b3107f8f7fc7f3baede91dcfdb282edbb624b4b9d316efb1d552cf3e2c1",
+      "time_complexity": "O((R * C)^2)",
+      "rationale": "Each dequeued cell also triggers an independent full-grid scan, multiplying the grid traversal work.",
+      "supported_pattern_candidate": false,
+      "expected_analyzer_response": "unknown",
+      "expected_prediction": "unknown",
+      "complexity_scorable": true,
+      "label_status": "provisional_not_human_reviewed",
+      "reviewer": "codex_provisional_labeler",
+      "assumptions": "Standard worst-case analysis; constant-time queue/set/array accesses unless the representation is explicitly the adjacency matrix. E denotes total adjacency entries.",
+      "provisional_note": "Not reviewed by a second human; exclude from claims requiring human-approved labels.",
+      "entrypoint": "flood_with_audit",
+      "source": "from collections import deque\n\ndef flood_with_audit(grid):\n    n = len(grid)\n    seen = set()\n    for r in range(n):\n        for c in range(n):\n            if not grid[r][c] or (r, c) in seen:\n                continue\n            queue = deque([(r, c)])\n            seen.add((r, c))\n            while queue:\n                y, x = queue.popleft()\n                for ny, nx in ((y-1,x),(y+1,x),(y,x-1),(y,x+1)):\n                    for a in range(n):\n                        for b in range(n):\n                            _ = grid[a][b]\n                    if 0 <= ny < n and 0 <= nx < n and grid[ny][nx] and (ny,nx) not in seen:\n                        seen.add((ny,nx))\n                        queue.append((ny,nx))",
+      "raw_prediction": "unknown (data-dependent loop bound)",
+      "predicted": "unknown",
+      "prediction_state": "unknown",
+      "truth_exact": false,
+      "expected_response_agreement": true,
+      "negative_case_false_positive": false,
+      "method": "static_ast_loop_depth",
+      "confidence": "low",
+      "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+      "evidence": {
+        "code_analysis": {
+          "language": "python",
+          "scope": "selected entrypoint; called helpers are not expanded",
+          "signals": [
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 6
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 7
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 8
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 11
+            },
+            {
+              "kind": "loop",
+              "label": "while loop",
+              "line": 12
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 14
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 15
+            },
+            {
+              "kind": "loop",
+              "label": "for loop",
+              "line": 16
+            },
+            {
+              "kind": "membership",
+              "label": "Membership check; cost depends on the container",
+              "line": 18
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 19
+            },
+            {
+              "kind": "collection_operation",
+              "label": "Collection method call; concrete type and cost are not inferred",
+              "line": 20
+            }
+          ],
+          "loop_count": 6,
+          "maximum_loop_nesting": 6,
+          "maximum_data_dependent_loop_nesting": 6,
+          "limitations": [
+            "A detected syntax pattern is evidence, not a full algorithmic proof.",
+            "Collection operation costs depend on the concrete type and implementation.",
+            "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+          ]
+        }
+      }
+    }
+  ]
+}

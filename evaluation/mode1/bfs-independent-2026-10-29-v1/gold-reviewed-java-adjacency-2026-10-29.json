@@ -1,0 +1,68 @@
+{
+  "artifact_id": "axioma-bfs-java-reviewed-labels-2026-10-29-v1",
+  "dataset_id": "axioma-independent-bfs-2026-10-29-v1",
+  "reviewed_at": "2026-10-29",
+  "reviewer": {
+    "reviewer_id": "user",
+    "role": "project_owner"
+  },
+  "review_scope": "Worst-case time complexity labels for the exact frozen Java source snippets below.",
+  "provenance": {
+    "case_file": "cases.jsonl",
+    "case_file_sha256": "ba79da949e040b42ff24426559b41cf88fa1417fcce99c597b136c058037af40",
+    "original_provisional_label_file": "gold-provisional.jsonl",
+    "original_provisional_label_file_sha256": "9bda67401a794613b4ac01fd351af8f4e0e3904f0c9464d4254efef930d95298",
+    "original_provisional_files_modified": false
+  },
+  "cases": [
+    {
+      "id": "bfs-ind-001",
+      "language": "java",
+      "entrypoint": "ListWalkA.count",
+      "source_sha256": "cef67e929bf22037f49af287285e905b3e6cace1e3046bf9211b70c151a5f51d",
+      "original_provisional_label_status": "provisional_not_human_reviewed",
+      "review_status": "approved",
+      "human_decision": "approved",
+      "reviewed_complexity": "O(V + E)",
+      "assumptions": [
+        "links is an adjacency-list representation.",
+        "Each vertex is marked visited before it is enqueued.",
+        "Each vertex is enqueued and processed at most once.",
+        "Each adjacency entry is examined at most once.",
+        "Hash-set operations are expected O(1); queue operations are O(1).",
+        "E counts adjacency entries under the graph representation convention."
+      ],
+      "rationale": "Each vertex is processed at most once and each adjacency entry is examined at most once."
+    },
+    {
+      "id": "bfs-ind-003",
+      "language": "java",
+      "entrypoint": "MultiListWalk.spread",
+      "source_sha256": "5673b332087a5b75d87369b27941a74d2226ec11fa25655c2add9bf8493081f8",
+      "original_provisional_label_status": "provisional_not_human_reviewed",
+      "human_decision": "conditionally_approved",
+      "review_status": "approved_after_conditional_verification",
+      "reviewed_complexity": "O(S + V + E)",
+      "conditional_simplification": {
+        "complexity": "O(V + E)",
+        "assumption": "S <= V, where S is the number of entries in starts."
+      },
+      "initialization_and_duplicate_start_verification": {
+        "verified": true,
+        "source_structure": "for (int seed : starts) if (seen.add(seed)) work.add(seed);",
+        "finding": "The starts loop performs one expected O(1) set-add attempt per input entry. HashSet.add returns true only for a previously unseen seed, so duplicate starts are not enqueued. The initial queue therefore contains each distinct start once.",
+        "resulting_initialization_cost": "O(S)",
+        "review_gate": "Satisfied by source inspection before recording this artifact."
+      },
+      "assumptions": [
+        "links is an adjacency-list representation backed by a map whose lookup is expected O(1).",
+        "Hash-set operations are expected O(1); deque operations are O(1).",
+        "Each distinct start is enqueued once because seen.add(seed) guards enqueue.",
+        "Each subsequently discovered vertex is enqueued once because seen.add(there) guards enqueue.",
+        "Each processed vertex adjacency entry is examined at most once.",
+        "S is the number of entries in starts; E counts graph adjacency entries."
+      ],
+      "rationale": "Initialization costs O(S), the traversal processes at most V vertices and scans at most E adjacency entries, yielding O(S + V + E). If S <= V, this simplifies to O(V + E). Duplicate entries in starts do not cause repeated enqueueing or repeated adjacency scans."
+    }
+  ]
+}

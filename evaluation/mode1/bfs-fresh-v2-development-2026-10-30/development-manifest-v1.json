@@ -1,0 +1,67 @@
+{
+  "evaluation": "Axioma BFS v2 post-change development replay",
+  "status": "completed_development_diagnostic_not_holdout",
+  "run_timestamp_utc": "2026-10-30T14:55:26.003078+00:00",
+  "git_head": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "worktree_dirty": true,
+  "analyzer_invocations": 1,
+  "cases": 28,
+  "language_counts": {
+    "java": 14,
+    "python": 14
+  },
+  "partition": "development; same frozen cases informed subsequent analyzer changes",
+  "labels_supplied_to_analyzer": false,
+  "metrics": {
+    "response_agreement": 25,
+    "response_denominator": 28,
+    "response_agreement_rate": 0.8928571428571429,
+    "emitted_estimates": 5,
+    "estimate_coverage": 0.17857142857142858,
+    "exact_emitted_estimates": 5,
+    "exact_accuracy_among_emitted_estimates": 1.0,
+    "unexpected_abstentions": 3,
+    "unexpected_estimates": 0,
+    "execution_errors": 0
+  },
+  "baseline_comparison": {
+    "baseline_response_agreement_count": 23,
+    "development_response_agreement_count": 25,
+    "baseline_estimates": 3,
+    "development_estimates": 5,
+    "changed_cases": [
+      {
+        "case_id": "axioma-bfs-v2-j05",
+        "baseline_response": "unknown",
+        "baseline_estimate": "unknown (data-dependent or incomplete loop)",
+        "development_response": "estimate",
+        "development_estimate": "O(V^2)",
+        "expected_response": "estimate",
+        "expected_complexity": "O(V^2)"
+      },
+      {
+        "case_id": "axioma-bfs-v2-j11",
+        "baseline_response": "unknown",
+        "baseline_estimate": "unknown (data-dependent or incomplete loop)",
+        "development_response": "estimate",
+        "development_estimate": "O(R * C)",
+        "expected_response": "estimate",
+        "expected_complexity": "O(R * C)"
+      }
+    ]
+  },
+  "input_sha256": {
+    "source_packet": "d7f997fee6a1317e164f20e59dac5f2edd0da6398f0c6d8a33b9f8f455ab29b1",
+    "frozen_gold_labels": "60af3adc6ecdb39cf0590eead0694e8d1d3b0bdf8ed8b48d7f06638def8dea9d",
+    "java_analyzer": "486b2492626cabbffe31c9e19106a716a0e3038e363775e608c93f1c9fe49b57",
+    "python_analyzer": "ec79121599eb2220db9b730c2a8b62fb09284b3425cb709437622d4b0db1550a",
+    "runner": "c072b27c9702f466844530c20fe65299563f24489c41d2b33063ca31ceefba89",
+    "scorer": "88abacbd16fc06e436a7f8385eb716de4fa5e678b531416614115b527ae42fbc",
+    "development_predictions": "ee07b567b02cbd8e5f7a63e922c9b2025a91da46b1017cbed93e3e8424bb73b9",
+    "development_score": "5aa46646b79850e0f38a3c89cc3bac5e567e5a93c2ffa31b3d911c8a8733198e",
+    "development_case_csv": "483dacd464b3c279fac01ef1e23ae77d76495c861dca43b37dfc19bdbf51c73a",
+    "baseline_predictions": "bb24cd62b73efd01ddbaec51b87fbb97d71805ed11fafdd542aa9859cf8e730a",
+    "baseline_score": "29f2c720c00b90de238d1b2754dfe7cd95cad6456138c4a7a4215e06c7c506b7"
+  },
+  "note": "Development replay only. The packet is not an untouched post-change evaluation set. Results do not support general accuracy claims."
+}

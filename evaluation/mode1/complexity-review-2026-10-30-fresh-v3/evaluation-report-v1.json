@@ -1,0 +1,847 @@
+{
+  "dataset_id": "axioma-20261030-external-multifamily-pilot-v1",
+  "dimension_count": 2,
+  "dimensions": {
+    "auxiliary_space": {
+      "abstentions": 5,
+      "answered": 0,
+      "by_confidence": {},
+      "by_family": {
+        "dynamic_programming": {
+          "abstentions": 1,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "n": 1,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          }
+        },
+        "graph_traversal": {
+          "abstentions": 1,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "n": 1,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          }
+        },
+        "search": {
+          "abstentions": 1,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "n": 1,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          }
+        },
+        "sorting": {
+          "abstentions": 1,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "n": 1,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          }
+        },
+        "tree_traversal": {
+          "abstentions": 1,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "n": 1,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          }
+        }
+      },
+      "by_language": {
+        "java": {
+          "abstentions": 2,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.6576197724933469
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.6576197724933469
+          },
+          "n": 2,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.6576197724933469
+          }
+        },
+        "python": {
+          "abstentions": 3,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 5.551115123125783e-17,
+            "upper": 0.5614970317550454
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 5.551115123125783e-17,
+            "upper": 0.5614970317550454
+          },
+          "n": 3,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 5.551115123125783e-17,
+            "upper": 0.5614970317550454
+          }
+        }
+      },
+      "by_method": {
+        "not_emitted_by_current_static_analyzer": {
+          "abstentions": 5,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.43448246478317476
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.43448246478317476
+          },
+          "n": 5,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.43448246478317476
+          }
+        }
+      },
+      "by_partition": {
+        "calibration": {
+          "abstentions": 5,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.43448246478317476
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.43448246478317476
+          },
+          "n": 5,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.43448246478317476
+          }
+        }
+      },
+      "class_order": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n log n)",
+        "O(n^2)",
+        "O(n^3)",
+        "O(2^n)"
+      ],
+      "confidence_note": "Without separate partitions, confidence strata are descriptive only. Held-out calibration uses category accuracy learned from the calibration partition, not assumed numeric values.",
+      "confusion_matrix": {
+        "O(1)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 2
+        },
+        "O(2^n)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 0
+        },
+        "O(log n)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 0
+        },
+        "O(n log n)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 0
+        },
+        "O(n)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 2
+        },
+        "O(n^2)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 1
+        },
+        "O(n^3)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 0
+        }
+      },
+      "coverage": 0.0,
+      "coverage_95_ci": {
+        "lower": 0.0,
+        "upper": 0.43448246478317476
+      },
+      "distinct_solutions": 5,
+      "evaluation_readiness": "below_minimum",
+      "exact_accuracy": 0.0,
+      "exact_accuracy_95_ci": {
+        "lower": 0.0,
+        "upper": 0.43448246478317476
+      },
+      "held_out_confidence_calibration": {
+        "available": false,
+        "reason": "Provide confidence-labeled records in both calibration and evaluation partitions, with a method and confidence category represented in both."
+      },
+      "interval_method": "two-sided 95% Wilson score interval (z=1.95996)",
+      "interval_note": "Wilson intervals are record-level binomial intervals; records from different methods for the same solution are correlated, so compare method-specific intervals and treat combined intervals as descriptive.",
+      "minimum_distinct_solutions": 50,
+      "minimum_solution_count_met": false,
+      "n": 5,
+      "selective_exact_accuracy": null,
+      "selective_exact_accuracy_95_ci": null,
+      "selective_within_one_class_accuracy": null,
+      "selective_within_one_class_accuracy_95_ci": null,
+      "within_one_class_accuracy": 0.0,
+      "within_one_class_accuracy_95_ci": {
+        "lower": 0.0,
+        "upper": 0.43448246478317476
+      }
+    },
+    "time": {
+      "abstentions": 3,
+      "answered": 2,
+      "by_confidence": {
+        "low": {
+          "abstentions": 0,
+          "answered": 2,
+          "coverage": 1.0,
+          "coverage_95_ci": {
+            "lower": 0.34238022750665303,
+            "upper": 1.0
+          },
+          "exact_accuracy": 0.5,
+          "exact_accuracy_95_ci": {
+            "lower": 0.09453120573423074,
+            "upper": 0.9054687942657693
+          },
+          "n": 2,
+          "selective_exact_accuracy": 0.5,
+          "selective_exact_accuracy_95_ci": {
+            "lower": 0.09453120573423074,
+            "upper": 0.9054687942657693
+          },
+          "selective_within_one_class_accuracy": 0.5,
+          "selective_within_one_class_accuracy_95_ci": {
+            "lower": 0.09453120573423074,
+            "upper": 0.9054687942657693
+          },
+          "within_one_class_accuracy": 0.5,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.09453120573423074,
+            "upper": 0.9054687942657693
+          }
+        }
+      },
+      "by_family": {
+        "dynamic_programming": {
+          "abstentions": 0,
+          "answered": 1,
+          "coverage": 1.0,
+          "coverage_95_ci": {
+            "lower": 0.20654931437723745,
+            "upper": 1.0
+          },
+          "exact_accuracy": 1.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.20654931437723745,
+            "upper": 1.0
+          },
+          "n": 1,
+          "selective_exact_accuracy": 1.0,
+          "selective_exact_accuracy_95_ci": {
+            "lower": 0.20654931437723745,
+            "upper": 1.0
+          },
+          "selective_within_one_class_accuracy": 1.0,
+          "selective_within_one_class_accuracy_95_ci": {
+            "lower": 0.20654931437723745,
+            "upper": 1.0
+          },
+          "within_one_class_accuracy": 1.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.20654931437723745,
+            "upper": 1.0
+          }
+        },
+        "graph_traversal": {
+          "abstentions": 1,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "n": 1,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          }
+        },
+        "search": {
+          "abstentions": 1,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "n": 1,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          }
+        },
+        "sorting": {
+          "abstentions": 1,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "n": 1,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          }
+        },
+        "tree_traversal": {
+          "abstentions": 0,
+          "answered": 1,
+          "coverage": 1.0,
+          "coverage_95_ci": {
+            "lower": 0.20654931437723745,
+            "upper": 1.0
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "n": 1,
+          "selective_exact_accuracy": 0.0,
+          "selective_exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "selective_within_one_class_accuracy": 0.0,
+          "selective_within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          }
+        }
+      },
+      "by_language": {
+        "java": {
+          "abstentions": 1,
+          "answered": 1,
+          "coverage": 0.5,
+          "coverage_95_ci": {
+            "lower": 0.09453120573423074,
+            "upper": 0.9054687942657693
+          },
+          "exact_accuracy": 0.5,
+          "exact_accuracy_95_ci": {
+            "lower": 0.09453120573423074,
+            "upper": 0.9054687942657693
+          },
+          "n": 2,
+          "selective_exact_accuracy": 1.0,
+          "selective_exact_accuracy_95_ci": {
+            "lower": 0.20654931437723745,
+            "upper": 1.0
+          },
+          "selective_within_one_class_accuracy": 1.0,
+          "selective_within_one_class_accuracy_95_ci": {
+            "lower": 0.20654931437723745,
+            "upper": 1.0
+          },
+          "within_one_class_accuracy": 0.5,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.09453120573423074,
+            "upper": 0.9054687942657693
+          }
+        },
+        "python": {
+          "abstentions": 2,
+          "answered": 1,
+          "coverage": 0.3333333333333333,
+          "coverage_95_ci": {
+            "lower": 0.06149194472039621,
+            "upper": 0.7923403991979522
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 5.551115123125783e-17,
+            "upper": 0.5614970317550454
+          },
+          "n": 3,
+          "selective_exact_accuracy": 0.0,
+          "selective_exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "selective_within_one_class_accuracy": 0.0,
+          "selective_within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 5.551115123125783e-17,
+            "upper": 0.5614970317550454
+          }
+        }
+      },
+      "by_method": {
+        "static_ast_binary_search": {
+          "abstentions": 1,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "n": 1,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          }
+        },
+        "static_ast_loop_depth": {
+          "abstentions": 1,
+          "answered": 0,
+          "coverage": 0.0,
+          "coverage_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "n": 1,
+          "selective_exact_accuracy": null,
+          "selective_exact_accuracy_95_ci": null,
+          "selective_within_one_class_accuracy": null,
+          "selective_within_one_class_accuracy_95_ci": null,
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          }
+        },
+        "static_ast_tree_recursion": {
+          "abstentions": 0,
+          "answered": 1,
+          "coverage": 1.0,
+          "coverage_95_ci": {
+            "lower": 0.20654931437723745,
+            "upper": 1.0
+          },
+          "exact_accuracy": 0.0,
+          "exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "n": 1,
+          "selective_exact_accuracy": 0.0,
+          "selective_exact_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "selective_within_one_class_accuracy": 0.0,
+          "selective_within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          },
+          "within_one_class_accuracy": 0.0,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.0,
+            "upper": 0.7934506856227626
+          }
+        },
+        "static_java_token_loop_depth": {
+          "abstentions": 1,
+          "answered": 1,
+          "coverage": 0.5,
+          "coverage_95_ci": {
+            "lower": 0.09453120573423074,
+            "upper": 0.9054687942657693
+          },
+          "exact_accuracy": 0.5,
+          "exact_accuracy_95_ci": {
+            "lower": 0.09453120573423074,
+            "upper": 0.9054687942657693
+          },
+          "n": 2,
+          "selective_exact_accuracy": 1.0,
+          "selective_exact_accuracy_95_ci": {
+            "lower": 0.20654931437723745,
+            "upper": 1.0
+          },
+          "selective_within_one_class_accuracy": 1.0,
+          "selective_within_one_class_accuracy_95_ci": {
+            "lower": 0.20654931437723745,
+            "upper": 1.0
+          },
+          "within_one_class_accuracy": 0.5,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.09453120573423074,
+            "upper": 0.9054687942657693
+          }
+        }
+      },
+      "by_partition": {
+        "calibration": {
+          "abstentions": 3,
+          "answered": 2,
+          "coverage": 0.4,
+          "coverage_95_ci": {
+            "lower": 0.11762077423264783,
+            "upper": 0.769275718723987
+          },
+          "exact_accuracy": 0.2,
+          "exact_accuracy_95_ci": {
+            "lower": 0.03622410863243014,
+            "upper": 0.6244653702374747
+          },
+          "n": 5,
+          "selective_exact_accuracy": 0.5,
+          "selective_exact_accuracy_95_ci": {
+            "lower": 0.09453120573423074,
+            "upper": 0.9054687942657693
+          },
+          "selective_within_one_class_accuracy": 0.5,
+          "selective_within_one_class_accuracy_95_ci": {
+            "lower": 0.09453120573423074,
+            "upper": 0.9054687942657693
+          },
+          "within_one_class_accuracy": 0.2,
+          "within_one_class_accuracy_95_ci": {
+            "lower": 0.03622410863243014,
+            "upper": 0.6244653702374747
+          }
+        }
+      },
+      "class_order": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n log n)",
+        "O(n^2)",
+        "O(n^3)",
+        "O(2^n)"
+      ],
+      "confidence_note": "Without separate partitions, confidence strata are descriptive only. Held-out calibration uses category accuracy learned from the calibration partition, not assumed numeric values.",
+      "confusion_matrix": {
+        "O(1)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 0
+        },
+        "O(2^n)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 0
+        },
+        "O(log n)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 1
+        },
+        "O(n log n)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 0
+        },
+        "O(n)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 1
+        },
+        "O(n^2)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 1,
+          "O(n^2)": 1,
+          "O(n^3)": 0,
+          "unknown": 1
+        },
+        "O(n^3)": {
+          "O(1)": 0,
+          "O(2^n)": 0,
+          "O(log n)": 0,
+          "O(n log n)": 0,
+          "O(n)": 0,
+          "O(n^2)": 0,
+          "O(n^3)": 0,
+          "unknown": 0
+        }
+      },
+      "coverage": 0.4,
+      "coverage_95_ci": {
+        "lower": 0.11762077423264783,
+        "upper": 0.769275718723987
+      },
+      "distinct_solutions": 5,
+      "evaluation_readiness": "below_minimum",
+      "exact_accuracy": 0.2,
+      "exact_accuracy_95_ci": {
+        "lower": 0.03622410863243014,
+        "upper": 0.6244653702374747
+      },
+      "held_out_confidence_calibration": {
+        "available": false,
+        "reason": "Provide confidence-labeled records in both calibration and evaluation partitions, with a method and confidence category represented in both."
+      },
+      "interval_method": "two-sided 95% Wilson score interval (z=1.95996)",
+      "interval_note": "Wilson intervals are record-level binomial intervals; records from different methods for the same solution are correlated, so compare method-specific intervals and treat combined intervals as descriptive.",
+      "minimum_distinct_solutions": 50,
+      "minimum_solution_count_met": false,
+      "n": 5,
+      "selective_exact_accuracy": 0.5,
+      "selective_exact_accuracy_95_ci": {
+        "lower": 0.09453120573423074,
+        "upper": 0.9054687942657693
+      },
+      "selective_within_one_class_accuracy": 0.5,
+      "selective_within_one_class_accuracy_95_ci": {
+        "lower": 0.09453120573423074,
+        "upper": 0.9054687942657693
+      },
+      "within_one_class_accuracy": 0.2,
+      "within_one_class_accuracy_95_ci": {
+        "lower": 0.03622410863243014,
+        "upper": 0.6244653702374747
+      }
+    }
+  },
+  "distinct_solutions": 5,
+  "evaluation_readiness": "below_minimum",
+  "evaluator_version": "0.4.0",
+  "joined_input_sha256": "af8a18a58de76d7588d7e18f9482d303ed222565e0dd056031bc598c9cf0b1cd",
+  "minimum_distinct_solutions": 50,
+  "minimum_solution_count_met": false,
+  "note": "Metrics are reported independently by dimension; do not combine time and auxiliary-space rows into one accuracy score.",
+  "record_count": 10
+}

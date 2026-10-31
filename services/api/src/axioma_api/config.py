@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -8,6 +9,8 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./axioma.db"
     job_event_poll_seconds: float = 0.5
+    gemini_api_key: str | None = None
+    gemma_model: Literal["gemma-4-26b-a4b-it", "gemma-4-31b-it"] = "gemma-4-26b-a4b-it"
 
 
 @lru_cache

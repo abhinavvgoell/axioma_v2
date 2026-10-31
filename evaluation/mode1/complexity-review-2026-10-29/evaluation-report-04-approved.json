@@ -1,0 +1,475 @@
+{
+  "auxiliary_space": {
+    "abstentions": 5,
+    "answered": 0,
+    "by_family": {
+      "dynamic_programming": {
+        "abstentions": 1,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 1,
+        "exact_accuracy_among_answered": null
+      },
+      "grid_bfs": {
+        "abstentions": 1,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 1,
+        "exact_accuracy_among_answered": null
+      },
+      "monotonic_stack": {
+        "abstentions": 1,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 1,
+        "exact_accuracy_among_answered": null
+      },
+      "quicksort": {
+        "abstentions": 1,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 1,
+        "exact_accuracy_among_answered": null
+      },
+      "recursive_search": {
+        "abstentions": 1,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 1,
+        "exact_accuracy_among_answered": null
+      }
+    },
+    "by_language": {
+      "java": {
+        "abstentions": 3,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 3,
+        "exact_accuracy_among_answered": null
+      },
+      "python": {
+        "abstentions": 2,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 2,
+        "exact_accuracy_among_answered": null
+      }
+    },
+    "conservative_accuracy_all_eligible": 0.0,
+    "correct": 0,
+    "coverage": 0.0,
+    "eligible": 5,
+    "exact_accuracy_among_answered": null
+  },
+  "dataset_id": "axioma-20261029-review-packet-04",
+  "errors": [
+    {
+      "ambiguous": false,
+      "dimension": "time",
+      "evidence": {
+        "details": {
+          "code_analysis": {
+            "language": "java",
+            "limitations": [
+              "Tokenizer-based signals are approximate and do not retain source line numbers.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Recurrence relations and called helper functions are not analyzed."
+            ],
+            "loop_count": 0,
+            "maximum_loop_nesting": 0,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": null
+              },
+              {
+                "kind": "indexing",
+                "label": "Array or indexed access; concrete access cost is not inferred",
+                "line": null
+              }
+            ]
+          }
+        },
+        "estimate": "unknown (recursion detected)",
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. Recurrence behavior is not inferred by this analyzer. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "normalization_note": null
+      },
+      "expected": "O(log n)",
+      "id": "axioma-20261029-16",
+      "initial_interpretation": "Prediction is wrong or abstained; inspect the recorded analyzer evidence before assigning a case-specific cause.",
+      "method": "static_java_token_loop_depth",
+      "predicted": "unknown"
+    },
+    {
+      "ambiguous": false,
+      "dimension": "auxiliary_space",
+      "evidence": {
+        "reason": "Current analyzer does not emit an auxiliary-space complexity class."
+      },
+      "expected": "O(log n)",
+      "id": "axioma-20261029-16",
+      "initial_interpretation": "Auxiliary-space classifier is not implemented; this is a dimension-wide coverage gap.",
+      "method": "not_emitted_by_current_static_analyzer",
+      "predicted": "unknown"
+    },
+    {
+      "ambiguous": false,
+      "dimension": "time",
+      "evidence": {
+        "details": {
+          "code_analysis": {
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Recurrence relations and called helper functions are not analyzed."
+            ],
+            "loop_count": 0,
+            "maximum_data_dependent_loop_nesting": 0,
+            "maximum_loop_nesting": 0,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": 7
+              },
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": 7
+              }
+            ]
+          }
+        },
+        "estimate": "unknown (recursion detected)",
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Recursive helper behavior is not inferred by this analyzer. Called helper functions are not included; this estimate is not a proof.",
+        "normalization_note": null
+      },
+      "expected": "O(n)",
+      "id": "axioma-20261029-17",
+      "initial_interpretation": "Prediction is wrong or abstained; inspect the recorded analyzer evidence before assigning a case-specific cause.",
+      "method": "static_ast_loop_depth",
+      "predicted": "unknown"
+    },
+    {
+      "ambiguous": false,
+      "dimension": "auxiliary_space",
+      "evidence": {
+        "reason": "Current analyzer does not emit an auxiliary-space complexity class."
+      },
+      "expected": "O(n)",
+      "id": "axioma-20261029-17",
+      "initial_interpretation": "Auxiliary-space classifier is not implemented; this is a dimension-wide coverage gap.",
+      "method": "not_emitted_by_current_static_analyzer",
+      "predicted": "unknown"
+    },
+    {
+      "ambiguous": false,
+      "dimension": "time",
+      "evidence": {
+        "details": {
+          "code_analysis": {
+            "language": "java",
+            "limitations": [
+              "Tokenizer-based signals are approximate and do not retain source line numbers.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Recurrence relations and called helper functions are not analyzed."
+            ],
+            "loop_count": 3,
+            "maximum_loop_nesting": 2,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "loop",
+                "label": "while loop",
+                "line": null
+              },
+              {
+                "kind": "loop",
+                "label": "while loop",
+                "line": null
+              },
+              {
+                "kind": "indexing",
+                "label": "Array or indexed access; concrete access cost is not inferred",
+                "line": null
+              }
+            ]
+          }
+        },
+        "estimate": "unknown (data-dependent or incomplete loop)",
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "normalization_note": null
+      },
+      "expected": "O(n)",
+      "id": "axioma-20261029-18",
+      "initial_interpretation": "Prediction is wrong or abstained; inspect the recorded analyzer evidence before assigning a case-specific cause.",
+      "method": "static_java_token_loop_depth",
+      "predicted": "unknown"
+    },
+    {
+      "ambiguous": false,
+      "dimension": "auxiliary_space",
+      "evidence": {
+        "reason": "Current analyzer does not emit an auxiliary-space complexity class."
+      },
+      "expected": "O(n)",
+      "id": "axioma-20261029-18",
+      "initial_interpretation": "Auxiliary-space classifier is not implemented; this is a dimension-wide coverage gap.",
+      "method": "not_emitted_by_current_static_analyzer",
+      "predicted": "unknown"
+    },
+    {
+      "ambiguous": false,
+      "dimension": "time",
+      "evidence": {
+        "details": {
+          "code_analysis": {
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Recurrence relations and called helper functions are not analyzed."
+            ],
+            "loop_count": 4,
+            "maximum_data_dependent_loop_nesting": 4,
+            "maximum_loop_nesting": 4,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 7
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 8
+              },
+              {
+                "kind": "membership",
+                "label": "Membership check; cost depends on the container",
+                "line": 9
+              },
+              {
+                "kind": "collection_operation",
+                "label": "Collection method call; concrete type and cost are not inferred",
+                "line": 13
+              },
+              {
+                "kind": "loop",
+                "label": "while loop",
+                "line": 14
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 16
+              },
+              {
+                "kind": "membership",
+                "label": "Membership check; cost depends on the container",
+                "line": 24
+              },
+              {
+                "kind": "collection_operation",
+                "label": "Collection method call; concrete type and cost are not inferred",
+                "line": 25
+              },
+              {
+                "kind": "collection_operation",
+                "label": "Collection method call; concrete type and cost are not inferred",
+                "line": 26
+              }
+            ]
+          }
+        },
+        "estimate": "unknown (data-dependent loop bound)",
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+        "normalization_note": null
+      },
+      "expected": "O(n^2)",
+      "id": "axioma-20261029-19",
+      "initial_interpretation": "Prediction is wrong or abstained; inspect the recorded analyzer evidence before assigning a case-specific cause.",
+      "method": "static_ast_loop_depth",
+      "predicted": "unknown"
+    },
+    {
+      "ambiguous": false,
+      "dimension": "auxiliary_space",
+      "evidence": {
+        "reason": "Current analyzer does not emit an auxiliary-space complexity class."
+      },
+      "expected": "O(n^2)",
+      "id": "axioma-20261029-19",
+      "initial_interpretation": "Auxiliary-space classifier is not implemented; this is a dimension-wide coverage gap.",
+      "method": "not_emitted_by_current_static_analyzer",
+      "predicted": "unknown"
+    },
+    {
+      "ambiguous": false,
+      "dimension": "time",
+      "evidence": {
+        "details": {
+          "code_analysis": {
+            "language": "java",
+            "limitations": [
+              "Tokenizer-based signals are approximate and do not retain source line numbers.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Recurrence relations and called helper functions are not analyzed."
+            ],
+            "loop_count": 0,
+            "maximum_loop_nesting": 0,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": null
+              },
+              {
+                "kind": "sorting",
+                "label": "sort() call",
+                "line": null
+              },
+              {
+                "kind": "sorting",
+                "label": "sort() call",
+                "line": null
+              }
+            ]
+          }
+        },
+        "estimate": "unknown (recursion detected)",
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. Recurrence behavior is not inferred by this analyzer. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "normalization_note": null
+      },
+      "expected": "O(n^2)",
+      "id": "axioma-20261029-20",
+      "initial_interpretation": "Prediction is wrong or abstained; inspect the recorded analyzer evidence before assigning a case-specific cause.",
+      "method": "static_java_token_loop_depth",
+      "predicted": "unknown"
+    },
+    {
+      "ambiguous": false,
+      "dimension": "auxiliary_space",
+      "evidence": {
+        "reason": "Current analyzer does not emit an auxiliary-space complexity class."
+      },
+      "expected": "O(n)",
+      "id": "axioma-20261029-20",
+      "initial_interpretation": "Auxiliary-space classifier is not implemented; this is a dimension-wide coverage gap.",
+      "method": "not_emitted_by_current_static_analyzer",
+      "predicted": "unknown"
+    }
+  ],
+  "metric_definitions": {
+    "abstention": "unknown prediction; remains in the eligible denominator but not answered denominator",
+    "conservative_accuracy_all_eligible": "exact correct predictions / all scorable cases, treating abstentions as incorrect",
+    "coverage": "answered scorable cases / all scorable cases",
+    "exact_accuracy_among_answered": "exact correct predictions / answered scorable cases; null if none answered"
+  },
+  "partition": "calibration",
+  "predictions_file": "predictions-04-approved.jsonl",
+  "predictions_sha256": "ac8495cd77d5c7ceed8c7202dc591549470351511ca6dc9406e9e658b49b916c",
+  "raw_analysis_file": "analysis-output-04-approved.json",
+  "raw_analysis_sha256": "92d48952d291f1c6ab79d8295e6b178fe46bcd93e9623b532defdd6ff4b4916f",
+  "time": {
+    "abstentions": 5,
+    "answered": 0,
+    "by_family": {
+      "dynamic_programming": {
+        "abstentions": 1,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 1,
+        "exact_accuracy_among_answered": null
+      },
+      "grid_bfs": {
+        "abstentions": 1,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 1,
+        "exact_accuracy_among_answered": null
+      },
+      "monotonic_stack": {
+        "abstentions": 1,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 1,
+        "exact_accuracy_among_answered": null
+      },
+      "quicksort": {
+        "abstentions": 1,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 1,
+        "exact_accuracy_among_answered": null
+      },
+      "recursive_search": {
+        "abstentions": 1,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 1,
+        "exact_accuracy_among_answered": null
+      }
+    },
+    "by_language": {
+      "java": {
+        "abstentions": 3,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 3,
+        "exact_accuracy_among_answered": null
+      },
+      "python": {
+        "abstentions": 2,
+        "answered": 0,
+        "conservative_accuracy_all_eligible": 0.0,
+        "correct": 0,
+        "coverage": 0.0,
+        "eligible": 2,
+        "exact_accuracy_among_answered": null
+      }
+    },
+    "conservative_accuracy_all_eligible": 0.0,
+    "correct": 0,
+    "coverage": 0.0,
+    "eligible": 5,
+    "exact_accuracy_among_answered": null
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "evaluation": "Axioma Independent BFS Evaluation v2",
+  "status": "completed_single_analyzer_pass_scored",
+  "run_date": "2026-10-30",
+  "git_head": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "worktree_was_dirty_before_run": true,
+  "analyzer_invocations": 1,
+  "case_count": 28,
+  "language_counts": {
+    "java": 14,
+    "python": 14
+  },
+  "frozen_input_sha256": {
+    "gold_labels": "60af3adc6ecdb39cf0590eead0694e8d1d3b0bdf8ed8b48d7f06638def8dea9d",
+    "review_packet": "d7f997fee6a1317e164f20e59dac5f2edd0da6398f0c6d8a33b9f8f455ab29b1",
+    "source_manifest": "f2c4564f3015670ee0c245e40771ee50c94466b2a7d18a87515c5f2e2f52799d"
+  },
+  "analyzer_and_harness_sha256": {
+    "java_complexity.py": "d21679b5dc79f657db1ad8e58252580ff0db0a4de7169dc16debcb7c135b4228",
+    "python_complexity.py": "378ab6344620d1606f5a93ebbec96cba8bf9c259804ded3a6057aa87bf3774ea",
+    "bfs_v2_complexity.py": "2137abf72fac736c894016b7543901a508b9d39ed4db700472fee1c0f1ac411d",
+    "run_bfs_v2_predictions.py": "c072b27c9702f466844530c20fe65299563f24489c41d2b33063ca31ceefba89",
+    "evaluate_bfs_v2.py": "88abacbd16fc06e436a7f8385eb716de4fa5e678b531416614115b527ae42fbc",
+    "test_bfs_v2_harness.py": "6a03ebd18912b4a767ae85ccef7750aa5e13646e7c1e1821b3ec915740c05c5a",
+    "bfs-v2-evaluation-harness.md": "833795e176bddc8ec1a4cdf9efc604514346f466735b781d04f285cdf9f53944"
+  },
+  "environment": {
+    "python": "3.14.3",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "java_runtime": "unavailable; static analysis did not invoke JVM"
+  },
+  "metrics": {
+    "response_agreement": 0.8214285714285714,
+    "response_agreement_count": 23,
+    "emitted_estimates": 3,
+    "exact_estimates": 3,
+    "estimate_coverage": 0.10714285714285714,
+    "expected_estimate_cases": 8,
+    "expected_estimate_subset_coverage": 0.375,
+    "unexpected_abstentions": 5,
+    "unexpected_estimates": 0,
+    "execution_errors": 0
+  },
+  "validation": {
+    "prediction_records": 28,
+    "unique_case_ids": 28,
+    "source_hashes_match_gold": true,
+    "raw_analyzer_output_preserved": true,
+    "scorer_case_count": 28
+  },
+  "artifact_sha256": {
+    "case-results-v2.csv": "b5f8b2ac282bf162a07d2f084df8e44ed9611caabc21b76699c38c9d7f8d492c",
+    "evaluation-report-v2.md": "646c6430034da67a38f9d11afd5ad368c0307530e27284b37b5ed71a31fee907",
+    "predictions-v2.jsonl": "bb24cd62b73efd01ddbaec51b87fbb97d71805ed11fafdd542aa9859cf8e730a",
+    "runner-output-raw-v2.jsonl": "03efe6302bacc712aaf913577708068c3479420a8abea9145bf8cd3b40efdcbc",
+    "score-v2.json": "29f2c720c00b90de238d1b2754dfe7cd95cad6456138c4a7a4215e06c7c506b7"
+  },
+  "notes": [
+    "No gold labels were supplied to the analyzer.",
+    "Predictions add scorer-required expected fields post-run; raw runner output is retained.",
+    "All emitted estimates were low confidence.",
+    "Exact estimate accuracy is conditional on three emitted estimates.",
+    "No timing or asymptotic-proof claim is made."
+  ]
+}

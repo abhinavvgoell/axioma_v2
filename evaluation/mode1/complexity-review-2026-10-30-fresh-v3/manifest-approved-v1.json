@@ -1,0 +1,53 @@
+{
+  "analyzer_branch": "main",
+  "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "analyzer_source_sha256": {
+    "java_complexity.py": "1f5274157f51946c221c641e65091027e76d6f4cdb8cf969d6828f063f94d8bb",
+    "python_complexity.py": "548e6208484bd4c545afd300de232c436d52d430c3520b6db914e962a4119c6d",
+    "recurrence.py": "5c1a91dc9bd79fc2cf29e0577b615e5eab2ba3363f83343c53a2344aaf32cab9"
+  },
+  "analyzer_worktree_dirty": true,
+  "case_count": 5,
+  "case_file": "review-packet-v1.jsonl",
+  "case_file_sha256": "c815bfcb50c869d2dec14d764cf44536f7170a996ab90484d4592da429610a25",
+  "case_ids": [
+    "axioma-20261030-v3-01",
+    "axioma-20261030-v3-02",
+    "axioma-20261030-v3-03",
+    "axioma-20261030-v3-04",
+    "axioma-20261030-v3-05"
+  ],
+  "dataset_id": "axioma-20261030-external-multifamily-pilot-v1",
+  "evaluator_source_sha256": {
+    "evaluate_complexity.py": "fe851ef368e80cecd498a6bd4f4c908d08e672de9b1d44b6450898d14b3bb2b5",
+    "prepare_complexity_evaluation.py": "41c02b91de67db9bc55e12698c2a6c388ee70d0906571ab9bb566d64ba7b6acd"
+  },
+  "freshness_note": "Five-case diagnostic/calibration pilot. It may guide later development and must not be presented as an untouched holdout. Create a separate untouched set for post-fix evaluation.",
+  "label_file": "gold-reviewed-v1.jsonl",
+  "label_file_sha256": "cae42511139f4c38f8a383950e5494b06b2edcf7adc41af3dbf2cb1095046a31",
+  "normalization_rules": {
+    "O(V + E)": "O(n) where n=V+E",
+    "all other supported classes": "exact class match",
+    "unknown or unrecognized": "unknown abstention"
+  },
+  "owner_decisions_file": "owner-decisions-v1.json",
+  "owner_decisions_sha256": "a604ef7210c0449976ce6999dc5ca717750383ccd3ea7f7d29a366d41e53143f",
+  "partition": "calibration",
+  "review_date": "2026-10-30",
+  "reviewed_by": "project_owner",
+  "runner_file": "run_external_multifamily_v1.py",
+  "runner_source_sha256": "76e0adbcbcc868f2d96fdc24f897e72122282b0167fe9ac4e599964cb8aca09b",
+  "scored_dimensions": [
+    "worst_case_time_complexity",
+    "auxiliary_space_complexity"
+  ],
+  "source_sha256": {
+    "axioma-20261030-v3-01": "bf2d0a3cfb68b0518857385cfb41fccebd21c4884b1bd00f44360027b584b88e",
+    "axioma-20261030-v3-02": "2b244e03a5831e74fc615090828949d6155b56eb1e898e34e021c73ac0723b75",
+    "axioma-20261030-v3-03": "828ca8cdba0a2f30dbace78ca4017eb83beea7266928d41de89b24cc6db434d2",
+    "axioma-20261030-v3-04": "ed98d5f455bd5e792a734d763bae810767a679333f3f160f353b2769ded84b5b",
+    "axioma-20261030-v3-05": "830a110a2827d491a5ce9efc4dd49110171950b587ddc2e379c89016c80690e0"
+  },
+  "space_convention": "Exclude input and returned output storage; include auxiliary data structures and recursion stack.",
+  "status": "labels_frozen_before_analysis"
+}

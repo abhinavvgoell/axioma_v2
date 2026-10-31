@@ -184,8 +184,8 @@ button { color: inherit; font: inherit; }
 .hero-copy { display: flex; gap: 13px; align-items: flex-start; max-width: 320px; }
 .copy-mark { color: var(--red); font-size: 20px; line-height: 1.15; }
 .hero-copy p { max-width: 340px; margin: 0; color: #dbdbd7; font-size: 14px; line-height: 1.7; }
-.hero-cta { display: flex; height: 52px; align-items: center; justify-content: space-between; padding: 0 17px; background: #050505; border: 1px solid rgba(239, 239, 234, .2); font: 11px var(--mono); transition: background .2s, border-color .2s; }
-.hero-cta:hover { background: #181818; border-color: var(--red); }
+.hero-cta { display: flex; height: 52px; align-items: center; justify-content: space-between; padding: 0 17px; background: var(--red); border: 1px solid var(--red); color: #fff; font: 11px var(--mono); transition: background .2s, border-color .2s; }
+.hero-cta:hover { background: #d92945; border-color: #d92945; }
 .hero-cta b { font: 17px var(--sans); font-weight: 400; }
 .hero-proof { display: flex; align-items: center; gap: 11px; font: 9px/1.55 var(--mono); letter-spacing: .03em; color: #c1c1bd; }
 .proof-mark { color: #f1f0ed; font-size: 22px; }

@@ -1,0 +1,25 @@
+{
+  "analyzer_run": false,
+  "artifact": "space-review-v1.jsonl",
+  "artifact_sha256": "7ad4a3392607c443a6becb253dcd06857178becb8ced3daa779cad9a2cd669e7",
+  "case_count": 5,
+  "dataset_id": "axioma-20261030-external-multifamily-proposed-v1",
+  "dimension": "auxiliary_space",
+  "gold_labels_frozen": false,
+  "notes": [
+    "Scoring classes are coarse normalization; exact mathematical labels and assumptions are retained.",
+    "These labels are independent proposals and require owner confirmation.",
+    "No analyzer predictions were generated."
+  ],
+  "parent_packet": "review-packet-v1.jsonl",
+  "parent_packet_sha256": "c815bfcb50c869d2dec14d764cf44536f7170a996ab90484d4592da429610a25",
+  "source_sha256": {
+    "axioma-20261030-v3-01": "bf2d0a3cfb68b0518857385cfb41fccebd21c4884b1bd00f44360027b584b88e",
+    "axioma-20261030-v3-02": "2b244e03a5831e74fc615090828949d6155b56eb1e898e34e021c73ac0723b75",
+    "axioma-20261030-v3-03": "828ca8cdba0a2f30dbace78ca4017eb83beea7266928d41de89b24cc6db434d2",
+    "axioma-20261030-v3-04": "ed98d5f455bd5e792a734d763bae810767a679333f3f160f353b2769ded84b5b",
+    "axioma-20261030-v3-05": "830a110a2827d491a5ce9efc4dd49110171950b587ddc2e379c89016c80690e0"
+  },
+  "space_convention": "Exclude input and returned output storage; include auxiliary data structures and recursion stack.",
+  "status": "proposed_pending_owner_confirmation"
+}

@@ -1,0 +1,65 @@
+{
+  "dataset_id": "axioma-20261030-external-broad-calibration-v2",
+  "status": "candidate_review_in_progress",
+  "target_case_count": 30,
+  "target_range": [
+    30,
+    50
+  ],
+  "current_batch": "03",
+  "batch_size": 5,
+  "case_count_current_batch": 5,
+  "case_ids": [
+    "axioma-20261030-broad-011",
+    "axioma-20261030-broad-012",
+    "axioma-20261030-broad-013",
+    "axioma-20261030-broad-014",
+    "axioma-20261030-broad-015"
+  ],
+  "languages": {
+    "python": 3,
+    "java": 2
+  },
+  "families": [
+    "sorting",
+    "recursion",
+    "dynamic_programming",
+    "searching"
+  ],
+  "candidate_file": "candidate-cases-batch-03-v1.jsonl",
+  "candidate_file_sha256": "df3fcbaa078a6a7471db0039bc332d55a87d307d3e29d674a5ea17c02c6354c8",
+  "source_sha256": {
+    "axioma-20261030-broad-011": "b127ba324e56ee5282b62b3336bc3c7e6e750414916c0222f6039cefb4bf2fa0",
+    "axioma-20261030-broad-012": "46a4586f2afc04c16fa73911f27fa63e928b3263b5854386a223efd4615acae2",
+    "axioma-20261030-broad-013": "c37c47ef9c269dc5024ca579433f7c0cd7e61e3bb35e4885bbcebd9a24e2d9a3",
+    "axioma-20261030-broad-014": "ed98d5f455bd5e792a734d763bae810767a679333f3f160f353b2769ded84b5b",
+    "axioma-20261030-broad-015": "372928b9da6ce36c1e36c3178a7503db6663bcee3a23208f1e5248b29ebcb4aa"
+  },
+  "upstream_repositories": {
+    "TheAlgorithms/Python": {
+      "commit": "6e03a48579ca212a08b36be00378f887dc41a003",
+      "license": "MIT",
+      "license_file": "LICENSE-TheAlgorithms-Python.md"
+    },
+    "TheAlgorithms/Java": {
+      "commit": "410f08753505a0af9e46423396e8768bc97cbc1c",
+      "license": "MIT",
+      "license_file": "LICENSE-TheAlgorithms-Java.md"
+    }
+  },
+  "previously_used_sets_excluded": [
+    "complexity-review-2026-10-22",
+    "complexity-review-2026-10-29 packets 01-04",
+    "bfs-independent-2026-10-29-v1",
+    "bfs-fresh-v2-review-2026-10-30",
+    "complexity-review-2026-10-30-fresh-v3"
+  ],
+  "reviewed_by": null,
+  "review_date": null,
+  "gold_labels_frozen": false,
+  "analyzer_run": false,
+  "independence_note": "Calibration batch only. New source files and case IDs from the same pinned upstream repositories as batches 01-02 and the five-case pilot; not a repository-held-out final evaluation.",
+  "supersedes": null,
+  "revision_note": "Five new proposed cases with exact pinned source snapshots. Labels await owner review. Axioma has not been run on this batch.",
+  "partition": "calibration"
+}

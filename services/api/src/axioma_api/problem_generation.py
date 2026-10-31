@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import itertools
 import json
 import math
 import random
 import re
+from pathlib import Path
 from typing import Any
 
 from axioma_api.contracts import (
@@ -26,6 +28,11 @@ from axioma_api.problem_validation import validate_problem_spec
 _PATH_PART = re.compile(r"\.([A-Za-z_]\w*)|\[(\d+)\]")
 _ROOT = re.compile(r"^(args|kwargs|stdin)")
 GENERATOR_VERSION = "problem-input-generator-v1"
+
+
+def generator_artifact_sha256() -> str:
+    """Hash this generator implementation for provenance and exact-case records."""
+    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 
 def _path_parts(path: str) -> tuple[str, list[str | int]]:
@@ -381,6 +388,7 @@ def generate_problem_inputs(
             append_case(sample, case, "random_constraint_sample")
     return ProblemInputGenerationResult(
         generator_version=GENERATOR_VERSION,
+        generator_artifact_sha256=generator_artifact_sha256(),
         seed=request.seed,
         requested=request.count,
         generated=len(cases),
@@ -439,6 +447,7 @@ def generate_complexity_benchmarks(
                 args=args,
                 kwargs=kwargs,
                 generator_version=GENERATOR_VERSION,
+                generator_artifact_sha256=generator_artifact_sha256(),
                 seed=request.seed,
                 size_path=request.size_path,
                 strategy=request.pattern,
@@ -447,6 +456,7 @@ def generate_complexity_benchmarks(
 
     return ComplexityBenchmarkGenerationResult(
         generator_version=GENERATOR_VERSION,
+        generator_artifact_sha256=generator_artifact_sha256(),
         seed=request.seed,
         size_path=request.size_path,
         pattern=request.pattern,

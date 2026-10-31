@@ -1,0 +1,53 @@
+{
+  "dataset_id": "axioma-independent-bfs-2026-10-29-v1",
+  "partition": "new_independent_source_provisional_labels",
+  "created_before_analyzer_run": true,
+  "case_file": "cases.jsonl",
+  "case_file_sha256": "ba79da949e040b42ff24426559b41cf88fa1417fcce99c597b136c058037af40",
+  "label_file": "gold-provisional.jsonl",
+  "label_file_sha256": "9bda67401a794613b4ac01fd351af8f4e0e3904f0c9464d4254efef930d95298",
+  "case_count": 22,
+  "java_cases": 11,
+  "python_cases": 11,
+  "label_review_status": "provisional_not_human_reviewed",
+  "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "analyzer_source_sha256": {
+    "java_complexity.py": "4e1d3778a140c9b55b22b34a0d17da734778a0e0acf09fdb1196b989ead4558b",
+    "python_complexity.py": "378ab6344620d1606f5a93ebbec96cba8bf9c259804ded3a6057aa87bf3774ea"
+  },
+  "rules": {
+    "bfs": "bounded_bfs_traversal_v1"
+  },
+  "frozen_at_utc": "2026-10-29T17:43:31.499437+00:00",
+  "metrics_preregistered": {
+    "scorable_cases": "complexity_scorable=true; unbounded/nonterminating input case excluded from accuracy and coverage but retained for abstention/false-positive analysis",
+    "answered": "normalized output is a concrete complexity class rather than unknown",
+    "exact_accuracy": "exact predictions / concrete predictions on complexity_scorable cases",
+    "coverage": "concrete predictions / complexity_scorable cases",
+    "selective_accuracy": "same as exact accuracy among answered, always paired with coverage",
+    "all_case_exact": "exact predictions / all complexity_scorable cases",
+    "supported_pattern_coverage": "concrete predictions / supported_pattern_candidate=true cases",
+    "expected_abstention_agreement": "unknown predictions / cases with expected_analyzer_response=unknown",
+    "negative_false_positives": "concrete predictions on cases whose expected_analyzer_response=unknown; inspect truth-label agreement separately"
+  },
+  "exclusion_policy": "Only cases explicitly marked complexity_scorable=false are excluded from accuracy and coverage. No post-prediction exclusions.",
+  "preregistration_file": "preregistration.md",
+  "preregistration_sha256": "415aeb1718ca5c000faf27eebb700bc24c4b4be98a7011dcb471f66cfa18a457",
+  "category_counts": {
+    "adjacency_list_single_source": 2,
+    "adjacency_list_boolean_visited": 1,
+    "adjacency_list_multi_source": 2,
+    "adjacency_matrix": 1,
+    "repeated_adjacency_list_bfs": 2,
+    "missing_visited_bound": 2,
+    "unfamiliar_neighbor_api": 1,
+    "grid_four_direction": 1,
+    "grid_eight_direction": 2,
+    "grid_bfs_with_extra_full_scan": 2,
+    "queue_worklist_not_graph": 2,
+    "adjacency_list_mark_on_dequeue": 1,
+    "adjacency_matrix_bfs": 1,
+    "grid_four_direction_rectangular": 1,
+    "grid_neighbor_helper_representation": 1
+  }
+}

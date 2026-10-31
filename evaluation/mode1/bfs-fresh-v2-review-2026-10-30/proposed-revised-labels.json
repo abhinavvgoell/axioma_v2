@@ -1,0 +1,729 @@
+{
+  "artifact_type": "proposed_revised_labels_not_approved",
+  "evaluation": "Axioma BFS Fresh Evaluation v2",
+  "review_date": "2026-10-30",
+  "reviewer_identifier": "not provided; user-provided review",
+  "final_owner_confirmation": "pending",
+  "human_approved": false,
+  "analyzer_execution_permitted": false,
+  "source_packet_path": "evaluation/mode1/bfs-fresh-v2-review-2026-10-30/review-packet.jsonl",
+  "source_packet_sha256": "d7f997fee6a1317e164f20e59dac5f2edd0da6398f0c6d8a33b9f8f455ab29b1",
+  "decision_counts": {
+    "approve": 20,
+    "revise": 8,
+    "exclude": 0
+  },
+  "reported_aggregate_counts_from_review": "20 approve, 8 revise, 0 exclude (final case-level tally supplied by user)",
+  "count_discrepancy": "Resolved: J08 is revise and P11 is approve; the final case-level tally is 20 approve, 8 revise, 0 exclude.",
+  "p11_recognizer_inspection": {
+    "result": "supported; retain expected response estimate",
+    "implementation": "services/worker/src/axioma_worker/python_complexity.py::_is_grid_bfs",
+    "regression_test": "services/worker/tests/test_python_complexity.py::test_grid_bfs_supports_rectangular_ranges_and_reports_dimensions",
+    "execution": "No analyzer execution against the evaluation packet."
+  },
+  "cases": [
+    {
+      "case_id": "axioma-bfs-v2-j01",
+      "language": "java",
+      "pattern": "adjacency_list_single_source",
+      "source_sha256": "216b479db758ab27134b82bff666e1c339561ebcf0863cfcd2134650cd937d20",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "estimate"
+      },
+      "proposed_review": {
+        "decision": "revise",
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "estimate",
+        "mathematical_rationale": "Retain the bound assuming expected O(1) map lookup, HashSet operations, and ArrayDeque operations; E counts adjacency entries.",
+        "assumptions": [
+          "The backing Map is a HashMap or equivalent with expected O(1) lookup.",
+          "The root is a valid vertex with an adjacency entry.",
+          "HashSet and ArrayDeque operations are expected O(1).",
+          "E is the total adjacency-entry count."
+        ],
+        "requested_corrections": [
+          "Specify HashMap or equivalent expected O(1) backing-map lookup and require a valid root."
+        ],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j02",
+      "language": "java",
+      "pattern": "adjacency_list_multi_source",
+      "source_sha256": "9ee0c0d70038b29a28d6c6fce9ebd254f18a458f19afb8b40fbefc8e7cb4eed0",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(S + V + E)",
+        "expected_response_category": "estimate"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(S + V + E)",
+        "expected_response_category": "estimate",
+        "mathematical_rationale": "The initialization scans S entries, deduplicates starts through seen, and the traversal processes each reached vertex/entry at most once.",
+        "assumptions": [
+          "No S <= V assumption.",
+          "Expected O(1) hash and deque operations.",
+          "Every start entry is a valid graph vertex; duplicates are permitted and S is not assumed <= V.",
+          "Every starting vertex is a valid graph vertex; duplicates are permitted and S is not assumed <= V."
+        ],
+        "requested_corrections": [
+          "Add input condition: every starting vertex is a valid graph vertex. Duplicates may occur and S need not be <= V."
+        ],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j03",
+      "language": "java",
+      "pattern": "disconnected_components_key_iteration",
+      "source_sha256": "889cfb9e0734a97401746f26d48d05f85ecfd1ef3227edf0a31554727bacd4e7",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "revise",
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "A shared visited set causes each vertex to seed at most once and each adjacency entry to be traversed once; expected constant-time map/set/queue operations are assumed.",
+        "assumptions": [
+          "Expected O(1) hash and queue operations.",
+          "The enhanced-for component driver may be outside the bounded recognizer.",
+          "Backing Map operations have expected O(1) cost (for example, HashMap).",
+          "Backing Map operations have expected O(1) cost (for example, HashMap)."
+        ],
+        "requested_corrections": [
+          "Add assumption: Map operations have expected O(1) cost (for example, HashMap backing). Keep expected response unknown because the component-driver pattern is outside the stated bounded recognizer."
+        ],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j04",
+      "language": "java",
+      "pattern": "array_of_adjacency_lists_boolean_visited",
+      "source_sha256": "7c195b389540f3f961b48d4ecf50c47f3b9ae8c3e389128d6e98c80e50e51284",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Each vertex is marked before enqueue and each adjacency entry is examined once.",
+        "assumptions": [
+          "Array, boolean and queue operations are O(1).",
+          "Array-of-lists is distinct from nested List and Map declarations.",
+          "Vertex IDs are dense integers in [0,V); every neighbor ID and start s is valid and within the visited-array bounds."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending.",
+        "input_constraints_and_representation": "Array of per-vertex neighbor lists with dense integer IDs 0 through V-1; every referenced ID and start s is in [0,V)."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j05",
+      "language": "java",
+      "pattern": "adjacency_matrix",
+      "source_sha256": "ec39246eaac54a8b20fec8fc2cce1807463d9cae32a98d388c85666bfa0099ad",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V^2)",
+        "expected_response_category": "estimate"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(V^2)",
+        "expected_response_category": "estimate",
+        "mathematical_rationale": "At most V vertices are dequeued, each with a V-entry row scan.",
+        "assumptions": [
+          "Matrix, visited and queue operations are O(1).",
+          "The matrix is square and non-empty (V >= 1); source s is a valid vertex in [0,V)."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending.",
+        "input_constraints_and_representation": "Non-empty V by V boolean matrix; valid source s in [0,V); each dequeued node scans every column."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j06",
+      "language": "java",
+      "pattern": "repeated_bfs_per_query",
+      "source_sha256": "4302bc4f48e8b71ed01c427318cec010e3d8de6ab862d2e343392b265baa6530",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(Q * (V + E))",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "revise",
+        "expected_time_complexity": "O(Q * (V + E))",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Each of Q starts can cause a full traversal; expected constant-time HashMap/HashSet/ArrayDeque operations are assumed.",
+        "assumptions": [
+          "Q is starts.length, the number of query entries.",
+          "Each query creates fresh visited and queue state.",
+          "Backing map lookup, HashSet operations, and queue operations are expected O(1)."
+        ],
+        "requested_corrections": [
+          "Define Q as starts.length and specify expected O(1) map operations."
+        ],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j07",
+      "language": "java",
+      "pattern": "ordered_map_and_set",
+      "source_sha256": "284c25fbed7bf46f410f5cf7eb3e6b4c0d54497b79cd584d2b47f7e5fb4357b2",
+      "original_provisional_label": {
+        "expected_time_complexity": "O((V + E) log V)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O((V + E) log V)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Ordered lookup and membership/insertion cost O(log V); scanning E entries gives O(E log V), plus vertex work.",
+        "assumptions": [
+          "Tree operations are worst-case O(log V)."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j08",
+      "language": "java",
+      "pattern": "edge_list_rescanned_per_vertex",
+      "source_sha256": "17037d0e839be2b1367515e132e86fa5c5e1a2b3be25b7947e0784cf64a71e3b",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V * E)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "revise",
+        "expected_time_complexity": "O(V + V*E) = O(V*(E + 1))",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "The boolean[n] visited-array initialization costs O(n). The traversal dequeues at most V vertices and scans all E edge records per dequeue, costing O(VE). With n = V, total time is O(V + VE) = O(V(E + 1)); when E >= 1 this is commonly simplified to O(VE).",
+        "assumptions": [
+          "n = V, and the source vertex s is valid.",
+          "Visited-array, set/queue operations are O(1) per operation.",
+          "The edge list contains E records and every dequeued vertex scans all records."
+        ],
+        "requested_corrections": [
+          "Define n = V and correct the complete bound to O(V + VE) = O(V(E+1)); state O(VE) is the simplified form when E >= 1."
+        ],
+        "reviewer_rationale": "The initial boolean[n] allocation contributes O(n), omitted from the provisional O(VE) rationale.",
+        "input_constraints_and_representation": "Flat edge list with E records; n = V; valid source s; every dequeued vertex scans all edge records."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j09",
+      "language": "java",
+      "pattern": "nested_vertex_scan_inside_bfs",
+      "source_sha256": "9bd2de6bec1b1504f75e144d2a906fafb7330402f1286716dd1e9b9bb62c892f",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V^2 + E)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(V^2 + E)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "The repeated loop costs V*V; edge enumeration adds E.",
+        "assumptions": [
+          "The extra loop always scans all V vertices.",
+          "The method parameter n equals the graph vertex count V."
+        ],
+        "requested_corrections": [
+          "Explicitly state in the input contract that n = V."
+        ],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending.",
+        "input_constraints_and_representation": "One full n-sized loop runs per dequeued vertex; explicitly assume n = V. Adjacency scanning additionally accounts for E."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j10",
+      "language": "java",
+      "pattern": "directed_tree_without_visited",
+      "source_sha256": "d3fadf415fa966b80e61966fefe881f038645f5f2084d4d1fdfd3bf96be4ae4f",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "revise",
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Under the directed rooted-tree guarantee, each vertex is reached once; constant-time children.get(u) and linear iteration over child lists yield O(V+E).",
+        "assumptions": [
+          "Tree orientation and acyclicity are external input guarantees.",
+          "The method body alone cannot establish them.",
+          "The outer children collection supports O(1) indexed access, such as ArrayList.",
+          "The outer children collection supports O(1) indexed access, such as ArrayList."
+        ],
+        "requested_corrections": [
+          "Add assumption: the outer children collection supports O(1) indexed access, such as ArrayList. Retain the external directed rooted-tree guarantee."
+        ],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j11",
+      "language": "java",
+      "pattern": "grid_four_direction_offset_arrays",
+      "source_sha256": "78ef756e81c64358d429c5db96421405e4c5a41a3c15d3890525989aeaa07144",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(R * C)",
+        "expected_response_category": "estimate"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(R * C)",
+        "expected_response_category": "estimate",
+        "mathematical_rationale": "Each reachable cell enters once and checks four constant directions.",
+        "assumptions": [
+          "R and C are dimensions; four is constant.",
+          "Array, queue and visited accesses are O(1).",
+          "The grid is non-empty and rectangular (R >= 1, C >= 1).",
+          "The provided starting coordinate is in bounds."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending.",
+        "input_constraints_and_representation": "; grid is non-empty and rectangular (R >= 1, C >= 1); starting coordinate is in bounds (0 <= row < R, 0 <= col < C)"
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j12",
+      "language": "java",
+      "pattern": "grid_eight_direction_offsets",
+      "source_sha256": "c79577dd525413a66c82e66a0c9388a45ca75c095e2fba7c2e4590c8adcf3986",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(R * C)",
+        "expected_response_category": "estimate"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(R * C)",
+        "expected_response_category": "estimate",
+        "mathematical_rationale": "Each cell expands once and checks eight constant-time neighbors.",
+        "assumptions": [
+          "Eight is a fixed constant.",
+          "Queue and visited operations are O(1).",
+          "The grid is non-empty and rectangular (R >= 1, C >= 1).",
+          "The provided starting coordinate is in bounds."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending.",
+        "input_constraints_and_representation": "; grid is non-empty and rectangular (R >= 1, C >= 1); starting coordinate is in bounds (0 <= row < R, 0 <= col < C)"
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j13",
+      "language": "java",
+      "pattern": "full_grid_scan_inside_neighbor_processing",
+      "source_sha256": "9d4503a0737f7f0b01504c1d766098ea346b4f0cea97562a19ad91c5e77e5238",
+      "original_provisional_label": {
+        "expected_time_complexity": "O((R * C)^2)",
+        "expected_response_category": "estimate"
+      },
+      "proposed_review": {
+        "decision": "revise",
+        "expected_time_complexity": "O((R * C)^2)",
+        "expected_response_category": "estimate",
+        "mathematical_rationale": "In an all-open rectangular grid, Theta(R*C) cells are dequeued, each has at most four in-bounds candidates, and every such candidate scans all R*C cells. The scan is therefore O((R*C)^2); four is constant.",
+        "assumptions": [
+          "The input is a rectangular grid; for the tight worst case the traversal reaches Theta(R*C) cells.",
+          "inspect() has no early return; cell values do not gate traversal. Every in-bounds neighbor candidate triggers a complete R*C scan before the visited check.",
+          "Four candidates per cell is constant.",
+          "The grid is non-empty and rectangular (R >= 1, C >= 1).",
+          "The provided starting coordinate is in bounds.",
+          "The stated bound is a worst-case bound over reachable cells; each in-bounds candidate triggers a full-grid scan."
+        ],
+        "requested_corrections": [
+          "Correct the rationale: every in-bounds neighbor candidate triggers a full-grid scan; grid values do not control traversal."
+        ],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending.",
+        "input_constraints_and_representation": "; grid is non-empty and rectangular (R >= 1, C >= 1); starting coordinate is in bounds (0 <= row < R, 0 <= col < C)"
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-j14",
+      "language": "java",
+      "pattern": "indexed_array_queue_adjacency_list",
+      "source_sha256": "4846d8fe44b7a56566206c23d60f06c6ca6a25fbfbedf35f483b761280c8e39e",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "revise",
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Each vertex is appended/read once and each adjacency entry is scanned once with expected/amortized constant-time access and append.",
+        "assumptions": [
+          "ArrayList append is amortized O(1); indexed access is O(1).",
+          "The current graph matcher may require Queue/Deque API operations.",
+          "The outer adjacency collection supports O(1) indexed access, such as ArrayList; queue append is amortized O(1).",
+          "The outer adjacency collection supports O(1) indexed access, such as ArrayList."
+        ],
+        "requested_corrections": [
+          "Add assumption: g supports O(1) indexed access, such as an ArrayList of adjacency lists. The monotonically increasing ArrayList queue head avoids remove(0) shifts."
+        ],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p01",
+      "language": "python",
+      "pattern": "adjacency_list_dict_deque",
+      "source_sha256": "26399d442c257b39f52c329965aa198a514f5471e6f50ae6cd59b49746caf5be",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "estimate"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "estimate",
+        "mathematical_rationale": "Each vertex is appended and expanded once, and each adjacency entry is scanned once.",
+        "assumptions": [
+          "Average O(1) set/dict operations; deque endpoint operations O(1)."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p02",
+      "language": "python",
+      "pattern": "multi_source_duplicate_starts",
+      "source_sha256": "6a5c56e6341311208e1e8b4b4a68e580b0f57219b49947a1e603ab5cbe8d5f45",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(S + V + E)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(S + V + E)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "The seed pass costs O(S), then traversal costs O(V+E); no S<=V assumption permits simplification.",
+        "assumptions": [
+          "Average O(1) set/dict operations and O(1) deque endpoints.",
+          "Current Python BFS rule has no explicit S-term evidence."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p03",
+      "language": "python",
+      "pattern": "disconnected_components_global_visited",
+      "source_sha256": "d1a395bb31a5fe587457e683ba234de3a52ba62edceb1bce8c20040475e497cb",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Each vertex seeds at most once and each adjacency list is expanded once overall.",
+        "assumptions": [
+          "Average O(1) hash and queue operations.",
+          "A queue loop is nested under the component driver."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p04",
+      "language": "python",
+      "pattern": "boolean_list_visited",
+      "source_sha256": "1fe2d68938c1c7a6a7dca5f0ce3e05b6684cd0fd2d0a6cf12af9124cf29349b8",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Every vertex is enqueued once and every adjacency entry is examined once.",
+        "assumptions": [
+          "List indexing and deque operations are O(1).",
+          "Current Python graph matcher may require a set membership guard.",
+          "Vertex IDs are dense integers in [0,V); every neighbor ID and start are valid and within the visited-list bounds."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending.",
+        "input_constraints_and_representation": "Dense integer IDs 0 through V-1; every adjacency reference and start is in [0,V), so boolean visited-list indexing is valid."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p05",
+      "language": "python",
+      "pattern": "adjacency_matrix",
+      "source_sha256": "476d8169b8ac6af72b6070c269b1b797138c3b31ba341534a1f8654f44c976e5",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V^2)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(V^2)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "At most V rows are processed, each with V entries.",
+        "assumptions": [
+          "Dense matrix indexing is O(1).",
+          "A list subscript alone must not be treated as adjacency-list evidence.",
+          "The matrix is square and non-empty (V >= 1); source is a valid vertex in [0,V)."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending.",
+        "input_constraints_and_representation": "Non-empty V by V boolean matrix; valid source in [0,V); scan a complete row for each dequeued vertex."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p06",
+      "language": "python",
+      "pattern": "repeated_bfs_per_request",
+      "source_sha256": "9352fa157deb34247aceb3b63f29004c84cdd8aa430926d143d577f7592fc03b",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(Q * (V + E))",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(Q * (V + E))",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Each traversal may scan V vertices and E entries; the outer loop multiplies the work by Q.",
+        "assumptions": [
+          "Q is independent of V.",
+          "Average O(1) hash and deque operations."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p07",
+      "language": "python",
+      "pattern": "neighbor_helper_contract",
+      "source_sha256": "28e2b5a872bd71470481770cf9922d9d98ca4985c0726f4b97f0ac580360b52d",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "revise",
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Under the explicit helper contract, total neighbor iteration is O(E), while each vertex contributes O(1) queue/set work on average.",
+        "assumptions": [
+          "neighbors(node) creates its iterator in O(1).",
+          "Iterating neighbors(node) costs O(deg(node)).",
+          "The helper performs no hidden full-graph scan.",
+          "The analyzer does not expand helper implementation; expected response remains unknown."
+        ],
+        "requested_corrections": [
+          "Specify O(1) iterator creation, O(deg(node)) iteration, and no hidden full-graph scans."
+        ],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p08",
+      "language": "python",
+      "pattern": "list_queue_front_removal",
+      "source_sha256": "2b9b3f0617fd144adaabcd13987f293ea1e843da2e1d65bfdcd413396a02c145",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V^2 + E)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(V^2 + E)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Each of at most V removals may shift O(V) elements, costing O(V^2); neighbor scans add O(E).",
+        "assumptions": [
+          "Python list front removal shifts remaining entries.",
+          "Average O(1) visited/dict operations."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p09",
+      "language": "python",
+      "pattern": "directed_tree_without_visited",
+      "source_sha256": "24e7bbb638cdf652bcec9cbbe057852bc001e982f03956017590f92746226031",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(V + E)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Unique root paths ensure each vertex is queued once; every child edge is examined once.",
+        "assumptions": [
+          "Acyclicity and orientation are external preconditions not established by the method body."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p10",
+      "language": "python",
+      "pattern": "queue_worklist_not_graph",
+      "source_sha256": "19e9a6edcbd0e069665f9c363bfb7f8e55004c2b0cfe5c842abe0126b8e0d1ec",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(N)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(N)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Every item is removed once with constant work.",
+        "assumptions": [
+          "This is a queue-only non-BFS control case."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p11",
+      "language": "python",
+      "pattern": "grid_four_neighbor_component_sweep",
+      "source_sha256": "de3b72257eaba0d35e91b18c0f16dc424b37dea631ef930cfe7c23819dd65edb",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(R * C)",
+        "expected_response_category": "estimate"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(R * C)",
+        "expected_response_category": "estimate",
+        "mathematical_rationale": "The outer sweep checks each cell once; shared seen state ensures each active cell is enqueued once across components, with four neighbor checks per dequeue. Current bounded Python recognizer explicitly models this component-sweep form.",
+        "assumptions": [
+          "The grid is rectangular; the full nested sweep visits each cell once.",
+          "The visited set is shared across component searches; each active cell is enqueued at most once.",
+          "The current _is_grid_bfs recognizer and test_grid_bfs_supports_rectangular_ranges_and_reports_dimensions cover this component-sweep structure.",
+          "Average O(1) set operations and deque operations; four is constant.",
+          "The grid is non-empty and rectangular (R >= 1, C >= 1)."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "Approved: source inspection shows the current Python component-sweep recognizer covers the pattern, and the existing rectangular-grid regression test covers this structure. This is not a run against the new packet.",
+        "input_constraints_and_representation": "; grid is non-empty and rectangular (R >= 1, C >= 1)"
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p12",
+      "language": "python",
+      "pattern": "grid_eight_neighbor_fixed_tuple",
+      "source_sha256": "f32093739f1765879464563a9110d6eeab439458a992e24ec1736d7b5cf18ef9",
+      "original_provisional_label": {
+        "expected_time_complexity": "O(R * C)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O(R * C)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "Every cell expands once and examines eight constant-time neighbors.",
+        "assumptions": [
+          "Eight is constant; current Python grid rule may only support its four-neighbor form.",
+          "The grid is non-empty and rectangular (R >= 1, C >= 1).",
+          "The provided starting coordinate is in bounds."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending.",
+        "input_constraints_and_representation": "; grid is non-empty and rectangular (R >= 1, C >= 1); starting coordinate is in bounds (0 <= row < R, 0 <= col < C)"
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p13",
+      "language": "python",
+      "pattern": "full_grid_scan_inside_neighbor_processing",
+      "source_sha256": "776aa08ef1fd2b09f066e98854f6626a2488d4312f6d1fddd4fc3df50356a63c",
+      "original_provisional_label": {
+        "expected_time_complexity": "O((R * C)^2)",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O((R * C)^2)",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "A constant number of candidates per dequeued cell each cost R*C; across R*C cells this is quadratic in the cell count.",
+        "assumptions": [
+          "Four local candidates is constant.",
+          "The full-grid scan is nested inside neighbor processing.",
+          "The grid is non-empty and rectangular (R >= 1, C >= 1).",
+          "The provided starting coordinate is in bounds.",
+          "The stated bound is a worst-case bound over reachable cells; each in-bounds candidate triggers a full-grid scan."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending.",
+        "input_constraints_and_representation": "; grid is non-empty and rectangular (R >= 1, C >= 1); starting coordinate is in bounds (0 <= row < R, 0 <= col < C)"
+      }
+    },
+    {
+      "case_id": "axioma-bfs-v2-p14",
+      "language": "python",
+      "pattern": "heap_ordered_weighted_traversal",
+      "source_sha256": "7e2474a5b0f9bff24722c54759bd01089326b41d7a2c3bab919697f24fd7824b",
+      "original_provisional_label": {
+        "expected_time_complexity": "O((V + E) * log(V + E))",
+        "expected_response_category": "unknown"
+      },
+      "proposed_review": {
+        "decision": "approve",
+        "expected_time_complexity": "O((V + E) * log(V + E))",
+        "expected_response_category": "unknown",
+        "mathematical_rationale": "With nonnegative weights and lazy stale-entry deletion, up to O(E) heap entries can be inserted and removed, each at logarithmic heap cost.",
+        "assumptions": [
+          "Weights are nonnegative and stale heap entries are skipped.",
+          "A binary heap may contain O(E) entries; no simple-graph bound on E is assumed.",
+          "This is a non-BFS priority-queue near-miss."
+        ],
+        "requested_corrections": [],
+        "reviewer_rationale": "User-provided consolidated technical review; final owner confirmation pending."
+      }
+    }
+  ],
+  "j08_mathematical_correction": "O(V + VE) = O(V(E+1)) with n=V; O(VE) is the common simplification when E>=1.",
+  "final_input_contract_clarifications": {
+    "dense_id_cases": [
+      "axioma-bfs-v2-j04",
+      "axioma-bfs-v2-p04"
+    ],
+    "square_matrix_cases": [
+      "axioma-bfs-v2-j05",
+      "axioma-bfs-v2-p05"
+    ],
+    "non_empty_rectangular_grid_cases": [
+      "axioma-bfs-v2-j11",
+      "axioma-bfs-v2-j12",
+      "axioma-bfs-v2-j13",
+      "axioma-bfs-v2-p11",
+      "axioma-bfs-v2-p12",
+      "axioma-bfs-v2-p13"
+    ],
+    "valid_start_coordinate_cases": [
+      "axioma-bfs-v2-j11",
+      "axioma-bfs-v2-j12",
+      "axioma-bfs-v2-j13",
+      "axioma-bfs-v2-p12",
+      "axioma-bfs-v2-p13"
+    ]
+  }
+}

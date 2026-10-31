@@ -14,6 +14,7 @@ CLASSES = ("O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n^2)", "O(n^3)", "O(2^n)
 UNKNOWN = "unknown"
 CONFIDENCE = {"high", "medium", "low"}
 PARTITIONS = {"calibration", "evaluation"}
+DIMENSIONS = {"time", "auxiliary_space"}
 
 
 def _wilson_interval(
@@ -35,8 +36,9 @@ def _wilson_interval(
 
 def load_records(path: Path) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
-    seen: set[tuple[str, str]] = set()
+    seen: set[tuple[str, str, str]] = set()
     id_partitions: dict[str, str] = {}
+    id_metadata: dict[str, dict[str, str]] = {}
     with path.open(encoding="utf-8") as source:
         for line_number, line in enumerate(source, start=1):
             if not line.strip():
@@ -80,7 +82,26 @@ def load_records(path: Path) -> list[dict[str, Any]]:
                     "must use the same partition"
                 )
             record["partition"] = partition
-            key = (record["id"], record["method"])
+            dimension = record.get("dimension", "time")
+            if not isinstance(dimension, str) or dimension not in DIMENSIONS:
+                raise ValueError("line {}: dimension must be time or auxiliary_space".format(line_number))
+            record["dimension"] = dimension
+            metadata = {}
+            for field in ("family", "language"):
+                value = record.get(field)
+                if value is not None:
+                    if not isinstance(value, str) or not value.strip():
+                        raise ValueError(
+                            f"line {line_number}: {field} must be a non-empty string when provided"
+                        )
+                    metadata[field] = value
+            previous_metadata = id_metadata.setdefault(record["id"], metadata)
+            if previous_metadata != metadata:
+                raise ValueError(
+                    f"line {line_number}: all methods for id {record['id']!r} "
+                    "must use the same family and language metadata"
+                )
+            key = (record["id"], record["method"], dimension)
             if key in seen:
                 raise ValueError(
                     f"line {line_number}: duplicate id and method: {key[0]} / {key[1]}"
@@ -92,7 +113,7 @@ def load_records(path: Path) -> list[dict[str, Any]]:
     return records
 
 
-def _score(records: list[dict[str, Any]]) -> dict[str, Any]:
+def _score_single(records: list[dict[str, Any]]) -> dict[str, Any]:
     distinct_solutions = len({record["id"] for record in records})
     minimum_solutions = 50
     exact = 0
@@ -101,6 +122,8 @@ def _score(records: list[dict[str, Any]]) -> dict[str, Any]:
     confusion: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     by_method: dict[str, list[dict[str, Any]]] = defaultdict(list)
     by_confidence: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    by_family: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    by_language: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for record in records:
         answered = record["predicted"] != UNKNOWN
         distance = (
@@ -112,6 +135,10 @@ def _score(records: list[dict[str, Any]]) -> dict[str, Any]:
         within_one += distance is not None and distance <= 1
         confusion[record["expected"]][record["predicted"]] += 1
         by_method[record["method"]].append(record)
+        if record.get("family") is not None:
+            by_family[record["family"]].append(record)
+        if record.get("language") is not None:
+            by_language[record["language"]].append(record)
         if answered and record.get("confidence") is not None:
             by_confidence[record["confidence"]].append(record)
 
@@ -300,6 +327,8 @@ def _score(records: list[dict[str, Any]]) -> dict[str, Any]:
             len(answered_records),
         ),
         "by_method": {method: summary(items) for method, items in sorted(by_method.items())},
+        "by_family": {family: summary(items) for family, items in sorted(by_family.items())},
+        "by_language": {language: summary(items) for language, items in sorted(by_language.items())},
         "by_partition": {
             partition: summary([item for item in records if item["partition"] == partition])
             for partition in sorted({item["partition"] for item in records})
@@ -320,6 +349,30 @@ def _score(records: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _score(records: list[dict[str, Any]]) -> dict[str, Any]:
+    by_dimension: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for record in records:
+        by_dimension[record.get("dimension", "time")].append(record)
+    distinct_solutions = len({record["id"] for record in records})
+    minimum_solutions = 50
+    if len(by_dimension) == 1:
+        dimension, items = next(iter(by_dimension.items()))
+        return {"dimension": dimension, **_score_single(items)}
+    return {
+        "dimensions": {
+            dimension: _score_single(items)
+            for dimension, items in sorted(by_dimension.items())
+        },
+        "dimension_count": len(by_dimension),
+        "record_count": len(records),
+        "distinct_solutions": distinct_solutions,
+        "minimum_distinct_solutions": minimum_solutions,
+        "minimum_solution_count_met": distinct_solutions >= minimum_solutions,
+        "evaluation_readiness": "minimum_met" if distinct_solutions >= minimum_solutions else "below_minimum",
+        "note": "Metrics are reported independently by dimension; do not combine time and auxiliary-space rows into one accuracy score.",
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("records", type=Path, help="JSONL file with human-reviewed gold labels")
@@ -328,7 +381,7 @@ def main() -> int:
     try:
         report = _score(load_records(args.records))
         report["input_sha256"] = hashlib.sha256(args.records.read_bytes()).hexdigest()
-        report["evaluator_version"] = "0.3.0"
+        report["evaluator_version"] = "0.4.0"
     except (OSError, ValueError) as exc:
         parser.error(str(exc))
     output = json.dumps(report, indent=2, sort_keys=True) + "\n"

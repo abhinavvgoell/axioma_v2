@@ -1,0 +1,100 @@
+{
+  "diagnostic_id": "java-grid-bfs-extra-full-scan-2026-10-29-v1",
+  "case_id": "bfs-ind-010",
+  "case_source_sha256": "9d75899b2760a19d3aa3d6ac3287e3f3a784e04d7c9c898093c7314753a67551",
+  "label_file_sha256": "9bda67401a794613b4ac01fd351af8f4e0e3904f0c9464d4254efef930d95298",
+  "label_review_status": "provisional_not_human_reviewed",
+  "expected_label_unchanged": "O((R * C)^2)",
+  "original_incorrect_result": {
+    "prediction": "O(R * C)",
+    "method": "static_java_grid_bfs_v1",
+    "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+    "assessment": "mismatch"
+  },
+  "updated_result": {
+    "prediction": "O((R * C)^2)",
+    "method": "static_java_grid_bfs_v2",
+    "confidence": "low",
+    "rule_version": "bounded_bfs_traversal_v2",
+    "assessment": "exact_against_provisional_label",
+    "explanation": "Each cell is enqueued at most once. The analyzer checks every nested loop in the traversal. Recognized full-grid loops cost O(R*C); a scan repeated per dequeued cell raises total work to O((R*C)^2). One scan outside the traversal adds O(R*C) to the bounded O(R*C) traversal. This bounded tokenizer match is a heuristic static estimate, not a proof for arbitrary Java code. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+    "evidence": {
+      "language": "java",
+      "rule_version": "bounded_bfs_traversal_v2",
+      "pattern_id": "java_grid_bfs_fixed_direction_loop",
+      "source_locations": {
+        "queue_loop_token_index": 88,
+        "queue_loop_line": 6,
+        "dequeue_call_token_index": 103,
+        "dequeue_call_line": 7,
+        "neighbor_loop_token_index": 109,
+        "neighbor_loop_line": 8,
+        "visited_guard_token_index": 190,
+        "visited_guard_line": 11,
+        "initial_visited_mark_token_index": 63,
+        "initial_enqueue_token_index": 73,
+        "neighbor_visited_mark_token_index": 228,
+        "neighbor_enqueue_token_index": 238,
+        "neighbor_enqueue_line": 12
+      },
+      "input_size": {
+        "rows": "R",
+        "columns": "C"
+      },
+      "queue": {
+        "driver": "q",
+        "dequeue": "remove/poll",
+        "token_index": 88
+      },
+      "visited_state": {
+        "container": "boolean[][]",
+        "name": "seen",
+        "mark_before_enqueue": true,
+        "one_enqueue_per_cell": true
+      },
+      "neighbor_enumeration": {
+        "fixed_neighbors_per_cell": 4,
+        "loop_index": "d",
+        "loop_token_index": 109
+      },
+      "additional_grid_scans": [
+        {
+          "placement": "inside_neighbor_processing",
+          "row_bound": "rows",
+          "column_bound": "cols",
+          "estimated_cost": "O(R*C)",
+          "source_locations": {
+            "row_loop_token_index": 124,
+            "row_loop_line": 9,
+            "column_loop_token_index": 138,
+            "column_loop_line": 9
+          }
+        }
+      ],
+      "loop_costs": {
+        "queue_processing": "O(R*C), since each cell is enqueued and processed at most once",
+        "neighbor_enumeration": "O(1) per dequeued cell (4 fixed directions)",
+        "additional_full_grid_scan": "O(R*C) per execution when present"
+      },
+      "aggregate_work": "O(R*C) dequeued cells * O(R*C) full-grid work per cell = O((R*C)^2)",
+      "bounded_work_argument": "Each cell is enqueued at most once. The analyzer checks every nested loop in the traversal. Recognized full-grid loops cost O(R*C); a scan repeated per dequeued cell raises total work to O((R*C)^2). One scan outside the traversal adds O(R*C) to the bounded O(R*C) traversal.",
+      "complexity": "O((R * C)^2)",
+      "assumptions": [
+        "The grid dimensions are R by C and the traversal is single-source.",
+        "The visited cell is marked before it is enqueued.",
+        "Queue operations and grid/visited accesses are O(1).",
+        "The direction loop executes exactly 4 times per cell.",
+        "Recognized additional scans iterate rows and columns and read a grid cell."
+      ],
+      "limitations": [
+        "Only fixed-bound 4- or 8-direction loops are recognized.",
+        "Tokenizer offsets are used; this is a narrow static heuristic, not a proof.",
+        "Only explicit rows/columns full-grid scans are costed; other loop work inside or adjacent to the traversal causes the grid rule to abstain."
+      ],
+      "inference_kind": "heuristic_static_bounded_argument"
+    }
+  },
+  "analyzer_source_sha256": "89cc1d1a1f62775e05bd1e7862d726f1729b994d394df348dcebc8a490b93a4e",
+  "git_head": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "note": "Development diagnostic only; this previously inspected case is not a fresh independent evaluation."
+}

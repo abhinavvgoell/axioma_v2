@@ -1,0 +1,36 @@
+{
+  "packet_id": "axioma-fresh-independent-bfs-v2-2026-10-30",
+  "status": "candidate_packet_pending_human_review",
+  "execution_gate": "do_not_run_analyzer_until_all_retained_labels_are_human_approved",
+  "case_count": 28,
+  "language_counts": {
+    "java": 14,
+    "python": 14
+  },
+  "packet_file": "review-packet.jsonl",
+  "packet_sha256": "d7f997fee6a1317e164f20e59dac5f2edd0da6398f0c6d8a33b9f8f455ab29b1",
+  "review_sheet": "review-sheet.md",
+  "review_sheet_sha256": "d8e1faabb0bb93293001ebb794f7ea5d928ad1336a512244220e8e62f2645481",
+  "exclusions_file": "exclusions.md",
+  "exclusions_sha256": "a11480da3743b87e3b147ef8dc4ab2c03f026d4a5d50b97670e5dcff05c278ac",
+  "source_hashes_verified": true,
+  "analyzer_revision_recorded_separately": {
+    "git_head": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+    "worktree_was_dirty_before_packet": true,
+    "java_analyzer_sha256": "d21679b5dc79f657db1ad8e58252580ff0db0a4de7169dc16debcb7c135b4228",
+    "python_analyzer_sha256": "378ab6344620d1606f5a93ebbec96cba8bf9c259804ded3a6057aa87bf3774ea",
+    "java_rule_versions": [
+      "bounded_bfs_traversal_v1",
+      "bounded_bfs_traversal_v2",
+      "java_monotonic_stack_amortized_v1"
+    ],
+    "python_rule_versions": [
+      "bounded_bfs_traversal_v1",
+      "bounded_recurrence_v1"
+    ]
+  },
+  "predictions_or_analyzer_evidence_in_packet": false,
+  "approved_gold_labels": null,
+  "approved_label_sha256": null,
+  "note": "The packet is a candidate only. No analyzers were invoked. Freeze an approved label artifact and hash after human review, before evaluation."
+}

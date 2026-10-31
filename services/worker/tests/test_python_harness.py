@@ -35,13 +35,41 @@ def double(value):
         {
             "name": "incorrect",
             "outcome": "failed",
-                "details": {
-                    "expected": 11,
-                    "actual": 10,
-                    "failure_kind": "incorrect_output",
-                },
+            "details": {
+                "expected": 11,
+                "actual": 10,
+                "failure_kind": "incorrect_output",
+            },
         },
     ]
+
+
+def test_harness_records_submission_line_for_runtime_errors(tmp_path) -> None:
+    (tmp_path / "submission.py").write_text(
+        "def solve(value):\n    return 10 // value\n", encoding="utf-8"
+    )
+    harness_path = tmp_path / "main.py"
+    harness_path.write_text(
+        build_function_harness(
+            "solve", [{"name": "zero", "args": [0], "kwargs": {}, "expected": 0}]
+        ),
+        encoding="utf-8",
+    )
+
+    completed = subprocess.run(
+        [sys.executable, str(harness_path)], capture_output=True, text=True, timeout=5
+    )
+
+    marker = "AXIOMA_RESULT:"
+    output = next(line for line in completed.stdout.splitlines() if line.startswith(marker))
+    result = json.loads(output[len(marker) :])[0]
+    assert completed.returncode == 0
+    assert result["details"]["error"] == "ZeroDivisionError: integer division or modulo by zero"
+    assert result["details"]["source_location"] == {
+        "file": "submission.py",
+        "line": 2,
+        "function": "solve",
+    }
 
 
 def test_harness_instantiates_solution_class_for_methods(tmp_path) -> None:

@@ -7,6 +7,8 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from axioma_api.contracts import (
     Confidence,
@@ -19,12 +21,19 @@ from axioma_api.contracts import (
     ProblemSpec,
     StdinStdoutSample,
 )
-from axioma_api.jobs import transition_job
-from axioma_api.models import ComplexityRecord, EvidenceClaimRecord, Job, TestCaseRecord
+from axioma_api.jobs import canonical_hash, transition_job
+from axioma_api.models import (
+    ComplexityRecord,
+    EvidenceClaimRecord,
+    InputSnapshotRecord,
+    Job,
+    TestCaseRecord,
+)
 from axioma_api.problem_validation import validate_problem_spec
 from axioma_api.problem_generation import (
     GENERATOR_VERSION,
     generate_exhaustive_inputs,
+    generator_artifact_sha256,
     generate_problem_inputs,
 )
 from axioma_api.queue import claim_next_job, reap_expired_jobs
@@ -58,6 +67,7 @@ def _benchmark_provenance(samples: list[ComplexityBenchmarkSample]) -> dict:
     if not samples:
         return {"state": "not_requested"}
     versions = {sample.generator_version for sample in samples}
+    artifacts = {sample.generator_artifact_sha256 for sample in samples}
     seeds = {sample.seed for sample in samples}
     size_paths = {sample.size_path for sample in samples}
     generated = (
@@ -65,16 +75,101 @@ def _benchmark_provenance(samples: list[ComplexityBenchmarkSample]) -> dict:
         and None not in seeds
         and None not in size_paths
         and len(versions) == len(seeds) == len(size_paths) == 1
+        and None not in artifacts
+        and len(artifacts) == 1
     )
     return {
         "state": "declared_generated" if generated else "user_supplied_or_legacy",
         "metadata_source": "job_request",
         "generator_version": next(iter(versions)) if len(versions) == 1 else None,
+        "generator_artifact_sha256": next(iter(artifacts)) if len(artifacts) == 1 else None,
         "seed": next(iter(seeds)) if len(seeds) == 1 else None,
         "size_path": next(iter(size_paths)) if len(size_paths) == 1 else None,
         "sizes": [sample.size for sample in samples],
         "strategies": [sample.strategy for sample in samples],
     }
+
+
+def _runtime_configuration(adapter, sandbox: DockerSandbox) -> dict:
+    return {
+        "container_image": adapter.image,
+        "timeout_seconds": getattr(sandbox, "timeout_seconds", 10),
+        "source_limit_bytes": getattr(sandbox, "source_limit_bytes", 64 * 1024),
+        "output_limit_bytes": getattr(sandbox, "output_limit_bytes", 1024 * 1024),
+        "memory_limit": "256m",
+        "cpu_limit": 1,
+        "process_limit": 64,
+        "network": "disabled",
+        "root_filesystem": "read_only",
+    }
+
+
+def _persist_input_snapshots(
+    session_factory: sessionmaker, job_id: str, snapshots: list[dict]
+) -> None:
+    if not snapshots:
+        return
+    with session_factory() as session:
+        dialect = session.get_bind().dialect.name
+        for snapshot in snapshots:
+            record = {
+                "id": str(uuid4()),
+                "job_id": job_id,
+                "source_snapshot_id": snapshot.get("source_snapshot_id"),
+                "snapshot_key": snapshot["snapshot_key"],
+                "origin": snapshot["origin"],
+                "language": snapshot["language"],
+                "problem_pack_identity": snapshot.get("problem_pack_identity"),
+                "input_snapshot": snapshot["input_snapshot"],
+                "input_sha256": canonical_hash(snapshot["input_snapshot"]),
+                "generator_version": snapshot.get("generator_version"),
+                "generator_artifact_sha256": snapshot.get("generator_artifact_sha256"),
+                "seed": snapshot.get("seed"),
+                "size_path": snapshot.get("size_path"),
+                "strategy": snapshot.get("strategy"),
+                "runtime_configuration": snapshot["runtime_configuration"],
+                "created_at": datetime.now(UTC),
+            }
+            if dialect == "sqlite":
+                statement = sqlite_insert(InputSnapshotRecord).values(**record)
+            elif dialect == "postgresql":
+                statement = pg_insert(InputSnapshotRecord).values(**record)
+            else:
+                raise RuntimeError(f"Input snapshots are unsupported for database dialect {dialect}")
+            session.execute(
+                statement.on_conflict_do_nothing(index_elements=["job_id", "snapshot_key"])
+            )
+        session.commit()
+        for snapshot in snapshots:
+            stored = session.query(InputSnapshotRecord).filter_by(
+                job_id=job_id, snapshot_key=snapshot["snapshot_key"]
+            ).one()
+            expected = {
+                "source_snapshot_id": snapshot.get("source_snapshot_id"),
+                "origin": snapshot["origin"],
+                "language": snapshot["language"],
+                "problem_pack_identity": snapshot.get("problem_pack_identity"),
+                "input_sha256": canonical_hash(snapshot["input_snapshot"]),
+                "generator_version": snapshot.get("generator_version"),
+                "generator_artifact_sha256": snapshot.get("generator_artifact_sha256"),
+                "seed": snapshot.get("seed"),
+                "size_path": snapshot.get("size_path"),
+                "strategy": snapshot.get("strategy"),
+                "runtime_configuration": snapshot["runtime_configuration"],
+            }
+            mismatched = [
+                key
+                for key, value in expected.items()
+                if (
+                    canonical_hash(getattr(stored, key)) != canonical_hash(value)
+                    if key in {"problem_pack_identity", "runtime_configuration"}
+                    else getattr(stored, key) != value
+                )
+            ]
+            if mismatched:
+                raise RuntimeError(
+                    f"Immutable input snapshot conflict for {job_id}/{snapshot['snapshot_key']}"
+                )
 
 
 def _stdin_execute_script(language: str) -> str:
@@ -128,6 +223,7 @@ def run_claimed_job(
     property_report: dict = {}
     generated_count_effective = 0
     generated_samples: list[dict] = []
+    property_samples: list[dict] = []
     problem: ProblemSpec | None = None
     try:
         if mode != "dsa_analysis":
@@ -141,6 +237,31 @@ def run_claimed_job(
             problem = ProblemSpec.model_validate(input_payload["problem"])
             if not validate_problem_spec(problem).valid:
                 raise ValueError("Problem samples do not satisfy the declared constraints")
+            runtime_configuration = _runtime_configuration(adapter, sandbox)
+            problem_pack_identity = input_payload.get("problem_pack_identity") or {
+                "kind": "user_problem_statement",
+                "statement_sha256": canonical_hash({"statement": problem.statement}),
+            }
+            sample_snapshots = []
+            for index, sample in enumerate(problem.samples, start=1):
+                input_snapshot = (
+                    {"args": sample.args, "kwargs": sample.kwargs, "expected": sample.expected}
+                    if isinstance(sample, FunctionSample)
+                    else {"stdin": sample.stdin, "expected_stdout": sample.expected_stdout}
+                )
+                sample_snapshots.append(
+                    {
+                        "snapshot_key": f"sample/{index:03d}/{sample.name}",
+                        "origin": "imported_sample"
+                        if input_payload.get("test_pack_source")
+                        else "user_sample",
+                        "language": language,
+                        "problem_pack_identity": problem_pack_identity,
+                        "input_snapshot": input_snapshot,
+                        "runtime_configuration": runtime_configuration,
+                    }
+                )
+            _persist_input_snapshots(session_factory, job_id, sample_snapshots)
             requested_mutants = int(input_payload.get("mutation_tests", 0))
             generated_count = int(input_payload.get("generated_tests", 0))
             exhaustive_mode = input_payload.get("exhaustive_tests", False)
@@ -180,6 +301,9 @@ def run_claimed_job(
                 ]
                 benchmark_provenance = _benchmark_provenance(benchmark_samples)
                 benchmark_provenance["runtime_image"] = adapter.image
+                benchmark_provenance["runtime_configuration"] = runtime_configuration
+                if input_payload.get("benchmark_replay"):
+                    benchmark_provenance["replay"] = input_payload["benchmark_replay"]
                 if benchmark_samples and (
                     len(benchmark_samples) < 4
                     or len(benchmark_samples) > 6
@@ -203,7 +327,6 @@ def run_claimed_job(
                     raise ValueError("independent_reference_code requires reference_code")
                 if independent_reference_code and independent_reference_code == reference_code:
                     raise ValueError("independent_reference_code must differ from reference_code")
-                generated_samples: list[dict] = []
                 if exhaustive_mode:
                     generated_samples = generate_exhaustive_inputs(problem)
                     generated_count = len(generated_samples)
@@ -228,7 +351,6 @@ def run_claimed_job(
                         raise ValueError("Generated differential tests require reference_code")
                     if mutation_count and not reference_code:
                         raise ValueError("Mutation testing requires reference_code")
-                    property_samples: list[dict] = []
                     if property_code and property_count:
                         property_inputs = generate_problem_inputs(
                             ProblemInputGenerationRequest(
@@ -296,7 +418,6 @@ def run_claimed_job(
                         raise ValueError(
                             "Java submission class name cannot be AxiomaOptimized when using an optimization"
                         )
-                    property_samples: list[dict] = []
                     if property_code and property_count:
                         property_inputs = generate_problem_inputs(
                             ProblemInputGenerationRequest(
@@ -376,6 +497,87 @@ def run_claimed_job(
                     }
                 else:
                     raise ValueError(f"Unsupported function language: {language}")
+                generated_snapshots = []
+                for sample in generated_samples:
+                    generated_snapshots.append(
+                        {
+                            "snapshot_key": f"generated/{sample['name']}",
+                            "origin": "exhaustive_generated"
+                            if exhaustive_mode
+                            else "generated_differential",
+                            "language": language,
+                            "problem_pack_identity": problem_pack_identity,
+                            "input_snapshot": {
+                                key: sample[key]
+                                for key in ("args", "kwargs", "stdin")
+                                if key in sample
+                            },
+                            "generator_version": None if exhaustive_mode else GENERATOR_VERSION,
+                            "generator_artifact_sha256": (
+                                None if exhaustive_mode else generator_artifact_sha256()
+                            ),
+                            "seed": None if exhaustive_mode else int(input_payload.get("seed", 0)),
+                            "strategy": sample.get("strategy"),
+                            "runtime_configuration": runtime_configuration,
+                        }
+                    )
+                for sample in property_samples:
+                    generated_snapshots.append(
+                        {
+                            "snapshot_key": f"property/{sample['name']}",
+                            "origin": "generated_property",
+                            "language": language,
+                            "problem_pack_identity": problem_pack_identity,
+                            "input_snapshot": {
+                                key: sample[key]
+                                for key in ("args", "kwargs", "stdin")
+                                if key in sample
+                            },
+                            "generator_version": GENERATOR_VERSION,
+                            "generator_artifact_sha256": generator_artifact_sha256(),
+                            "seed": int(input_payload.get("seed", 0)),
+                            "strategy": sample.get("strategy"),
+                            "runtime_configuration": runtime_configuration,
+                        }
+                    )
+                replay_sources = (input_payload.get("benchmark_replay") or {}).get("snapshots", [])
+                for index, sample in enumerate(benchmark_samples):
+                    declared_generated = bool(
+                        sample.generator_version
+                        and sample.generator_artifact_sha256
+                        and sample.seed is not None
+                        and sample.size_path
+                    )
+                    source_snapshot_id = (
+                        replay_sources[index]["snapshot_id"]
+                        if index < len(replay_sources)
+                        else None
+                    )
+                    generated_snapshots.append(
+                        {
+                            "snapshot_key": f"benchmark/{index:03d}/{sample.size}",
+                            "origin": "benchmark_replay"
+                            if source_snapshot_id
+                            else "generated_benchmark"
+                            if declared_generated
+                            else "user_benchmark",
+                            "source_snapshot_id": source_snapshot_id,
+                            "language": language,
+                            "problem_pack_identity": problem_pack_identity,
+                            "input_snapshot": {
+                                "size": sample.size,
+                                "args": sample.args,
+                                "kwargs": sample.kwargs,
+                            },
+                            "generator_version": sample.generator_version,
+                            "generator_artifact_sha256": sample.generator_artifact_sha256,
+                            "seed": sample.seed,
+                            "size_path": sample.size_path,
+                            "strategy": sample.strategy,
+                            "runtime_configuration": runtime_configuration,
+                        }
+                    )
+                _persist_input_snapshots(session_factory, job_id, generated_snapshots)
                 result = sandbox.run(
                     adapter,
                     input_payload["code"],
@@ -695,6 +897,11 @@ def run_claimed_job(
                                 if generated_samples and not exhaustive_mode
                                 else None
                             ),
+                            "generator_artifact_sha256": (
+                                generator_artifact_sha256()
+                                if generated_samples and not exhaustive_mode
+                                else None
+                            ),
                             "exhaustive_tests": exhaustive_mode,
                             "reference_limit": (
                                 (
@@ -771,6 +978,11 @@ def run_claimed_job(
                                 "generated": property_report.get("generated", 0),
                                 "generator_version": (
                                     GENERATOR_VERSION
+                                    if property_report.get("generated", 0)
+                                    else None
+                                ),
+                                "generator_artifact_sha256": (
+                                    generator_artifact_sha256()
                                     if property_report.get("generated", 0)
                                     else None
                                 ),

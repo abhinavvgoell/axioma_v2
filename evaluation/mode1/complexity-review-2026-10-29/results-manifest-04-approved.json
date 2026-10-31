@@ -1,0 +1,19 @@
+{
+  "analysis_output_file": "analysis-output-04-approved.json",
+  "analysis_output_sha256": "92d48952d291f1c6ab79d8295e6b178fe46bcd93e9623b532defdd6ff4b4916f",
+  "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "analyzer_source_sha256": {
+    "java_complexity.py": "247e1e0506acebd384e7f56f6131ef49d61950c91b7802ff5ca47e2118859d1d",
+    "python_complexity.py": "ceacb44a10704a4b02cdee70bc56979f611d628bf13a60615e7c911faecda171"
+  },
+  "approved_label_file": "gold-reviewed-04.jsonl",
+  "approved_label_file_sha256": "6b81097959a0c48f430fc6215883a4f843a0b96386463e85c1ad2580e3922f45",
+  "approved_manifest_file": "manifest-04-approved.json",
+  "dataset_id": "axioma-20261029-review-packet-04",
+  "evaluation_runner_file": "../run_reviewed_packet_04.py",
+  "evaluation_runner_sha256": "1f771b5a8d4f2d4c7dc460c7db58a23f1b22645c69cf5d8347a24ae466fcf22f",
+  "evaluation_report_file": "evaluation-report-04-approved.json",
+  "evaluation_report_sha256": "b0807d5cf29a3dd9dbf7a05c1c87f620e3d82e36724283635c7f1df799583a6b",
+  "predictions_file": "predictions-04-approved.jsonl",
+  "predictions_sha256": "ac8495cd77d5c7ceed8c7202dc591549470351511ca6dc9406e9e658b49b916c"
+}

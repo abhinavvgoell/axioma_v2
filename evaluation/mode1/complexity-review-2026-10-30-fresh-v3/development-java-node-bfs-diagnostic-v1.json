@@ -1,0 +1,73 @@
+{
+  "artifact_type": "development_calibration_diagnostic",
+  "created_at": "2026-10-30T18:08:36.498668+00:00",
+  "scope": "single owner-reviewed calibration case; not a formal evaluation",
+  "formal_evaluation": false,
+  "frozen_pilot_rerun": false,
+  "case_id": "axioma-20261030-v3-05",
+  "reviewed_label": "O(n)",
+  "reviewed_label_scope": "O(n), with n = V + E",
+  "owner_decision": {
+    "id": "axioma-20261030-v3-05",
+    "owner_action": "approve",
+    "owner_note": "Each distinct value is expanded at most once, so adjacency lists are processed once in total and at most E child entries are enqueued. HashSet operations are expected O(1). Dedupe by value can reduce traversal work, not increase this upper bound. The retained visited list and set use O(V); because nodes are marked when dequeued, pending queue entries can total O(E).",
+    "review_date": "2026-10-30",
+    "reviewer": "project_owner",
+    "space_decision": "approved",
+    "time_decision": "approved"
+  },
+  "source_sha256": "830a110a2827d491a5ce9efc4dd49110171950b587ddc2e379c89016c80690e0",
+  "owner_decisions_sha256": "a604ef7210c0449976ce6999dc5ca717750383ccd3ea7f7d29a366d41e53143f",
+  "analyzer_source_sha256": "a0b5509847dd43540de9498eecf0fc3b401e96bb3e86bfc6bd6a2694c0829bf5",
+  "prediction": {
+    "method": "static_java_graph_bfs_v2",
+    "estimate": "O(V + E)",
+    "confidence": "low",
+    "explanation": "Each distinct value is expanded at most once, so child-list enumeration totals O(E). At most O(E) child references are queued and checked, while visited/list updates cost O(V), giving O(V + E). This low-confidence tokenizer match is a heuristic static estimate, not a proof for arbitrary Java. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+    "bfs_evidence": {
+      "language": "java",
+      "rule_version": "bounded_object_bfs_v1",
+      "pattern_id": "java_node_children_bfs_dequeue_deduplication",
+      "complexity": "O(V + E)",
+      "input_size": {
+        "vertices": "V = distinct reachable values expanded",
+        "adjacency_entries": "E = child references enumerated from expanded values"
+      },
+      "queue": {
+        "driver": "while queue is not empty",
+        "name": "queue",
+        "initialization": "root.getChildren()"
+      },
+      "visited_state": {
+        "name": "visitedSet",
+        "deduplication": "on dequeue",
+        "each_value_expanded_at_most_once": true,
+        "one_enqueue_per_vertex": false
+      },
+      "neighbor_enumeration": {
+        "representation": "Node child lists",
+        "bound": "getChildren/addAll work is O(degree)"
+      },
+      "pending_queue_bound": "O(E); duplicate references may be queued before dequeue deduplication",
+      "source_locations": {
+        "queue_loop_token_index": 78,
+        "dequeue_token_index": 95,
+        "visited_guard_token_index": 110,
+        "child_enqueue_token_index": 166
+      },
+      "bounded_work_argument": "Each distinct value is expanded at most once, so child-list enumeration totals O(E). At most O(E) child references are queued and checked, while visited/list updates cost O(V), giving O(V + E).",
+      "assumptions": [
+        "The analyzed method runs on a fresh traversal instance.",
+        "Each getChildren iteration and queue.addAll operation is O(degree).",
+        "HashSet contains/add and value equality/hashCode are expected O(1).",
+        "The graph has V reachable distinct values and E child references enumerated from expanded values."
+      ],
+      "limitations": [
+        "Dequeue-time deduplication can hold O(E) duplicate references in the queue.",
+        "The tokenizer rule recognizes this specific Node<T>/Queue pattern only."
+      ],
+      "inference_kind": "heuristic_static_bounded_argument"
+    }
+  },
+  "interpretation": "The bounded object-child BFS recognizer matches this reviewed source and its O(V + E) label. This development diagnostic is not independent evaluation evidence and does not establish general BFS recognition accuracy."
+}

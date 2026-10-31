@@ -1,0 +1,594 @@
+{
+  "artifact_type": "frozen_independent_bfs_v2_gold_labels",
+  "evaluation": "Axioma Independent BFS Evaluation v2",
+  "status": "frozen_approved_not_yet_evaluated",
+  "gold_labels_frozen": true,
+  "owner_confirmation_required": false,
+  "owner_confirmed": true,
+  "owner_confirmation_date": "2026-10-30",
+  "owner_confirmation_scope": "all 28 cases",
+  "analyzer_executed": false,
+  "case_count": 28,
+  "language_counts": {
+    "java": 14,
+    "python": 14
+  },
+  "review_disposition_counts": {
+    "approve": 20,
+    "revise": 8,
+    "exclude": 0
+  },
+  "revision_case_ids": [
+    "axioma-bfs-v2-j01",
+    "axioma-bfs-v2-j03",
+    "axioma-bfs-v2-j06",
+    "axioma-bfs-v2-j08",
+    "axioma-bfs-v2-j10",
+    "axioma-bfs-v2-j13",
+    "axioma-bfs-v2-j14",
+    "axioma-bfs-v2-p07"
+  ],
+  "source_packet_filename": "review-packet.jsonl",
+  "source_packet_sha256": "d7f997fee6a1317e164f20e59dac5f2edd0da6398f0c6d8a33b9f8f455ab29b1",
+  "source_manifest_filename": "manifest.json",
+  "source_manifest_sha256": "f2c4564f3015670ee0c245e40771ee50c94466b2a7d18a87515c5f2e2f52799d",
+  "parent_proposed_artifact_filename": "proposed-review-labels-v2.json",
+  "parent_proposed_artifact_sha256": "f2bf080fed010b93e3e3a78d90e53c00062d83c40b2fe448ae67ad4b2aaa70a9",
+  "cases": [
+    {
+      "case_id": "axioma-bfs-v2-j01",
+      "language": "java",
+      "pattern": "adjacency_list_single_source",
+      "source_sha256": "216b479db758ab27134b82bff666e1c339561ebcf0863cfcd2134650cd937d20",
+      "mathematical_complexity": "O(V + E)",
+      "expected_analyzer_response": "estimate",
+      "mathematical_rationale": "Each reachable vertex is queued and expanded once; every stored adjacency entry is scanned once.",
+      "input_contract": "Map<Integer,List<Integer>> adjacency list with an entry for each vertex; one source root.",
+      "assumptions": [
+        "Backing Map is a HashMap or equivalent with expected O(1) lookup.",
+        "Root is a valid vertex with an adjacency entry.",
+        "HashSet and ArrayDeque operations are expected O(1).",
+        "E is the total adjacency-entry count."
+      ],
+      "historical_review_disposition": "revise",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j02",
+      "language": "java",
+      "pattern": "adjacency_list_multi_source",
+      "source_sha256": "9ee0c0d70038b29a28d6c6fce9ebd254f18a458f19afb8b40fbefc8e7cb4eed0",
+      "mathematical_complexity": "O(S + V + E)",
+      "expected_analyzer_response": "estimate",
+      "mathematical_rationale": "The seed loop costs O(S), then at most V vertices and E adjacency entries are processed.",
+      "input_contract": "HashMap adjacency list with an entry for every vertex; S starting entries may contain duplicates.",
+      "assumptions": [
+        "Every starting vertex is valid and has an adjacency entry.",
+        "Duplicates are permitted; no S <= V relationship is assumed.",
+        "Expected O(1) hash and deque operations."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j03",
+      "language": "java",
+      "pattern": "disconnected_components_key_iteration",
+      "source_sha256": "889cfb9e0734a97401746f26d48d05f85ecfd1ef3227edf0a31554727bacd4e7",
+      "mathematical_complexity": "O(V + E)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "A shared visited set causes each vertex to seed at most once and each adjacency entry to be traversed once.",
+      "input_contract": "Map keySet enumerates all vertices; one shared visited set spans components.",
+      "assumptions": [
+        "Backing Map operations have expected O(1) cost, for example HashMap.",
+        "Expected O(1) set and queue operations.",
+        "The enhanced-for component driver is outside the bounded recognizer; expected response remains unknown."
+      ],
+      "historical_review_disposition": "revise",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j04",
+      "language": "java",
+      "pattern": "array_of_adjacency_lists_boolean_visited",
+      "source_sha256": "7c195b389540f3f961b48d4ecf50c47f3b9ae8c3e389128d6e98c80e50e51284",
+      "mathematical_complexity": "O(V + E)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Each vertex is marked before enqueue and each adjacency entry is examined once.",
+      "input_contract": "Array of per-vertex neighbor lists; vertex IDs are dense integers in [0,V).",
+      "assumptions": [
+        "All neighbor references and starting ID s are valid and in [0,V), within visited-array bounds.",
+        "Array, boolean-array, and queue operations are O(1).",
+        "The array-of-lists representation is distinct from nested List and Map declarations."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j05",
+      "language": "java",
+      "pattern": "adjacency_matrix",
+      "source_sha256": "ec39246eaac54a8b20fec8fc2cce1807463d9cae32a98d388c85666bfa0099ad",
+      "mathematical_complexity": "O(V^2)",
+      "expected_analyzer_response": "estimate",
+      "mathematical_rationale": "At most V vertices are dequeued, each with a V-entry row scan.",
+      "input_contract": "Non-empty V by V boolean adjacency matrix; valid source s in [0,V).",
+      "assumptions": [
+        "The matrix is square and non-empty (V >= 1).",
+        "Source s is a valid vertex in [0,V).",
+        "Matrix, visited, and queue operations are O(1)."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j06",
+      "language": "java",
+      "pattern": "repeated_bfs_per_query",
+      "source_sha256": "4302bc4f48e8b71ed01c427318cec010e3d8de6ab862d2e343392b265baa6530",
+      "mathematical_complexity": "O(Q * (V + E))",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Each of Q start entries can cause a full traversal, so the repeated work is O(Q(V+E)).",
+      "input_contract": "Fresh BFS state for each query; Q is starts.length.",
+      "assumptions": [
+        "Q is exactly starts.length; no simplifying relationship to V is assumed.",
+        "Each query creates fresh visited and queue state.",
+        "Backing-map lookups, set operations, and queue operations are expected O(1)."
+      ],
+      "historical_review_disposition": "revise",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j07",
+      "language": "java",
+      "pattern": "ordered_map_and_set",
+      "source_sha256": "284c25fbed7bf46f410f5cf7eb3e6b4c0d54497b79cd584d2b47f7e5fb4357b2",
+      "mathematical_complexity": "O((V + E) log V)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Ordered lookup and membership/insertion cost O(log V); scanning E entries gives O(E log V), plus vertex work.",
+      "input_contract": "TreeMap adjacency and TreeSet visited state.",
+      "assumptions": [
+        "Tree operations are worst-case O(log V)."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j08",
+      "language": "java",
+      "pattern": "edge_list_rescanned_per_vertex",
+      "source_sha256": "17037d0e839be2b1367515e132e86fa5c5e1a2b3be25b7947e0784cf64a71e3b",
+      "mathematical_complexity": "O(V + VE) = O(V(E + 1))",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Allocating boolean[n] costs O(n). At most V vertices are dequeued, and each scans all E edge records, costing O(VE). With n=V, total is O(V+VE)=O(V(E+1)); when E>=1 this is commonly simplified to O(VE).",
+      "input_contract": "Flat edge list with E records; n = V; valid source s and all endpoint IDs are in [0,V).",
+      "assumptions": [
+        "n equals V.",
+        "The source s and every edge endpoint ID are valid dense IDs in [0,V).",
+        "Visited-array, queue, and per-edge operations are O(1).",
+        "Each dequeued vertex scans all E edge records."
+      ],
+      "historical_review_disposition": "revise",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j09",
+      "language": "java",
+      "pattern": "nested_vertex_scan_inside_bfs",
+      "source_sha256": "9bd2de6bec1b1504f75e144d2a906fafb7330402f1286716dd1e9b9bb62c892f",
+      "mathematical_complexity": "O(V^2 + E)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "The repeated loop costs V*V; edge enumeration adds E.",
+      "input_contract": "The method parameter n equals the vertex count V; a full n-sized loop runs for each dequeued vertex.",
+      "assumptions": [
+        "n = V.",
+        "The extra loop always scans all V vertices."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j10",
+      "language": "java",
+      "pattern": "directed_tree_without_visited",
+      "source_sha256": "d3fadf415fa966b80e61966fefe881f038645f5f2084d4d1fdfd3bf96be4ae4f",
+      "mathematical_complexity": "O(V + E)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Under the tree guarantee, each vertex is reached once; O(1) indexed access to each child list plus scanning all child entries yields O(V+E).",
+      "input_contract": "Input is a directed rooted tree oriented away from root; outer children collection supports O(1) indexed access.",
+      "assumptions": [
+        "Directed rooted-tree orientation and acyclicity are external guarantees; the method body alone cannot establish them.",
+        "The outer children collection supports O(1) indexed access, such as ArrayList.",
+        "Child-list entries are scanned once overall; queue operations are O(1)."
+      ],
+      "historical_review_disposition": "revise",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j11",
+      "language": "java",
+      "pattern": "grid_four_direction_offset_arrays",
+      "source_sha256": "78ef756e81c64358d429c5db96421405e4c5a41a3c15d3890525989aeaa07144",
+      "mathematical_complexity": "O(R * C)",
+      "expected_analyzer_response": "estimate",
+      "mathematical_rationale": "At most R*C cells are reached, with four constant-time neighbor checks per dequeue.",
+      "input_contract": "Non-empty rectangular grid (R>=1,C>=1), four fixed orthogonal offsets, and in-bounds start (sr,sc).",
+      "assumptions": [
+        "Grid is non-empty and rectangular.",
+        "Starting coordinate satisfies 0<=sr<R and 0<=sc<C.",
+        "Four is constant; array, queue, and visited accesses are O(1)."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j12",
+      "language": "java",
+      "pattern": "grid_eight_direction_offsets",
+      "source_sha256": "c79577dd525413a66c82e66a0c9388a45ca75c095e2fba7c2e4590c8adcf3986",
+      "mathematical_complexity": "O(R * C)",
+      "expected_analyzer_response": "estimate",
+      "mathematical_rationale": "At most R*C cells are reached, with eight constant-time neighbor checks per dequeue.",
+      "input_contract": "Non-empty rectangular grid (R>=1,C>=1), eight fixed offsets, and in-bounds start (sr,sc).",
+      "assumptions": [
+        "Grid is non-empty and rectangular.",
+        "Starting coordinate satisfies 0<=sr<R and 0<=sc<C.",
+        "Eight is constant; queue and visited operations are O(1)."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j13",
+      "language": "java",
+      "pattern": "full_grid_scan_inside_neighbor_processing",
+      "source_sha256": "9d4503a0737f7f0b01504c1d766098ea346b4f0cea97562a19ad91c5e77e5238",
+      "mathematical_complexity": "O((R * C)^2)",
+      "expected_analyzer_response": "estimate",
+      "mathematical_rationale": "Every in-bounds neighbor candidate triggers a full R*C scan before the visited check; grid values do not gate traversal. In the worst case Theta(R*C) cells are dequeued, each with at most four candidates, giving O((R*C)^2).",
+      "input_contract": "Non-empty rectangular grid (R>=1,C>=1) and in-bounds start (sr,sc).",
+      "assumptions": [
+        "Grid is non-empty and rectangular; start is in bounds.",
+        "inspect() has no early return; cell values do not control traversal.",
+        "Every in-bounds neighbor candidate triggers a full grid scan.",
+        "Four candidate directions is constant; complexity is a worst-case bound."
+      ],
+      "historical_review_disposition": "revise",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-j14",
+      "language": "java",
+      "pattern": "indexed_array_queue_adjacency_list",
+      "source_sha256": "4846d8fe44b7a56566206c23d60f06c6ca6a25fbfbedf35f483b761280c8e39e",
+      "mathematical_complexity": "O(V + E)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Every vertex is appended and read once; each adjacency entry is scanned once, and head-index queue reads avoid front-removal shifts.",
+      "input_contract": "Adjacency collection is indexed in O(1) (such as ArrayList); queue is an ArrayList read using a monotonically increasing head index.",
+      "assumptions": [
+        "Outer adjacency collection supports O(1) indexed access, such as ArrayList.",
+        "ArrayList queue append is amortized O(1); monotonically increasing head index avoids remove(0).",
+        "Dense valid IDs and visited-array operations are O(1)."
+      ],
+      "historical_review_disposition": "revise",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p01",
+      "language": "python",
+      "pattern": "adjacency_list_dict_deque",
+      "source_sha256": "26399d442c257b39f52c329965aa198a514f5471e6f50ae6cd59b49746caf5be",
+      "mathematical_complexity": "O(V + E)",
+      "expected_analyzer_response": "estimate",
+      "mathematical_rationale": "Each vertex is appended and expanded once, and each adjacency entry is scanned once.",
+      "input_contract": "Dictionary with an adjacency list, including empty lists, for each vertex; deque and visited set.",
+      "assumptions": [
+        "Average O(1) set/dict operations; deque endpoint operations O(1)."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p02",
+      "language": "python",
+      "pattern": "multi_source_duplicate_starts",
+      "source_sha256": "6a5c56e6341311208e1e8b4b4a68e580b0f57219b49947a1e603ab5cbe8d5f45",
+      "mathematical_complexity": "O(S + V + E)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "The seed pass costs O(S), then traversal costs O(V+E); no S<=V assumption permits simplification.",
+      "input_contract": "S starting entries may include duplicates; graph is an adjacency list.",
+      "assumptions": [
+        "Average O(1) set/dict operations and O(1) deque endpoints.",
+        "Current Python BFS rule has no explicit S-term evidence."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p03",
+      "language": "python",
+      "pattern": "disconnected_components_global_visited",
+      "source_sha256": "d1a395bb31a5fe587457e683ba234de3a52ba62edceb1bce8c20040475e497cb",
+      "mathematical_complexity": "O(V + E)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Each vertex seeds at most once and each adjacency list is expanded once overall.",
+      "input_contract": "Iterate all vertices and launch a traversal only for unseen roots; one global set.",
+      "assumptions": [
+        "Average O(1) hash and queue operations.",
+        "A queue loop is nested under the component driver."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p04",
+      "language": "python",
+      "pattern": "boolean_list_visited",
+      "source_sha256": "1fe2d68938c1c7a6a7dca5f0ce3e05b6684cd0fd2d0a6cf12af9124cf29349b8",
+      "mathematical_complexity": "O(V + E)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Every vertex is enqueued once and every adjacency entry is examined once.",
+      "input_contract": "List-of-lists adjacency with dense integer vertex IDs in [0,V).",
+      "assumptions": [
+        "Every adjacency reference and start ID is valid and in [0,V), within visited-list bounds.",
+        "List indexing and deque operations are O(1).",
+        "Expected analyzer response remains unknown; current graph matcher may require a set-membership guard."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p05",
+      "language": "python",
+      "pattern": "adjacency_matrix",
+      "source_sha256": "476d8169b8ac6af72b6070c269b1b797138c3b31ba341534a1f8654f44c976e5",
+      "mathematical_complexity": "O(V^2)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "At most V rows are processed, each with V entries.",
+      "input_contract": "Non-empty V by V boolean matrix and valid source ID in [0,V).",
+      "assumptions": [
+        "The matrix is square and non-empty (V>=1).",
+        "Source ID is valid and in [0,V).",
+        "Dense matrix indexing is O(1); list subscripting alone is not adjacency-list evidence."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p06",
+      "language": "python",
+      "pattern": "repeated_bfs_per_request",
+      "source_sha256": "9352fa157deb34247aceb3b63f29004c84cdd8aa430926d143d577f7592fc03b",
+      "mathematical_complexity": "O(Q * (V + E))",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Each traversal may scan V vertices and E entries; the outer loop multiplies the work by Q.",
+      "input_contract": "A new BFS is performed for each of Q requests.",
+      "assumptions": [
+        "Q is independent of V.",
+        "Average O(1) hash and deque operations."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p07",
+      "language": "python",
+      "pattern": "neighbor_helper_contract",
+      "source_sha256": "28e2b5a872bd71470481770cf9922d9d98ca4985c0726f4b97f0ac580360b52d",
+      "mathematical_complexity": "O(V + E)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Under the helper contract, total neighbor iteration is O(E); each vertex adds expected O(1) queue/set work, giving O(V+E).",
+      "input_contract": "neighbors(node) is contractually an iterator over that vertex's adjacency entries.",
+      "assumptions": [
+        "neighbors(node) creates its iterator in O(1).",
+        "Iterating it costs O(deg(node)).",
+        "The helper performs no hidden full-graph scan.",
+        "The analyzer does not expand helper implementations; expected response remains unknown."
+      ],
+      "historical_review_disposition": "revise",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p08",
+      "language": "python",
+      "pattern": "list_queue_front_removal",
+      "source_sha256": "2b9b3f0617fd144adaabcd13987f293ea1e843da2e1d65bfdcd413396a02c145",
+      "mathematical_complexity": "O(V^2 + E)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Each of at most V removals may shift O(V) elements, costing O(V^2); neighbor scans add O(E).",
+      "input_contract": "Adjacency list, but FIFO queue uses list.pop(0).",
+      "assumptions": [
+        "Python list front removal shifts remaining entries.",
+        "Average O(1) visited/dict operations."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p09",
+      "language": "python",
+      "pattern": "directed_tree_without_visited",
+      "source_sha256": "24e7bbb638cdf652bcec9cbbe057852bc001e982f03956017590f92746226031",
+      "mathematical_complexity": "O(V + E)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Unique root paths ensure each vertex is queued once; every child edge is examined once.",
+      "input_contract": "Input contract guarantees a directed rooted tree oriented away from root; no seen set.",
+      "assumptions": [
+        "Acyclicity and orientation are external preconditions not established by the method body."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p10",
+      "language": "python",
+      "pattern": "queue_worklist_not_graph",
+      "source_sha256": "19e9a6edcbd0e069665f9c363bfb7f8e55004c2b0cfe5c842abe0126b8e0d1ec",
+      "mathematical_complexity": "O(N)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Every item is removed once with constant work.",
+      "input_contract": "A queue drains independent jobs; there is no graph or neighbor relation.",
+      "assumptions": [
+        "This is a queue-only non-BFS control case."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p11",
+      "language": "python",
+      "pattern": "grid_four_neighbor_component_sweep",
+      "source_sha256": "de3b72257eaba0d35e91b18c0f16dc424b37dea631ef930cfe7c23819dd65edb",
+      "mathematical_complexity": "O(R * C)",
+      "expected_analyzer_response": "estimate",
+      "mathematical_rationale": "The sweep checks each cell once; shared seen state enqueues each active cell at most once, with four fixed neighbor checks. Existing bounded Python recognizer and regression-test inspection support expected response estimate.",
+      "input_contract": "Non-empty rectangular grid (R>=1,C>=1); full component sweep, no supplied start coordinate.",
+      "assumptions": [
+        "Grid is non-empty and rectangular.",
+        "Visited set is shared across component searches; each active cell is enqueued at most once.",
+        "Four fixed tuple offsets are checked per dequeued cell.",
+        "Existing _is_grid_bfs recognizer and test_grid_bfs_supports_rectangular_ranges_and_reports_dimensions were inspected; no run on this packet.",
+        "Average O(1) set and deque operations."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p12",
+      "language": "python",
+      "pattern": "grid_eight_neighbor_fixed_tuple",
+      "source_sha256": "f32093739f1765879464563a9110d6eeab439458a992e24ec1736d7b5cf18ef9",
+      "mathematical_complexity": "O(R * C)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Every cell expands once and examines eight constant-time neighbors.",
+      "input_contract": "Non-empty rectangular grid (R>=1,C>=1) and in-bounds starting coordinate.",
+      "assumptions": [
+        "Grid is non-empty and rectangular.",
+        "Start coordinate satisfies 0<=row<R and 0<=col<C.",
+        "Eight fixed neighbor offsets are constant; expected response remains unknown because the bounded recognizer may support only the four-neighbor form."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p13",
+      "language": "python",
+      "pattern": "full_grid_scan_inside_neighbor_processing",
+      "source_sha256": "776aa08ef1fd2b09f066e98854f6626a2488d4312f6d1fddd4fc3df50356a63c",
+      "mathematical_complexity": "O((R * C)^2)",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "Each in-bounds local neighbor candidate causes a full R*C scan before the visited check. In the worst case Theta(R*C) cells are reached and each has at most four candidates, yielding O((R*C)^2).",
+      "input_contract": "Non-empty rectangular grid (R>=1,C>=1) and in-bounds starting coordinate.",
+      "assumptions": [
+        "Grid is non-empty and rectangular; start is in bounds.",
+        "Four local candidates is constant.",
+        "Every in-bounds candidate triggers the nested full-grid scan.",
+        "The bound is worst-case over reachable cells; expected response remains unknown."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    },
+    {
+      "case_id": "axioma-bfs-v2-p14",
+      "language": "python",
+      "pattern": "heap_ordered_weighted_traversal",
+      "source_sha256": "7e2474a5b0f9bff24722c54759bd01089326b41d7a2c3bab919697f24fd7824b",
+      "mathematical_complexity": "O((V + E) * log(V + E))",
+      "expected_analyzer_response": "unknown",
+      "mathematical_rationale": "With nonnegative weights and lazy stale-entry deletion, up to O(E) heap entries may be inserted/removed, each at logarithmic heap cost; the proposed upper bound is O((V+E) log(V+E)).",
+      "input_contract": "Heap-based weighted traversal over a graph with V vertices and E adjacency entries.",
+      "assumptions": [
+        "Weights are nonnegative and stale heap entries are skipped.",
+        "Heap tuple node identifiers are hashable and mutually comparable when costs tie.",
+        "A binary heap may contain O(E) entries; no simple-graph bound on E is assumed.",
+        "This is a non-BFS priority-queue near-miss; expected response remains unknown."
+      ],
+      "historical_review_disposition": "approve",
+      "gold_label_approved": true,
+      "decision_status": "approved_frozen",
+      "owner_approved": true,
+      "analyzer_executed": false
+    }
+  ]
+}

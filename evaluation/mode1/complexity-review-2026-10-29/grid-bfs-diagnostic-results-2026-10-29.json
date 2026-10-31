@@ -1,0 +1,114 @@
+{
+  "dataset_id": "axioma-20261029-review-packet-04",
+  "partition": "approved_calibration_diagnostic_development_case",
+  "label_file": "gold-reviewed-04.jsonl",
+  "label_file_sha256": "6b81097959a0c48f430fc6215883a4f843a0b96386463e85c1ad2580e3922f45",
+  "case_file": "review-set-04.jsonl",
+  "case_file_sha256": "46ae812f921c97d6bf5d4605ebeeb3832a58e489360555f66ff4c4d4e4237734",
+  "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "analyzer_source_sha256": {
+    "python_complexity.py": "378ab6344620d1606f5a93ebbec96cba8bf9c259804ded3a6057aa87bf3774ea",
+    "java_complexity.py": "4e1d3778a140c9b55b22b34a0d17da734778a0e0acf09fdb1196b989ead4558b"
+  },
+  "run_at_utc": "2026-10-29T17:36:46.130610+00:00",
+  "python_version": "3.14.3",
+  "benchmark_measurements": {
+    "state": "not_run"
+  },
+  "results": [
+    {
+      "id": "axioma-20261029-19",
+      "title": "Count islands in a square grid",
+      "language": "python",
+      "entrypoint": "count_islands",
+      "source_sha256": "97f3b21cc634870e1f6dbfbc2f36687e1e7614e8d3dd89af9b44d7a776854358",
+      "expected_time": "O(n^2)",
+      "expected_rationale": "The outer loops inspect n\u00b2 cells; each land cell is enqueued at most once and each BFS step checks four neighbors.",
+      "actual_time": "O(n^2)",
+      "status": "exact",
+      "method": "static_ast_grid_bfs_v1",
+      "confidence": "low",
+      "explanation": "Recognized full-grid scanning with component BFS, shared visited state, and four constant-time neighbor checks per enqueued cell. Each cell is enqueued at most once across all component scans, yielding O(n^2). This is a bounded AST heuristic, not a proof for arbitrary Python control flow. Called helper functions are not included; this estimate is not a proof.",
+      "bfs_evidence": {
+        "language": "python",
+        "rule_version": "bounded_bfs_traversal_v1",
+        "pattern_id": "python_grid_component_bfs_four_neighbors",
+        "source_locations": {
+          "queue_loop_line": 14,
+          "dequeue_line": 15,
+          "neighbor_loop_line": 16,
+          "visited_guard_line": 22,
+          "initial_queue_seed_line": 12,
+          "initial_visited_mark_lines": [
+            13
+          ],
+          "neighbor_visited_mark_line": 25,
+          "neighbor_enqueue_line": 26
+        },
+        "input_size": {
+          "rows": "R",
+          "columns": "C",
+          "symbolic_bounds": [
+            "n",
+            "n"
+          ]
+        },
+        "queue": {
+          "driver": "queue",
+          "dequeue": "popleft",
+          "line": 15
+        },
+        "visited_state": {
+          "container": "set",
+          "name": "visited",
+          "mark_before_neighbor_enqueue": true,
+          "initial_cell_marked_before_queue_processing": true,
+          "shared_across_component_scans": true
+        },
+        "neighbor_enumeration": {
+          "line": 16,
+          "fixed_neighbors_per_cell": 4,
+          "offsets": [
+            [
+              -1,
+              0
+            ],
+            [
+              0,
+              -1
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ]
+        },
+        "bounded_work_argument": "The outer loops inspect R*C cells. The visited set is shared across all component scans, each land cell is enqueued at most once, and each dequeued cell checks exactly four neighbors; total queue and neighbor work is O(R*C).",
+        "complexity": "O(n^2)",
+        "assumptions": [
+          "The two outer loops enumerate each grid cell once.",
+          "The visited set is not cleared between component searches.",
+          "Set membership/addition and deque operations are average O(1).",
+          "Grid indexing and the four neighbor checks are O(1)."
+        ],
+        "limitations": [
+          "This recognizes only explicit four-neighbor component BFS with tuple coordinates.",
+          "This is a bounded syntax heuristic, not a proof for arbitrary Python control flow.",
+          "Called helper work and alias-based mutation are not expanded."
+        ],
+        "inference_kind": "heuristic_static_bounded_argument"
+      }
+    }
+  ],
+  "summary": {
+    "eligible": 1,
+    "exact": 1,
+    "mismatch": 0,
+    "unsupported": 0
+  },
+  "note": "Approved calibration data used to develop this rule; not an untouched holdout. This static result is a bounded syntax heuristic, not a formal proof or timing measurement."
+}

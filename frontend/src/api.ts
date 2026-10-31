@@ -1,4 +1,4 @@
-import type { AnalysisReport, Job, Language, OptimizationProposalResponse, ProblemMatch } from './types'
+import type { AnalysisReport, GemmaReviewResponse, Job, Language, OptimizationProposalResponse, ProblemMatch } from './types'
 
 export class ApiError extends Error {
   readonly status: number
@@ -52,6 +52,18 @@ export function findOptimizationProposals(input: {
   problem: Record<string, unknown>
 }): Promise<OptimizationProposalResponse> {
   return request<OptimizationProposalResponse>('/v1/optimization-proposals', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function requestGemmaReview(input: {
+  job_id: string
+  language: Language
+  code: string
+  problem_statement: string
+}): Promise<GemmaReviewResponse> {
+  return request<GemmaReviewResponse>('/v1/gemma-review', {
     method: 'POST',
     body: JSON.stringify(input),
   })

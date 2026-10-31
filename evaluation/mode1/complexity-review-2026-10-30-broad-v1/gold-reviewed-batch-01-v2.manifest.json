@@ -1,0 +1,30 @@
+{
+  "status": "human_reviewed_batch_frozen",
+  "dataset_gold_labels_frozen": false,
+  "partial_batch_only": true,
+  "reviewer_id": "project_owner",
+  "review_date": "2026-10-31",
+  "case_count": 5,
+  "case_ids": [
+    "axioma-20261030-broad-001",
+    "axioma-20261030-broad-002",
+    "axioma-20261030-broad-003",
+    "axioma-20261030-broad-004",
+    "axioma-20261030-broad-005"
+  ],
+  "candidate_manifest": "manifest-v2.json",
+  "candidate_manifest_sha256": "e52dec9ec07fe4feefce2f862ddc669db2453482b4092f21242fa956d96f1421",
+  "candidate_packet": "candidate-cases-batch-01-v2.jsonl",
+  "candidate_packet_sha256": "dc631455f4a5d44447f598d46137b4f2ab738d07dfb61dfeb48d3040aa400276",
+  "review_decisions_sha256": "5cc983d9a3d29c2e2deb4e3ad173206d31655230928f21c33028e02c8db2a956",
+  "gold_labels_file": "gold-reviewed-batch-01-v2.jsonl",
+  "gold_labels_sha256": "ed182e2aae5bb27a28411b50e01e86ae2e877e616dd6f3a8dcc997407981a496",
+  "source_sha256": {
+    "axioma-20261030-broad-001": "621e11bd4a320c7437bba42e29715608b05e84a5939562715cde8e32a576a529",
+    "axioma-20261030-broad-002": "e844589a5505736ab8a8ee6aee2494f124a7c56c28d92ab860fb817993f0e433",
+    "axioma-20261030-broad-003": "2b7b74597b3246e29ff751dfae3399b833fe7ae6b3367a1fd959e9c7c18a2816",
+    "axioma-20261030-broad-004": "2d23e1c8f889ef2784b78faab71959a7e374281c39e7cd36658848ffba85567c",
+    "axioma-20261030-broad-005": "6d2f69289af704e62a323b78a104b538297cce92fe19478c1d4db273b6cccea2"
+  },
+  "analyzer_run": false
+}

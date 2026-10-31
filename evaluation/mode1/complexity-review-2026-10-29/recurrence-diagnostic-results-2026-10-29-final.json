@@ -1,0 +1,137 @@
+{
+  "dataset_id": "axioma-20261029-review-packet-04",
+  "partition": "calibration_diagnostic_development_case",
+  "label_file": "gold-reviewed-04.jsonl",
+  "label_file_sha256": "6b81097959a0c48f430fc6215883a4f843a0b96386463e85c1ad2580e3922f45",
+  "case_file": "review-set-04.jsonl",
+  "case_file_sha256": "46ae812f921c97d6bf5d4605ebeeb3832a58e489360555f66ff4c4d4e4237734",
+  "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "analyzer_source_sha256": {
+    "java_complexity.py": "14a9fbbc8da085f73a471bf716ac39c0f1255b1d1dfe3c076dc0758844101b05",
+    "python_complexity.py": "b9ecddecf5fdeeb6c146587fdad838c73eb5a9bd2eba40ac7a172b73944a3644",
+    "recurrence.py": "5c1a91dc9bd79fc2cf29e0577b615e5eab2ba3363f83343c53a2344aaf32cab9"
+  },
+  "run_at_utc": "2026-10-29T17:04:28.105153+00:00",
+  "python_version": "3.14.3",
+  "benchmark_measurements": {
+    "state": "not_run"
+  },
+  "results": [
+    {
+      "id": "axioma-20261029-16",
+      "title": "Recursive binary search",
+      "language": "java",
+      "entrypoint": "Solution.search",
+      "source_sha256": "5b2098fcb1b4b01eda619fa6b11a209c4956867f249399ca5fe80ec811a1bd6a",
+      "expected_time": "O(log n)",
+      "expected_rationale": "Each recursive call halves [low, high], so the worst-case number of calls is logarithmic.",
+      "actual_time": "O(log n)",
+      "status": "exact",
+      "method": "static_java_recurrence_v1",
+      "confidence": "low",
+      "explanation": "Recognized T(n) = T(n / 2) + O(1) and applied master_theorem_case_2a, yielding O(log n). This is a heuristic syntax match under the listed recurrence assumptions. Other helper calls, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "recurrence_evidence": {
+        "rule_version": "bounded_recurrence_v1",
+        "source_location": {
+          "function": "search",
+          "line": null
+        },
+        "recursive_call_pattern": "1 recursive call(s) per recurrence level",
+        "recursive_calls_per_level": 1,
+        "input_size_reduction": "factor_two",
+        "nonrecursive_work": "O(1)",
+        "base_case": "recognized terminating base case required by the language-specific matcher",
+        "recurrence": "T(n) = T(n / 2) + O(1)",
+        "solving_rule": "master_theorem_case_2a",
+        "complexity": "O(log n)",
+        "assumptions": [
+          "The selected method has one mutually exclusive recursive branch per call.",
+          "The midpoint divides the inclusive [low, high] interval into halves.",
+          "The bounds are valid array indices and array access is O(1).",
+          "The base case returns when low > high."
+        ],
+        "inference_kind": "heuristic_pattern_match"
+      }
+    },
+    {
+      "id": "axioma-20261029-17",
+      "title": "Memoized Fibonacci",
+      "language": "python",
+      "entrypoint": "fib",
+      "source_sha256": "17b0da9ff1f179414dabbdff71d2e80a3bebe69b3e6e6fd8e844689ef0e84768",
+      "expected_time": "O(n)",
+      "expected_rationale": "Memoization computes each distinct argument once, with average O(1) cache access; this uses the approved usual DSA unit-cost arithmetic model.",
+      "actual_time": "O(n)",
+      "status": "exact",
+      "method": "static_ast_recurrence_v1",
+      "confidence": "low",
+      "explanation": "Recognized O(1) work for each of at most n + 1 distinct cached states and applied memoized_monotone_scalar_states, yielding O(n). This is a heuristic syntax match under the listed recurrence assumptions. Called helper functions are not included; this estimate is not a proof.",
+      "recurrence_evidence": {
+        "rule_version": "bounded_recurrence_v1",
+        "source_location": {
+          "function": "fib",
+          "line": 7
+        },
+        "recursive_call_pattern": "cached direct self-calls with strictly decreasing scalar state",
+        "recursive_calls_per_level": 2,
+        "input_size_reduction": "constant_decrement",
+        "nonrecursive_work": "O(1)",
+        "base_case": "parameter-guarded return detected",
+        "recurrence": "O(1) work for each of at most n + 1 distinct cached states",
+        "solving_rule": "memoized_monotone_scalar_states",
+        "complexity": "O(n)",
+        "assumptions": [
+          "The scalar parameter is a non-negative integer bounded by n.",
+          "An unbounded cache stores each argument state once with average O(1) access.",
+          "Every recursive argument decreases by a positive constant and reaches the base case.",
+          "No input-sized loop or hidden helper work occurs in the function."
+        ],
+        "inference_kind": "heuristic_pattern_match"
+      }
+    },
+    {
+      "id": "axioma-20261029-20",
+      "title": "Quicksort with last-element pivot",
+      "language": "java",
+      "entrypoint": "Solution.sort",
+      "source_sha256": "71811775b1129a5a3c4fe5ea6c67f13e92b7deb1205a15a80b6b5c3177e7092d",
+      "expected_time": "O(n^2)",
+      "expected_rationale": "Sorted or all-equal input makes each partition maximally unbalanced, summing n + (n-1) + ... + 1 comparisons/work.",
+      "actual_time": "O(n^2)",
+      "status": "exact",
+      "method": "static_java_worst_case_quicksort_recurrence",
+      "confidence": "low",
+      "explanation": "Recognized T(n) = T(n - 1) + O(n) and applied worst_case_decrement_recurrence_linear_work, yielding O(n^2). This is a heuristic syntax match under the listed recurrence assumptions. Other helper calls, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "recurrence_evidence": {
+        "rule_version": "bounded_recurrence_v1",
+        "source_location": {
+          "function": "sort",
+          "line": null
+        },
+        "recursive_call_pattern": "1 recursive call(s) per recurrence level",
+        "recursive_calls_per_level": 1,
+        "input_size_reduction": "constant_decrement in the worst case",
+        "nonrecursive_work": "O(n)",
+        "base_case": "recognized terminating base case required by the language-specific matcher",
+        "recurrence": "T(n) = T(n - 1) + O(n)",
+        "solving_rule": "worst_case_decrement_recurrence_linear_work",
+        "complexity": "O(n^2)",
+        "assumptions": [
+          "The recursive method partitions around the last array element.",
+          "Some sorted or all-equal inputs can place the pivot at an endpoint.",
+          "Partition scans the current range once and performs O(n) work.",
+          "Worst-case time is requested; the smaller recursive subproblem may be empty.",
+          "The second recursive call on an empty subproblem has constant work."
+        ],
+        "inference_kind": "heuristic_pattern_match"
+      }
+    }
+  ],
+  "summary": {
+    "eligible": 3,
+    "exact": 3,
+    "mismatch": 0,
+    "unsupported": 0
+  },
+  "note": "These previously approved calibration cases are diagnostic development data, not an untouched holdout. Gold labels were read without modification."
+}

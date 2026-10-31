@@ -1,0 +1,57 @@
+{
+  "dataset_id": "axioma-20261030-external-multifamily-pilot-v1",
+  "decisions": [
+    {
+      "id": "axioma-20261030-v3-01",
+      "owner_action": "approve",
+      "owner_note": "Each iteration halves [lo, hi), so the number of iterations is O(log n). Only scalar indices and the midpoint are retained.",
+      "review_date": "2026-10-30",
+      "reviewer": "project_owner",
+      "space_decision": "approved",
+      "time_decision": "approved"
+    },
+    {
+      "id": "axioma-20261030-v3-02",
+      "owner_action": "approve",
+      "owner_note": "On reverse-sorted input, shifts sum to 1 + 2 + ... + (n-1), giving O(n^2) worst-case time. The algorithm sorts in place and keeps only scalar temporaries.",
+      "review_date": "2026-10-30",
+      "reviewer": "project_owner",
+      "space_decision": "approved",
+      "time_decision": "approved"
+    },
+    {
+      "id": "axioma-20261030-v3-03",
+      "owner_action": "revise",
+      "owner_note": "For each yielded value at depth d, next() resumes the active yield-from delegation chain through O(d) generators. Summed over all nodes this is O(sum depth)=O(n*h); a skewed tree has O(n^2) total delegation work, while a balanced tree has O(n log n). The Python yield-from proposal explicitly notes that delegation chains in recursive traversals can make an intended O(n) operation O(n^2). The recursive generator delegation retains O(h) active generator frames; a skewed tree has h = n.",
+      "review_date": "2026-10-30",
+      "reviewer": "project_owner",
+      "space_decision": "approved",
+      "time_decision": "approved_revised"
+    },
+    {
+      "id": "axioma-20261030-v3-04",
+      "owner_action": "approve",
+      "owner_note": "The DP table fills Θ(m*n) cells. With total input length N=m+n, this is O(N^2) in the worst case and Θ(N^2) for similarly sized strings. Splitting and traceback are linear and dominated. The int table has (m+1)(n+1) cells; String[] character arrays add O(m+n), and output storage is excluded.",
+      "review_date": "2026-10-30",
+      "reviewer": "project_owner",
+      "space_decision": "approved",
+      "time_decision": "approved"
+    },
+    {
+      "id": "axioma-20261030-v3-05",
+      "owner_action": "approve",
+      "owner_note": "Each distinct value is expanded at most once, so adjacency lists are processed once in total and at most E child entries are enqueued. HashSet operations are expected O(1). Dedupe by value can reduce traversal work, not increase this upper bound. The retained visited list and set use O(V); because nodes are marked when dequeued, pending queue entries can total O(E).",
+      "review_date": "2026-10-30",
+      "reviewer": "project_owner",
+      "space_decision": "approved",
+      "time_decision": "approved"
+    }
+  ],
+  "review_date": "2026-10-30",
+  "reviewed_by": "project_owner",
+  "revision_basis": {
+    "case_id": "axioma-20261030-v3-03",
+    "source": "PEP 380, yield-from delegation optimizations: https://peps.python.org/pep-0380/",
+    "summary": "Recursive generator delegation can add depth-proportional resumption overhead per yielded node; revised label is O(n*h), worst-case O(n^2)."
+  }
+}

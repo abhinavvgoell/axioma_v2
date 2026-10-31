@@ -112,6 +112,12 @@ class JobEventView(BaseModel):
     created_at: datetime
 
 
+class TestInputPreview(BaseModel):
+    data: dict[str, Any]
+    sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    truncated: bool = False
+
+
 class TestCaseView(BaseModel):
     name: str
     outcome: Literal["passed", "failed", "skipped"]
@@ -125,6 +131,7 @@ class TestCaseView(BaseModel):
     ] = "unknown"
     duration_ms: int | None = None
     details: dict[str, Any] = Field(default_factory=dict)
+    input_preview: TestInputPreview | None = None
 
 
 class AnalysisReport(BaseModel):
@@ -151,6 +158,7 @@ class ComplexityBenchmarkSample(BaseModel):
     args: list[Any] = Field(default_factory=list, max_length=64)
     kwargs: dict[str, Any] = Field(default_factory=dict, max_length=64)
     generator_version: str | None = Field(default=None, min_length=1, max_length=40)
+    generator_artifact_sha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     seed: int | None = Field(default=None, ge=0, le=4_294_967_295)
     size_path: str | None = Field(default=None, max_length=120)
     strategy: Literal[
@@ -382,6 +390,24 @@ class OptimizationProposalResponse(BaseModel):
     message: str
 
 
+class GemmaReviewRequest(BaseModel):
+    job_id: str = Field(min_length=1, max_length=36)
+    language: Literal["python", "java"]
+    code: str = Field(min_length=1, max_length=65536)
+    problem_statement: str = Field(min_length=1, max_length=20000)
+
+
+class GemmaReviewResponse(BaseModel):
+    provider: Literal["Google Gemini API"] = "Google Gemini API"
+    model: str
+    prompt_id: Literal["axioma-gemma-review-v7"] = "axioma-gemma-review-v7"
+    evidence_type: Literal["model"] = "model"
+    confidence: Confidence = Confidence.LOW
+    advisory: str
+    axioma_evidence: dict[str, Any]
+    limitations: list[str]
+
+
 class ProblemSpecIssue(BaseModel):
     sample: str
     path: str
@@ -411,6 +437,7 @@ class GeneratedInputCase(BaseModel):
 
 class ProblemInputGenerationResult(BaseModel):
     generator_version: str
+    generator_artifact_sha256: str
     seed: int
     requested: int = Field(ge=1)
     generated: int = Field(ge=0)
@@ -465,6 +492,7 @@ class ComplexityBenchmarkGenerationRequest(BaseModel):
 
 class ComplexityBenchmarkGenerationResult(BaseModel):
     generator_version: str
+    generator_artifact_sha256: str
     seed: int
     size_path: str
     pattern: str

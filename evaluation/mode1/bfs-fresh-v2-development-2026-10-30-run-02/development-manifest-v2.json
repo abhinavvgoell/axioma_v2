@@ -1,0 +1,107 @@
+{
+  "evaluation": "Axioma BFS v2 post-change development replay",
+  "status": "completed_development_diagnostic_not_holdout",
+  "run_timestamp_utc": "2026-10-30T15:24:29.281935+00:00",
+  "git_head": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "worktree_dirty": true,
+  "analyzer_invocations": 1,
+  "case_count": 28,
+  "language_counts": {
+    "java": 14,
+    "python": 14
+  },
+  "partition": "development; packet has previously informed analyzer development",
+  "labels_passed_to_analyzer": false,
+  "test_command": "services/api/.venv/Scripts/python.exe -m pytest -o addopts='' services/worker/tests/test_java_complexity.py services/worker/tests/test_python_complexity.py -q",
+  "test_result": "113 passed",
+  "ruff_command": "services/api/.venv/Scripts/ruff.exe check services/worker/src/axioma_worker/java_complexity.py services/worker/src/axioma_worker/python_complexity.py services/worker/tests/test_java_complexity.py services/worker/tests/test_python_complexity.py",
+  "ruff_result": "passed",
+  "metrics": {
+    "response_agreement_count": 28,
+    "response_denominator": 28,
+    "response_agreement_rate": 1.0,
+    "estimates_emitted": 8,
+    "estimate_coverage": 0.2857142857142857,
+    "exact_emitted_estimates": 8,
+    "exact_accuracy_among_emitted_estimates": 1.0,
+    "unexpected_abstentions": 0,
+    "unexpected_estimates": 0,
+    "execution_errors": 0
+  },
+  "prior_runs": {
+    "original_baseline_response_agreement": 23,
+    "original_baseline_estimates": 3,
+    "development_run_01_response_agreement": 25,
+    "development_run_01_estimates": 5
+  },
+  "cases_changed_from_original_baseline": [
+    {
+      "case_id": "axioma-bfs-v2-j05",
+      "baseline_response": "unknown",
+      "baseline_estimate": "unknown (data-dependent or incomplete loop)",
+      "development_response": "estimate",
+      "development_estimate": "O(V^2)",
+      "expected_response": "estimate",
+      "expected_complexity": "O(V^2)"
+    },
+    {
+      "case_id": "axioma-bfs-v2-j11",
+      "baseline_response": "unknown",
+      "baseline_estimate": "unknown (data-dependent or incomplete loop)",
+      "development_response": "estimate",
+      "development_estimate": "O(R * C)",
+      "expected_response": "estimate",
+      "expected_complexity": "O(R * C)"
+    },
+    {
+      "case_id": "axioma-bfs-v2-j12",
+      "baseline_response": "unknown",
+      "baseline_estimate": "unknown (data-dependent or incomplete loop)",
+      "development_response": "estimate",
+      "development_estimate": "O(R * C)",
+      "expected_response": "estimate",
+      "expected_complexity": "O(R * C)"
+    },
+    {
+      "case_id": "axioma-bfs-v2-j13",
+      "baseline_response": "unknown",
+      "baseline_estimate": "unknown (data-dependent or incomplete loop)",
+      "development_response": "estimate",
+      "development_estimate": "O((R * C)^2)",
+      "expected_response": "estimate",
+      "expected_complexity": "O((R * C)^2)"
+    },
+    {
+      "case_id": "axioma-bfs-v2-p11",
+      "baseline_response": "unknown",
+      "baseline_estimate": "unknown (data-dependent loop bound)",
+      "development_response": "estimate",
+      "development_estimate": "O(R * C)",
+      "expected_response": "estimate",
+      "expected_complexity": "O(R * C)"
+    }
+  ],
+  "input_sha256": {
+    "source_packet": "d7f997fee6a1317e164f20e59dac5f2edd0da6398f0c6d8a33b9f8f455ab29b1",
+    "frozen_gold_labels": "60af3adc6ecdb39cf0590eead0694e8d1d3b0bdf8ed8b48d7f06638def8dea9d",
+    "source_manifest": "f2c4564f3015670ee0c245e40771ee50c94466b2a7d18a87515c5f2e2f52799d",
+    "java_analyzer": "1f5274157f51946c221c641e65091027e76d6f4cdb8cf969d6828f063f94d8bb",
+    "python_analyzer": "548e6208484bd4c545afd300de232c436d52d430c3520b6db914e962a4119c6d",
+    "java_complexity_tests": "64f3d96449af215987eca6a1637676b38fe23adbb046a1841b57e43ee63b719a",
+    "python_complexity_tests": "301cfd3d9de30ef5c6be82a5fbcc8930463705907fcd93854c353f06711e3bb8",
+    "runner": "c072b27c9702f466844530c20fe65299563f24489c41d2b33063ca31ceefba89",
+    "scorer": "88abacbd16fc06e436a7f8385eb716de4fa5e678b531416614115b527ae42fbc",
+    "baseline_predictions": "bb24cd62b73efd01ddbaec51b87fbb97d71805ed11fafdd542aa9859cf8e730a",
+    "baseline_score": "29f2c720c00b90de238d1b2754dfe7cd95cad6456138c4a7a4215e06c7c506b7",
+    "prior_development_score": "5aa46646b79850e0f38a3c89cc3bac5e567e5a93c2ffa31b3d911c8a8733198e",
+    "development_predictions": "292dbbf181c8c81e9a3fbf82cb6110a8e4d7e9496a6c0b688318f885464a40b7",
+    "development_score": "d45f010419a4777b5073b33abad7b3971518f65d5c7ad3aae4568fefffcb1f77",
+    "development_case_csv": "f919cfb88384e7588e1678b6c7c59f9e7143a01aca5a878ad5b19cc6c1e4dedd"
+  },
+  "limitations": [
+    "This is development data, not an untouched evaluation set.",
+    "The packet contains BFS-focused examples only.",
+    "Exact results apply only to the eight estimates emitted on this 28-case packet; they do not establish general complexity accuracy.",
+    "No timing measurements or asymptotic proof are claimed."
+  ]
+}

@@ -57,6 +57,7 @@ export interface TestCaseResult {
   origin: 'catalog_sample' | 'generated_differential' | 'reference_validation' | 'property_check' | 'program_execution' | 'unknown'
   duration_ms: number | null
   details: Record<string, unknown>
+  input_preview?: { data: Record<string, unknown>; sha256: string; truncated: boolean } | null
 }
 
 export interface OptimizationProposal {
@@ -72,6 +73,38 @@ export interface OptimizationProposal {
 export interface OptimizationProposalResponse {
   proposals: OptimizationProposal[]
   message: string
+}
+
+export interface GemmaReviewResponse {
+  provider: 'Google Gemini API'
+  model: string
+  prompt_id: 'axioma-gemma-review-v7'
+  evidence_type: 'model'
+  confidence: 'low'
+  advisory: string
+  axioma_evidence: {
+    test_counts: { total: number; passed: number; failed: number; skipped: number }
+    complexity_estimate: {
+      estimate: string
+      method: string
+      confidence: string
+      methods_disagree: boolean
+      explanation: string | null
+    } | null
+    code_signals: { kind?: string; label?: string; line?: number }[]
+    failed_cases: {
+      name: string
+      failure_kind: string
+      expected: unknown
+      observed: unknown
+      input: unknown
+      diagnostic?: string | null
+      source_location?: { file?: string; line: number; column?: number } | null
+    }[]
+    sample_passed_names: string[]
+    analysis_limitations: string[]
+  }
+  limitations: string[]
 }
 
 export interface ProblemMatch {

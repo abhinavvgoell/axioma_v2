@@ -215,6 +215,15 @@ public class Harness {{
         return java.util.Objects.equals(left, right);
     }}
 
+    static String sourceLocation(Throwable error, String className) {{
+        for (StackTraceElement frame : error.getStackTrace()) {{
+            if (frame.getClassName().equals(className) && frame.getLineNumber() > 0) {{
+                return frame.getFileName() + ":" + frame.getLineNumber();
+            }}
+        }}
+        return "";
+    }}
+
     static String quote(String value) {{
         StringBuilder out = new StringBuilder("\\\"");
         for (char c : value.toCharArray()) {{
@@ -461,7 +470,9 @@ public class Harness {{
                 failureKind = "runtime_error";
                 Throwable cause = error instanceof java.lang.reflect.InvocationTargetException && error.getCause() != null ? error.getCause() : error;
                 reason = cause.getClass().getSimpleName() + ": " + String.valueOf(cause.getMessage());
-                if (reason.length() > 300) reason = reason.substring(0, 300);
+                if (reason.length() > 240) reason = reason.substring(0, 240);
+                String location = sourceLocation(cause, {_java_string(class_name)});
+                if (!location.isEmpty()) reason += " [" + location + "]";
             }}
             sampleOutcomes.add(outcome);
             allExecutionChecksPassed &= outcome.equals("passed");

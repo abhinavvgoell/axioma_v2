@@ -1,0 +1,14 @@
+{
+  "dataset_id": "axioma-independent-bfs-2026-10-29-v1",
+  "case_file_sha256": "ba79da949e040b42ff24426559b41cf88fa1417fcce99c597b136c058037af40",
+  "label_file_sha256": "9bda67401a794613b4ac01fd351af8f4e0e3904f0c9464d4254efef930d95298",
+  "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "analyzer_source_sha256": {
+    "java_complexity.py": "4e1d3778a140c9b55b22b34a0d17da734778a0e0acf09fdb1196b989ead4558b",
+    "python_complexity.py": "378ab6344620d1606f5a93ebbec96cba8bf9c259804ded3a6057aa87bf3774ea"
+  },
+  "rule_version": "bounded_bfs_traversal_v1",
+  "run_at_utc": "2026-10-29T17:46:08.809966+00:00",
+  "python_version": "3.14.3",
+  "command": "services/api/.venv/Scripts/python.exe evaluation/mode1/bfs-independent-2026-10-29-v1/run_independent_bfs_eval.py"
+}

@@ -47,6 +47,7 @@ import os
 import statistics
 import sys
 import tracemalloc
+import traceback
 
 spec = json.loads({payload!r})
 json_dumps = json.dumps
@@ -88,6 +89,13 @@ def call(namespace, sample, copy_inputs=True):
         args = deepcopy(sample.get("args", [])) if copy_inputs else sample.get("args", [])
         kwargs = deepcopy(sample.get("kwargs", {{}})) if copy_inputs else sample.get("kwargs", {{}})
         return function(*args, **kwargs)
+
+def submission_location(exc):
+    frames = traceback.extract_tb(exc.__traceback__)
+    frame = next((item for item in reversed(frames) if item.filename.endswith("submission.py")), None)
+    if frame is None:
+        return None
+    return {{"file": "submission.py", "line": frame.lineno, "function": frame.name}}
 
 def check_property(namespace, sample, result):
     checker = namespace.get("check")
@@ -199,6 +207,9 @@ for sample in spec["samples"]:
                 result["details"] = {{"expected": expected, "actual": actual, "failure_kind": "incorrect_output"}}
         except BaseException as exc:
             result["details"] = {{"error": type(exc).__name__ + ": " + str(exc)[:300], "failure_kind": "runtime_error"}}
+            location = submission_location(exc)
+            if location is not None:
+                result["details"]["source_location"] = location
     results.append(result)
 
     if optimized is not None:

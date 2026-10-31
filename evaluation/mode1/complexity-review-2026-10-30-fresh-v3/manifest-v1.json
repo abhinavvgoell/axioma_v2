@@ -1,0 +1,54 @@
+{
+  "dataset_id": "axioma-20261030-external-multifamily-proposed-v1",
+  "status": "proposed_pending_owner_confirmation",
+  "partition": "candidate_evaluation_not_frozen",
+  "case_count": 5,
+  "languages": {
+    "python": 3,
+    "java": 2
+  },
+  "families": [
+    "search",
+    "sorting",
+    "tree_traversal",
+    "dynamic_programming",
+    "graph_traversal"
+  ],
+  "case_file": "review-packet-v1.jsonl",
+  "case_file_sha256": "c815bfcb50c869d2dec14d764cf44536f7170a996ab90484d4592da429610a25",
+  "source_sha256": {
+    "axioma-20261030-v3-01": "bf2d0a3cfb68b0518857385cfb41fccebd21c4884b1bd00f44360027b584b88e",
+    "axioma-20261030-v3-02": "2b244e03a5831e74fc615090828949d6155b56eb1e898e34e021c73ac0723b75",
+    "axioma-20261030-v3-03": "828ca8cdba0a2f30dbace78ca4017eb83beea7266928d41de89b24cc6db434d2",
+    "axioma-20261030-v3-04": "ed98d5f455bd5e792a734d763bae810767a679333f3f160f353b2769ded84b5b",
+    "axioma-20261030-v3-05": "830a110a2827d491a5ce9efc4dd49110171950b587ddc2e379c89016c80690e0"
+  },
+  "upstream_repositories": {
+    "TheAlgorithms/Python": {
+      "commit": "6e03a48579ca212a08b36be00378f887dc41a003",
+      "license": "MIT",
+      "license_file": "LICENSE-TheAlgorithms-Python.md"
+    },
+    "TheAlgorithms/Java": {
+      "commit": "410f08753505a0af9e46423396e8768bc97cbc1c",
+      "license": "MIT",
+      "license_file": "LICENSE-TheAlgorithms-Java.md"
+    }
+  },
+  "reviewed_by": null,
+  "review_date": null,
+  "gold_labels_frozen": false,
+  "analyzer_run": false,
+  "previously_used_sets_excluded": [
+    "complexity-review-2026-10-22",
+    "complexity-review-2026-10-29 packets 01-04",
+    "bfs-independent-2026-10-29-v1",
+    "bfs-fresh-v2-review-2026-10-30"
+  ],
+  "notes": [
+    "This is a five-case pilot, not the 30-50-case broad evaluation recommended by the evaluation plan.",
+    "The source comes from two separately pinned upstream repositories not used by the prior Axioma evaluation packets.",
+    "Labels and assumptions are proposals and require independent owner review before freezing or analyzer execution.",
+    "No Axioma predictions are included."
+  ]
+}

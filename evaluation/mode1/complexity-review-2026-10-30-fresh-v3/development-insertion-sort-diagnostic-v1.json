@@ -1,0 +1,34 @@
+{
+  "artifact_type": "development_calibration_diagnostic",
+  "created_at": "2026-10-30T18:02:26.706568+00:00",
+  "scope": "single-case analyzer diagnostic; not a formal evaluation",
+  "frozen_evaluation_rerun": false,
+  "case_id": "axioma-20261030-v3-02",
+  "expected_complexity": "O(n^2)",
+  "source_sha256": "2b244e03a5831e74fc615090828949d6155b56eb1e898e34e021c73ac0723b75",
+  "analyzer_source_sha256": "b6403915366c2e284433eac5d5c2fc5faf0c9fb2fb71cb7ec409a4c575c72c81",
+  "prediction": {
+    "method": "static_ast_insertion_sort",
+    "estimate": "O(n^2)",
+    "confidence": "low",
+    "explanation": "Recognized insertion sort: each outer iteration may shift a linear number of earlier items, giving O(n^2) worst-case time and O(n) best-case time when already sorted. This assumes constant-time comparisons and indexed sequence access; the syntax rule is a bounded heuristic. Called helper functions are not included; this estimate is not a proof.",
+    "signals": [
+      {
+        "kind": "insertion_sort",
+        "label": "Forward insertion scan with bounded backward shifts",
+        "line": 82
+      },
+      {
+        "kind": "loop",
+        "label": "for loop",
+        "line": 82
+      },
+      {
+        "kind": "loop",
+        "label": "while loop",
+        "line": 84
+      }
+    ]
+  },
+  "interpretation": "The bounded syntax recognizer matches this reviewed insertion-sort source. This calibration case is not independent evaluation evidence and does not establish general insertion-sort recognition accuracy."
+}

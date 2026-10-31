@@ -1,0 +1,83 @@
+{
+  "dataset_id": "axioma-20261029-review-packet-04",
+  "partition": "approved_calibration_diagnostic_development_case",
+  "label_file": "gold-reviewed-04.jsonl",
+  "label_file_sha256": "6b81097959a0c48f430fc6215883a4f843a0b96386463e85c1ad2580e3922f45",
+  "case_file": "review-set-04.jsonl",
+  "case_file_sha256": "46ae812f921c97d6bf5d4605ebeeb3832a58e489360555f66ff4c4d4e4237734",
+  "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "analyzer_source_sha256": "afc6d785f62bdd5474a00b1e74271e791c95d15134d33f6c0c023dc76d76024b",
+  "run_at_utc": "2026-10-29T17:20:53.697474+00:00",
+  "python_version": "3.14.3",
+  "benchmark_measurements": {
+    "state": "not_run"
+  },
+  "results": [
+    {
+      "id": "axioma-20261029-18",
+      "title": "Next greater element with a monotonic stack",
+      "language": "java",
+      "entrypoint": "Solution.nextGreater",
+      "source_sha256": "e2ef278dd715dde5a42c4fe0d952df4194ce162d3a07de347cfb7e94e16d11e2",
+      "expected_time": "O(n)",
+      "expected_rationale": "Each index is pushed once and popped at most once across the scan and final drain.",
+      "actual_time": "O(n)",
+      "status": "exact",
+      "method": "static_java_amortized_monotonic_stack_v1",
+      "confidence": "low",
+      "explanation": "Recognized one ArrayDeque push for each array index and a value-ordered pop loop. Each index is pushed once and, after it is popped, is not reinserted; the optional final drain also removes each remaining index once. Total stack operations are therefore O(n) amortized. This bounded tokenizer pattern is a heuristic, not a proof. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+      "monotonic_stack_evidence": {
+        "language": "java",
+        "rule_version": "java_monotonic_stack_amortized_v1",
+        "pattern_id": "java_arraydeque_single_push_monotonic_pop",
+        "source_locations": {
+          "outer_for_token_index": 26,
+          "monotonic_while_token_index": 43,
+          "final_drain_while_token_index": 90,
+          "push_token_index": 82,
+          "pop_token_indices": [
+            69,
+            101
+          ],
+          "peek_token_index": 54
+        },
+        "bounded_push_evidence": {
+          "container": "ArrayDeque",
+          "outer_loop_bound": "i from 0 to values.length - 1",
+          "push_sites": 1,
+          "push_argument": "i",
+          "push_once_per_iteration": true
+        },
+        "bounded_removal_evidence": {
+          "pop_sites": 2,
+          "monotonic_condition": "values[stack.peek()] < values[i]",
+          "popped_entries_reinserted": false,
+          "optional_final_drain": true
+        },
+        "amortized_argument": "The outer loop pushes each array index once. Each pop removes the current top permanently, so each index can be popped at most once by the monotonic loop or the final drain. Total pushes and pops are O(n).",
+        "complexity": "O(n)",
+        "assumptions": [
+          "The loop traverses the array once from index 0 to values.length - 1.",
+          "ArrayDeque push, peek, pop, and isEmpty are O(1).",
+          "Only the recognized push site mutates the stack by adding entries.",
+          "Only the recognized pop sites remove entries; popped indices are not reinserted.",
+          "No hidden helper work or aliases mutate the stack.",
+          "This is a heuristic static match, not a formal proof for arbitrary Java code."
+        ],
+        "limitations": [
+          "Locations are token offsets because this tokenizer does not retain source line numbers.",
+          "Only ArrayDeque with direct push, peek, pop, and isEmpty calls is recognized.",
+          "Aliases, helper calls, additional stack mutations, and other control flow are not analyzed."
+        ],
+        "inference_kind": "heuristic_static_amortized_argument"
+      }
+    }
+  ],
+  "summary": {
+    "eligible": 1,
+    "exact": 1,
+    "mismatch": 0,
+    "unsupported": 0
+  },
+  "note": "Approved calibration data used for diagnostic development, not an untouched holdout. This is a heuristic static estimate, not a proof or a timing measurement."
+}

@@ -1,0 +1,28 @@
+{
+  "dataset_id": "axioma-20261029-review-packet-04",
+  "status": "awaiting_owner_review",
+  "partition": "calibration",
+  "case_count": 5,
+  "languages": {
+    "java": 3,
+    "python": 2
+  },
+  "families": [
+    "recursive_search",
+    "dynamic_programming",
+    "monotonic_stack",
+    "grid_bfs",
+    "quicksort"
+  ],
+  "case_file": "review-set-04.jsonl",
+  "case_file_sha256": "46ae812f921c97d6bf5d4605ebeeb3832a58e489360555f66ff4c4d4e4237734",
+  "packet_file": "packet-04.md",
+  "case_source_sha256": {
+    "axioma-20261029-16": "5b2098fcb1b4b01eda619fa6b11a209c4956867f249399ca5fe80ec811a1bd6a",
+    "axioma-20261029-17": "17b0da9ff1f179414dabbdff71d2e80a3bebe69b3e6e6fd8e844689ef0e84768",
+    "axioma-20261029-18": "e2ef278dd715dde5a42c4fe0d952df4194ce162d3a07de347cfb7e94e16d11e2",
+    "axioma-20261029-19": "97f3b21cc634870e1f6dbfbc2f36687e1e7614e8d3dd89af9b44d7a776854358",
+    "axioma-20261029-20": "71811775b1129a5a3c4fe5ea6c67f13e92b7deb1205a15a80b6b5c3177e7092d"
+  },
+  "freshness_note": "New calibration fixtures only. Do not run Axioma on these cases until the owner reviews and freezes expected labels and rationales. This packet is not final evaluation data."
+}

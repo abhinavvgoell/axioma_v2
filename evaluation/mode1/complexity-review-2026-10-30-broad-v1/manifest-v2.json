@@ -1,0 +1,66 @@
+{
+  "dataset_id": "axioma-20261030-external-broad-calibration-v2",
+  "status": "candidate_review_in_progress_revised_proposal",
+  "target_case_count": 30,
+  "target_range": [
+    30,
+    50
+  ],
+  "current_batch": "01",
+  "batch_size": 5,
+  "case_count_current_batch": 5,
+  "case_ids": [
+    "axioma-20261030-broad-001",
+    "axioma-20261030-broad-002",
+    "axioma-20261030-broad-003",
+    "axioma-20261030-broad-004",
+    "axioma-20261030-broad-005"
+  ],
+  "languages": {
+    "python": 3,
+    "java": 2
+  },
+  "families": [
+    "array_dynamic_programming",
+    "dynamic_programming",
+    "graph_traversal",
+    "sliding_window",
+    "string_search"
+  ],
+  "candidate_file": "candidate-cases-batch-01-v2.jsonl",
+  "candidate_file_sha256": "dc631455f4a5d44447f598d46137b4f2ab738d07dfb61dfeb48d3040aa400276",
+  "source_sha256": {
+    "axioma-20261030-broad-001": "621e11bd4a320c7437bba42e29715608b05e84a5939562715cde8e32a576a529",
+    "axioma-20261030-broad-002": "e844589a5505736ab8a8ee6aee2494f124a7c56c28d92ab860fb817993f0e433",
+    "axioma-20261030-broad-003": "2b7b74597b3246e29ff751dfae3399b833fe7ae6b3367a1fd959e9c7c18a2816",
+    "axioma-20261030-broad-004": "2d23e1c8f889ef2784b78faab71959a7e374281c39e7cd36658848ffba85567c",
+    "axioma-20261030-broad-005": "6d2f69289af704e62a323b78a104b538297cce92fe19478c1d4db273b6cccea2"
+  },
+  "upstream_repositories": {
+    "TheAlgorithms/Python": {
+      "commit": "6e03a48579ca212a08b36be00378f887dc41a003",
+      "license": "MIT",
+      "license_file": "LICENSE-TheAlgorithms-Python.md"
+    },
+    "TheAlgorithms/Java": {
+      "commit": "410f08753505a0af9e46423396e8768bc97cbc1c",
+      "license": "MIT",
+      "license_file": "LICENSE-TheAlgorithms-Java.md"
+    }
+  },
+  "previously_used_sets_excluded": [
+    "complexity-review-2026-10-22",
+    "complexity-review-2026-10-29 packets 01-04",
+    "bfs-independent-2026-10-29-v1",
+    "bfs-fresh-v2-review-2026-10-30",
+    "complexity-review-2026-10-30-fresh-v3"
+  ],
+  "reviewed_by": null,
+  "review_date": null,
+  "gold_labels_frozen": false,
+  "analyzer_run": false,
+  "independence_note": "New source files and case IDs are used; these cases share the same two upstream repositories as the five-case v3 pilot. This candidate set is for calibration, not a repository-held-out final evaluation. Reserve different repositories or a later time slice for the untouched evaluation set.",
+  "supersedes": "manifest-v1.json / candidate-cases-batch-01-v1.jsonl; originals preserved unchanged",
+  "revision_note": "Corrected edit-distance time and space bounds to include boundary work when either string is empty. All source snapshots and source hashes are unchanged; all owner decisions remain pending. Candidate records use the evaluator-supported calibration partition value.",
+  "partition": "calibration"
+}

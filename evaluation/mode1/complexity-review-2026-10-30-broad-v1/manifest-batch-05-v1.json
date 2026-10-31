@@ -1,0 +1,64 @@
+{
+  "dataset_id": "axioma-20261030-external-broad-calibration-v2",
+  "status": "candidate_review_in_progress",
+  "target_case_count": 30,
+  "target_range": [
+    30,
+    50
+  ],
+  "current_batch": "05",
+  "batch_size": 5,
+  "case_count_current_batch": 5,
+  "case_ids": [
+    "axioma-20261030-broad-021",
+    "axioma-20261030-broad-022",
+    "axioma-20261030-broad-023",
+    "axioma-20261030-broad-024",
+    "axioma-20261030-broad-025"
+  ],
+  "languages": {
+    "python": 3,
+    "java": 2
+  },
+  "families": [
+    "graph_traversal",
+    "searching",
+    "dynamic_programming"
+  ],
+  "candidate_file": "candidate-cases-batch-05-v1.jsonl",
+  "candidate_file_sha256": "a401a89e5b7362e918f87afcbabd13ed6a9a5e5ca3ce180e2795889f94ca26ee",
+  "source_sha256": {
+    "axioma-20261030-broad-021": "eebe79cba9ede0138a97bd21d3bcce7ca8749b5e05b735859fa22b4d1077552a",
+    "axioma-20261030-broad-022": "24ca1e641d1a16496fc73b29f4cb2d7a997e630861af4f04f04fc35b5c018b77",
+    "axioma-20261030-broad-023": "4b60ccb26882d8fa5d87e4e2417d9ed810fb12dc4e386f6689b10a2b985bda77",
+    "axioma-20261030-broad-024": "4dac00819b9665faf71aed11c37c83e0782acf83216a38f61fb50894b09568ed",
+    "axioma-20261030-broad-025": "d339d3eaa4e38fbb722b5b4c951412516afe40eea8c32db470c75c28083710c7"
+  },
+  "upstream_repositories": {
+    "TheAlgorithms/Python": {
+      "commit": "6e03a48579ca212a08b36be00378f887dc41a003",
+      "license": "MIT",
+      "license_file": "LICENSE-TheAlgorithms-Python.md"
+    },
+    "TheAlgorithms/Java": {
+      "commit": "410f08753505a0af9e46423396e8768bc97cbc1c",
+      "license": "MIT",
+      "license_file": "LICENSE-TheAlgorithms-Java.md"
+    }
+  },
+  "previously_used_sets_excluded": [
+    "complexity-review-2026-10-22",
+    "complexity-review-2026-10-29 packets 01-04",
+    "bfs-independent-2026-10-29-v1",
+    "bfs-fresh-v2-review-2026-10-30",
+    "complexity-review-2026-10-30-fresh-v3"
+  ],
+  "reviewed_by": null,
+  "review_date": null,
+  "gold_labels_frozen": false,
+  "analyzer_run": false,
+  "independence_note": "Calibration only; pinned upstream sources; not a repository-held-out final evaluation.",
+  "supersedes": null,
+  "revision_note": "Five proposed source-backed cases; labels pending owner review; Axioma not run.",
+  "partition": "calibration"
+}

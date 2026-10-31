@@ -1,0 +1,45 @@
+{
+  "dataset_id": "axioma-20261029-review-packet-04",
+  "status": "labels_frozen_before_analysis",
+  "partition": "calibration",
+  "case_count": 5,
+  "languages": {
+    "java": 3,
+    "python": 2
+  },
+  "families": [
+    "recursive_search",
+    "dynamic_programming",
+    "monotonic_stack",
+    "grid_bfs",
+    "quicksort"
+  ],
+  "case_file": "review-set-04.jsonl",
+  "case_file_sha256": "46ae812f921c97d6bf5d4605ebeeb3832a58e489360555f66ff4c4d4e4237734",
+  "label_file": "gold-reviewed-04.jsonl",
+  "label_file_sha256": "6b81097959a0c48f430fc6215883a4f843a0b96386463e85c1ad2580e3922f45",
+  "reviewed_by": "project_owner",
+  "review_date": "2026-10-29",
+  "scored_dimensions": [
+    "worst_case_time_complexity",
+    "auxiliary_space_complexity"
+  ],
+  "space_convention": "Exclude input and returned output storage; include auxiliary data structures and recursion stack. Use the usual scalar word/cell model; Python big-integer bit costs are documented but not scored.",
+  "ambiguity_policy": "Any ambiguous or unscorable dimension is marked before predictions and excluded from that dimension's eligible denominator with the reason retained. Analyzer abstentions remain eligible and count as uncovered and incorrect for conservative end-to-end accuracy.",
+  "case_source_sha256": {
+    "axioma-20261029-16": "5b2098fcb1b4b01eda619fa6b11a209c4956867f249399ca5fe80ec811a1bd6a",
+    "axioma-20261029-17": "17b0da9ff1f179414dabbdff71d2e80a3bebe69b3e6e6fd8e844689ef0e84768",
+    "axioma-20261029-18": "e2ef278dd715dde5a42c4fe0d952df4194ce162d3a07de347cfb7e94e16d11e2",
+    "axioma-20261029-19": "97f3b21cc634870e1f6dbfbc2f36687e1e7614e8d3dd89af9b44d7a776854358",
+    "axioma-20261029-20": "71811775b1129a5a3c4fe5ea6c67f13e92b7deb1205a15a80b6b5c3177e7092d"
+  },
+  "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "analyzer_branch": "main",
+  "analyzer_method": "Direct static calls to analyze_java_complexity/analyze_python_complexity, matching evaluation/mode1/replay_reviewed_calibration.py. No benchmark run.",
+  "analyzer_source_sha256": {
+    "python_complexity.py": "ceacb44a10704a4b02cdee70bc56979f611d628bf13a60615e7c911faecda171",
+    "java_complexity.py": "247e1e0506acebd384e7f56f6131ef49d61950c91b7802ff5ca47e2118859d1d"
+  },
+  "working_tree_note": "The overall checkout has pre-existing modifications and untracked files. The two analyzer source files are clean relative to the recorded checkout; no analyzer code was modified for this evaluation.",
+  "freshness_note": "Approved source fixtures in a calibration/diagnostic partition; not a final holdout. Do not use these cases to tune and continue calling them an untouched evaluation set."
+}

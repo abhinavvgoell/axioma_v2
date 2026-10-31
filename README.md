@@ -2,6 +2,12 @@
 
 Axioma is an evidence-based code analysis platform for Java and Python. It is being built as a student project in small, reviewable phases. Every report is meant to say what was checked, how it was checked, and how strong that evidence is. A green result means the configured checks passed; it is not a proof of correctness.
 
+## Open-source scope
+
+Axioma's application code is released under the MIT License. The repository does not include the locally imported problem catalog, databases, credentials, model weights, or generated local reports. Reproduce the catalog locally using the documented importer and verify the source dataset's redistribution terms before sharing imported problem content.
+
+Mode 1's core analysis remains deterministic and evidence-first: it uses static heuristics, sandbox execution, and optional benchmark measurements. It has no trained ML model. An optional, user-invoked Gemma 4 advisory is separately labeled as low-confidence model evidence; it cannot change execution outcomes or Axioma's complexity estimate. After a completed analysis, the hosted Gemini API path sends the saved problem and code plus a bounded summary of Axioma's recorded results to Google. It requires a server-side API key.
+
 The API contract is documented in [docs/api-contract.md](docs/api-contract.md). The Mode 1 React workspace lives in [frontend/](frontend/); the separate `frontend-prototype/` folder is a visual reference and is not part of the running app.
 
 ## Architecture
@@ -37,7 +43,7 @@ The API validates requests and stores jobs. A separate worker claims jobs and ex
 - Browser-local recent run history stores job IDs, self-assigned topic tags, and report summaries (never source code); users can reopen server-side reports, export the displayed job and report as JSON, clear local history, and review descriptive topic failure counts and recent complexity estimates.
 - Function jobs can provide one reference and an independent second reference; both must match samples and each other before their outputs are used for differential checks. The UI describes this as corroboration, not proof.
 - Function-problem UI can submit a user-provided optimization candidate and optional benchmark inputs; it shows equivalence counts, before/after estimates, measurements, and their limits. It does not generate or silently apply code changes.
-- Rule-based proposals recognize a narrow integer-array sum pattern and a nested Two Sum search in Python/Java. The analyzer can present the Two Sum hash-map candidate and run it against the matched test pack plus increasing-size benchmarks; suggestions stay static and low-confidence until checked, and no LLM provider is called.
+- Rule-based proposals recognize a narrow integer-array sum pattern and a nested Two Sum search in Python/Java. The analyzer can present the Two Sum hash-map candidate and run it against the matched test pack plus increasing-size benchmarks; suggestions stay static and low-confidence until checked. An optional Gemma 4 review compares the candidate with Axioma's complexity estimate and may recommend a more efficient algorithm; its alternative complexity is unverified and does not replace these checks.
 
 ### Not built or not verified yet
 

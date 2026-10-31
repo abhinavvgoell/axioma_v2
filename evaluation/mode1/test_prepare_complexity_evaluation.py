@@ -4,6 +4,32 @@ import json
 import pytest
 
 from prepare_complexity_evaluation import combine, load_gold, load_predictions
+from complexity_normalization import normalize_complexity_estimate
+
+
+@pytest.mark.parametrize(
+    ("estimate", "expected"),
+    [
+        ("O(log n)", "O(log n)"),
+        ("O(logn)", "O(log n)"),
+        ("O(n logn)", "O(n log n)"),
+        ("O(n^2)", "O(n^2)"),
+        ("O(n²)", "O(n^2)"),
+        ("unknown (recursion detected)", "unknown"),
+    ],
+)
+def test_normalize_complexity_estimate_preserves_canonical_classes(estimate, expected) -> None:
+    normalized, note = normalize_complexity_estimate(estimate)
+
+    assert normalized == expected
+    assert note is None
+
+
+def test_normalize_complexity_estimate_maps_graph_bound_only_when_declared() -> None:
+    normalized, note = normalize_complexity_estimate("O(V + E)")
+
+    assert normalized == "O(n)"
+    assert "n = V + E" in note
 
 
 def _write_jsonl(path, records) -> None:
@@ -60,6 +86,96 @@ def test_join_keeps_review_and_report_provenance(tmp_path) -> None:
             "predictions_file_sha256": hashlib.sha256(prediction_path.read_bytes()).hexdigest(),
         }
     ]
+
+
+def test_join_preserves_optional_family_and_language_metadata(tmp_path) -> None:
+    gold_path = tmp_path / "gold.jsonl"
+    prediction_path = tmp_path / "predictions.jsonl"
+    _write_jsonl(
+        gold_path,
+        [{
+            "id": "case-1",
+            "expected": "O(n)",
+            "partition": "evaluation",
+            "reviewer": "reviewer-1",
+            "rationale": "One pass.",
+            "source_sha256": "a" * 64,
+            "family": "graph_traversal",
+            "language": "java",
+        }],
+    )
+    gold = load_gold(gold_path)
+    _write_jsonl(
+        prediction_path,
+        [{
+            "id": "case-1",
+            "method": "static_java",
+            "predicted": "O(n)",
+            "report_sha256": "b" * 64,
+        }],
+    )
+
+    joined = combine(gold, load_predictions(prediction_path, gold), "c" * 64, "d" * 64)
+
+    assert joined[0]["family"] == "graph_traversal"
+    assert joined[0]["language"] == "java"
+
+
+def test_join_selects_expected_label_by_prediction_dimension(tmp_path) -> None:
+    gold_path = tmp_path / "gold.jsonl"
+    prediction_path = tmp_path / "predictions.jsonl"
+    _write_jsonl(
+        gold_path,
+        [{
+            "id": "case-1",
+            "expected_time": "O(n log n)",
+            "expected_auxiliary_space": "O(n)",
+            "partition": "evaluation",
+            "reviewer": "reviewer-1",
+            "rationale": "Reviewed time and space bounds.",
+            "source_sha256": "a" * 64,
+        }],
+    )
+    gold = load_gold(gold_path)
+    _write_jsonl(
+        prediction_path,
+        [
+            {"id": "case-1", "method": "static", "dimension": "time", "predicted": "O(n log n)", "report_sha256": "b" * 64},
+            {"id": "case-1", "method": "static", "dimension": "auxiliary_space", "predicted": "unknown", "report_sha256": "c" * 64},
+        ],
+    )
+
+    joined = combine(gold, load_predictions(prediction_path, gold), "d" * 64, "e" * 64)
+
+    assert [(row["dimension"], row["expected"], row["predicted"]) for row in joined] == [
+        ("auxiliary_space", "O(n)", "unknown"),
+        ("time", "O(n log n)", "O(n log n)"),
+    ]
+
+
+def test_predictions_must_cover_each_labeled_dimension(tmp_path) -> None:
+    gold_path = tmp_path / "gold.jsonl"
+    prediction_path = tmp_path / "predictions.jsonl"
+    _write_jsonl(
+        gold_path,
+        [{
+            "id": "case-1",
+            "expected_time": "O(n)",
+            "expected_auxiliary_space": "O(1)",
+            "partition": "evaluation",
+            "reviewer": "reviewer-1",
+            "rationale": "Reviewed both dimensions.",
+            "source_sha256": "a" * 64,
+        }],
+    )
+    gold = load_gold(gold_path)
+    _write_jsonl(
+        prediction_path,
+        [{"id": "case-1", "method": "static", "dimension": "time", "predicted": "O(n)", "report_sha256": "b" * 64}],
+    )
+
+    with pytest.raises(ValueError, match="case-1/auxiliary_space"):
+        load_predictions(prediction_path, gold)
 
 
 def test_predictions_are_sorted_deterministically(tmp_path) -> None:
@@ -218,4 +334,22 @@ def test_gold_rejects_duplicate_solution_ids(tmp_path) -> None:
     _write_jsonl(path, [record, record])
 
     with pytest.raises(ValueError, match="duplicate solution id"):
+        load_gold(path)
+
+
+@pytest.mark.parametrize("field", ["family", "language"])
+def test_gold_rejects_empty_slice_metadata(tmp_path, field) -> None:
+    path = tmp_path / "invalid-metadata.jsonl"
+    record = {
+        "id": "case-1",
+        "expected": "O(n)",
+        "partition": "evaluation",
+        "reviewer": "reviewer-1",
+        "rationale": "Reviewed control.",
+        "source_sha256": "a" * 64,
+        field: " ",
+    }
+    _write_jsonl(path, [record])
+
+    with pytest.raises(ValueError, match=field):
         load_gold(path)

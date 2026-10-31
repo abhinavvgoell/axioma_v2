@@ -47,6 +47,73 @@ def test_score_reports_exact_within_one_method_and_confidence_metrics(tmp_path) 
     assert "Without separate partitions" in report["confidence_note"]
 
 
+def test_score_reports_family_and_language_slices(tmp_path) -> None:
+    records = [
+        {
+            "id": "case-1",
+            "method": "static",
+            "expected": "O(log n)",
+            "predicted": "O(log n)",
+            "family": "search",
+            "language": "python",
+        },
+        {
+            "id": "case-2",
+            "method": "static",
+            "expected": "O(n^2)",
+            "predicted": "unknown",
+            "family": "sorting",
+            "language": "python",
+        },
+        {
+            "id": "case-3",
+            "method": "static",
+            "expected": "O(n)",
+            "predicted": "O(n)",
+            "family": "graph_traversal",
+            "language": "java",
+        },
+    ]
+
+    records_path = tmp_path / "slices.jsonl"
+    records_path.write_text("".join(json.dumps(record) + "\n" for record in records), encoding="utf-8")
+    report = _score(load_records(records_path))
+
+    assert report["by_family"]["search"]["exact_accuracy"] == 1.0
+    assert report["by_family"]["sorting"]["coverage"] == 0.0
+    assert report["by_language"]["python"]["n"] == 2
+    assert report["by_language"]["java"]["exact_accuracy"] == 1.0
+
+
+def test_score_keeps_time_and_auxiliary_space_metrics_separate() -> None:
+    records = [
+        {
+            "id": "case-1",
+            "method": "static",
+            "dimension": "time",
+            "expected": "O(n)",
+            "predicted": "O(n)",
+            "partition": "evaluation",
+        },
+        {
+            "id": "case-1",
+            "method": "static",
+            "dimension": "auxiliary_space",
+            "expected": "O(1)",
+            "predicted": "unknown",
+            "partition": "evaluation",
+        },
+    ]
+
+    report = _score(records)
+
+    assert report["record_count"] == 2
+    assert report["dimensions"]["time"]["exact_accuracy"] == 1.0
+    assert report["dimensions"]["time"]["coverage"] == 1.0
+    assert report["dimensions"]["auxiliary_space"]["exact_accuracy"] == 0.0
+    assert report["dimensions"]["auxiliary_space"]["coverage"] == 0.0
+
+
 def test_unknown_counts_as_abstention_and_reports_coverage_and_selective_accuracy() -> None:
     records = [
         {
@@ -185,6 +252,25 @@ def test_load_records_rejects_duplicate_id_and_method(tmp_path) -> None:
 
     with pytest.raises(ValueError, match="duplicate id and method"):
         load_records(records_path)
+
+
+def test_load_records_allows_same_method_once_per_dimension(tmp_path) -> None:
+    path = tmp_path / "dimensions.jsonl"
+    records = [
+        {"id": "case-1", "method": "static", "expected": "O(n)", "predicted": "O(n)"},
+        {
+            "id": "case-1",
+            "method": "static",
+            "dimension": "auxiliary_space",
+            "expected": "O(1)",
+            "predicted": "O(1)",
+        },
+    ]
+    path.write_text("".join(json.dumps(record) + "\n" for record in records), encoding="utf-8")
+
+    loaded = load_records(path)
+
+    assert [record["dimension"] for record in loaded] == ["time", "auxiliary_space"]
 
 
 def test_load_records_rejects_unknown_complexity_class(tmp_path) -> None:

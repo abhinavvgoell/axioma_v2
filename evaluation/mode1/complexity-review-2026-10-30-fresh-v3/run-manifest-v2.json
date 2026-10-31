@@ -1,0 +1,25 @@
+{
+  "analyzer_commit": "55ba24c3edac23a83ebbf610be63ee3e3b30e15f",
+  "analyzer_source_sha256": {
+    "java_complexity.py": "1f5274157f51946c221c641e65091027e76d6f4cdb8cf969d6828f063f94d8bb",
+    "python_complexity.py": "548e6208484bd4c545afd300de232c436d52d430c3520b6db914e962a4119c6d",
+    "recurrence.py": "5c1a91dc9bd79fc2cf29e0577b615e5eab2ba3363f83343c53a2344aaf32cab9"
+  },
+  "approved_label_file_sha256": "cae42511139f4c38f8a383950e5494b06b2edcf7adc41af3dbf2cb1095046a31",
+  "approved_manifest_sha256": "475d9208071b6a3e2cf8d43ed11b9974b6a8c16acbd45991abbbc5c57db7975a",
+  "case_file_sha256": "c815bfcb50c869d2dec14d764cf44536f7170a996ab90484d4592da429610a25",
+  "correction": "Normalize whitespace against canonical class spellings on both sides; v1 incorrectly converted O(log n) to unknown.",
+  "dataset_id": "axioma-20261030-external-multifamily-pilot-v1",
+  "outputs": {
+    "evaluation-report-v2.json": "eb2dfe958633d8ae4031ee2112426167e6bcef0000b8a9cdb2b0085cfa560e13",
+    "joined-evaluation-v2.jsonl": "b40af7c62cff6a29920bfce840b6cc9f95657564ba6dd4be4642f3c4188c6549",
+    "predictions-v2.jsonl": "a09f11750d47ca5c1a3c5740ead845da03404af12e452f20ca7032dd5cb2feca",
+    "run-report-v2.md": "c4ba1dced13e2bb24bab3b8073f3bdcfa26297068c8523d85c2c3c74f105edf4"
+  },
+  "partition": "calibration",
+  "postprocessing_version": "complexity-label-normalizer-v2",
+  "reprocessor_source_sha256": "757aab733bf1528a1cd2455cce95ceaba16eb6b95dcbdd6ec1623c4c448824c2",
+  "run_type": "postprocessing_only_no_analyzer_rerun",
+  "source_analysis_output_sha256": "3da24429f5ef6f98afac9326b3614639e1aaa87f924d4373200be7ef28726148",
+  "source_run_manifest_sha256": "7514f5bcf59643754edd6151600ee6e0c89a3bd8bf52354e989a4c760d7d102d"
+}

@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass, field
 
 from axioma_api.contracts import ConstraintRange
+from axioma_worker.recurrence import recurrence_evidence, solve_bounded_recurrence
 
 
 @dataclass(frozen=True)
@@ -491,6 +492,140 @@ def _amortized_forward_scan(function: ast.FunctionDef | ast.AsyncFunctionDef) ->
     return False
 
 
+def _is_insertion_sort(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    """Recognize insertion sort's bounded backward shift inside a forward scan."""
+    for outer in (node for node in ast.walk(function) if isinstance(node, ast.For)):
+        loops = [
+            node
+            for node in ast.walk(function)
+            if isinstance(node, (ast.For, ast.AsyncFor, ast.While))
+        ]
+        if len(loops) != 2 or outer not in loops:
+            continue
+        if not isinstance(outer.target, ast.Name):
+            continue
+        index_name = outer.target.id
+        iterator = outer.iter
+        if not (
+            isinstance(iterator, ast.Call)
+            and isinstance(iterator.func, ast.Name)
+            and iterator.func.id == "range"
+            and len(iterator.args) == 2
+            and isinstance(iterator.args[0], ast.Constant)
+            and iterator.args[0].value == 1
+            and isinstance(iterator.args[1], ast.Call)
+            and isinstance(iterator.args[1].func, ast.Name)
+            and iterator.args[1].func.id == "len"
+            and len(iterator.args[1].args) == 1
+            and isinstance(iterator.args[1].args[0], ast.Name)
+        ):
+            continue
+        sequence = iterator.args[1].args[0].id
+        while_loop = next((node for node in outer.body if isinstance(node, ast.While)), None)
+        if while_loop is None or not isinstance(while_loop.test, ast.BoolOp):
+            continue
+        if not isinstance(while_loop.test.op, ast.And):
+            continue
+
+        has_index_guard = any(
+            isinstance(check, ast.Compare)
+            and isinstance(check.left, ast.Name)
+            and check.left.id == index_name
+            and len(check.ops) == len(check.comparators) == 1
+            and isinstance(check.ops[0], ast.Gt)
+            and isinstance(check.comparators[0], ast.Constant)
+            and check.comparators[0].value == 0
+            for check in while_loop.test.values
+        )
+        saved_keys = {
+            statement.targets[0].id
+            for statement in outer.body[: outer.body.index(while_loop)]
+            if isinstance(statement, ast.Assign)
+            and len(statement.targets) == 1
+            and isinstance(statement.targets[0], ast.Name)
+            and isinstance(statement.value, ast.Subscript)
+            and isinstance(statement.value.value, ast.Name)
+            and statement.value.value.id == sequence
+            and isinstance(statement.value.slice, ast.Name)
+            and statement.value.slice.id == index_name
+        }
+        if not has_index_guard or not saved_keys:
+            continue
+        shifts_while_out_of_order = any(
+            isinstance(check, ast.Compare)
+            and isinstance(check.left, ast.Name)
+            and check.left.id in saved_keys
+            and len(check.ops) == len(check.comparators) == 1
+            and isinstance(check.ops[0], ast.Lt)
+            and isinstance(check.comparators[0], ast.Subscript)
+            and isinstance(check.comparators[0].value, ast.Name)
+            and check.comparators[0].value.id == sequence
+            and isinstance(check.comparators[0].slice, ast.BinOp)
+            and isinstance(check.comparators[0].slice.op, ast.Sub)
+            and isinstance(check.comparators[0].slice.left, ast.Name)
+            and check.comparators[0].slice.left.id == index_name
+            and isinstance(check.comparators[0].slice.right, ast.Constant)
+            and check.comparators[0].slice.right.value == 1
+            for check in while_loop.test.values
+        )
+        shifts_previous_item = any(
+            isinstance(statement, ast.Assign)
+            and len(statement.targets) == 1
+            and isinstance(statement.targets[0], ast.Subscript)
+            and isinstance(statement.targets[0].value, ast.Name)
+            and statement.targets[0].value.id == sequence
+            and isinstance(statement.targets[0].slice, ast.Name)
+            and statement.targets[0].slice.id == index_name
+            and isinstance(statement.value, ast.Subscript)
+            and isinstance(statement.value.value, ast.Name)
+            and statement.value.value.id == sequence
+            and isinstance(statement.value.slice, ast.BinOp)
+            and isinstance(statement.value.slice.op, ast.Sub)
+            and isinstance(statement.value.slice.left, ast.Name)
+            and statement.value.slice.left.id == index_name
+            and isinstance(statement.value.slice.right, ast.Constant)
+            and statement.value.slice.right.value == 1
+            for statement in while_loop.body
+        )
+        decrements_index = any(
+            isinstance(statement, ast.AugAssign)
+            and isinstance(statement.target, ast.Name)
+            and statement.target.id == index_name
+            and isinstance(statement.op, ast.Sub)
+            and isinstance(statement.value, ast.Constant)
+            and statement.value.value == 1
+            for statement in while_loop.body
+        )
+        index_updates = [
+            statement
+            for statement in ast.walk(outer)
+            if isinstance(statement, ast.AugAssign)
+            and isinstance(statement.target, ast.Name)
+            and statement.target.id == index_name
+        ]
+        restores_saved_key = any(
+            isinstance(statement, ast.Assign)
+            and len(statement.targets) == 1
+            and isinstance(statement.targets[0], ast.Subscript)
+            and isinstance(statement.targets[0].value, ast.Name)
+            and statement.targets[0].value.id == sequence
+            and isinstance(statement.targets[0].slice, ast.Name)
+            and statement.targets[0].slice.id == index_name
+            and isinstance(statement.value, ast.Name)
+            and statement.value.id in saved_keys
+            for statement in outer.body[outer.body.index(while_loop) + 1 :]
+        )
+        if all((
+            shifts_while_out_of_order,
+            shifts_previous_item,
+            decrements_index,
+            len(index_updates) == 1,
+            restores_saved_key,
+        )):
+            return outer.lineno
+    return None
+
+
 def _is_binary_search_loop(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
     """Recognize common interval-halving searches, including lower-bound variants."""
     for loop in (node for node in ast.walk(function) if isinstance(node, ast.While)):
@@ -892,8 +1027,22 @@ def _is_z_algorithm(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | N
 
 def _is_adjacency_list_bfs(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
     """Recognize a queue traversal over adjacency lists with a visited guard."""
+    parents = {
+        child: node
+        for node in ast.walk(function)
+        for child in ast.iter_child_nodes(node)
+    }
     for outer in ast.walk(function):
         if not isinstance(outer, ast.While) or not isinstance(outer.test, ast.Name):
+            continue
+        ancestor = parents.get(outer)
+        repeated_by_outer_loop = False
+        while ancestor is not None and ancestor is not function:
+            if isinstance(ancestor, (ast.For, ast.AsyncFor, ast.While)):
+                repeated_by_outer_loop = True
+                break
+            ancestor = parents.get(ancestor)
+        if repeated_by_outer_loop:
             continue
         queue_name = outer.test.id
         initialized = any(
@@ -987,8 +1136,448 @@ def _is_adjacency_list_bfs(function: ast.FunctionDef | ast.AsyncFunctionDef) -> 
     return None
 
 
+def _is_grid_bfs(function: ast.FunctionDef | ast.AsyncFunctionDef) -> dict | None:
+    """Recognize grid component BFS with shared visited state and four fixed neighbors."""
+    parents = {
+        child: node
+        for node in ast.walk(function)
+        for child in ast.iter_child_nodes(node)
+    }
+
+    def tuple_names(node: ast.AST) -> tuple[str, ...] | None:
+        if isinstance(node, (ast.Tuple, ast.List)) and all(
+            isinstance(item, ast.Name) for item in node.elts
+        ):
+            return tuple(item.id for item in node.elts)
+        return None
+
+    def range_bound(node: ast.AST) -> str | None:
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+            return None
+        if node.func.id != "range" or len(node.args) != 1:
+            return None
+        arg = node.args[0]
+        if isinstance(arg, ast.Name):
+            return arg.id
+        if isinstance(arg, ast.Call) and isinstance(arg.func, ast.Name) and arg.func.id == "len":
+            if len(arg.args) == 1 and isinstance(arg.args[0], ast.Name):
+                return f"len({arg.args[0].id})"
+        return None
+
+    for queue_loop in (node for node in ast.walk(function) if isinstance(node, ast.While)):
+        if not isinstance(queue_loop.test, ast.Name):
+            continue
+        queue_name = queue_loop.test.id
+        dequeue = next((
+            node for node in ast.walk(queue_loop)
+            if isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and tuple_names(node.targets[0])
+            and isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Attribute)
+            and isinstance(node.value.func.value, ast.Name)
+            and node.value.func.value.id == queue_name
+            and node.value.func.attr in {"popleft", "pop"}
+        ), None)
+        current = tuple_names(dequeue.targets[0]) if dequeue is not None else None
+        if current is None or len(current) != 2:
+            continue
+        row_name, col_name = current
+        loop_ancestors = []
+        ancestor = parents.get(queue_loop)
+        while ancestor is not None and ancestor is not function:
+            if isinstance(ancestor, ast.For):
+                loop_ancestors.append(ancestor)
+            elif isinstance(ancestor, (ast.While, ast.AsyncFor)):
+                break
+            ancestor = parents.get(ancestor)
+        if len(loop_ancestors) != 2:
+            continue
+        column_loop, row_loop = loop_ancestors
+        if not isinstance(column_loop.target, ast.Name) or not isinstance(row_loop.target, ast.Name):
+            continue
+
+        neighbor_loop = next((
+            node for node in ast.walk(queue_loop)
+            if isinstance(node, ast.For)
+            and tuple_names(node.target)
+            and isinstance(node.iter, (ast.Tuple, ast.List))
+            and len(node.iter.elts) == 4
+            and all(isinstance(pair, (ast.Tuple, ast.List)) and len(pair.elts) == 2
+                    for pair in node.iter.elts)
+        ), None)
+        if neighbor_loop is None:
+            continue
+        internal_loops = [
+            node for node in ast.walk(queue_loop)
+            if isinstance(node, (ast.For, ast.AsyncFor, ast.While))
+        ]
+        if len(internal_loops) != 2:  # the queue loop and its one fixed-neighbor loop
+            continue
+        neighbor_names = tuple_names(neighbor_loop.target)
+        if neighbor_names is None or len(neighbor_names) != 2:
+            continue
+        next_row, next_col = neighbor_names
+
+        def axis_offset(expr: ast.AST, current_name: str) -> int | None:
+            if isinstance(expr, ast.Name) and expr.id == current_name:
+                return 0
+            if (
+                isinstance(expr, ast.BinOp)
+                and isinstance(expr.left, ast.Name)
+                and expr.left.id == current_name
+                and isinstance(expr.right, ast.Constant)
+                and type(expr.right.value) is int
+                and expr.right.value == 1
+            ):
+                if isinstance(expr.op, ast.Sub):
+                    return -1
+                if isinstance(expr.op, ast.Add):
+                    return 1
+            return None
+
+        def literal_offset(expr: ast.AST) -> int | None:
+            if isinstance(expr, ast.Constant) and type(expr.value) is int:
+                return expr.value
+            if (
+                isinstance(expr, ast.UnaryOp)
+                and isinstance(expr.op, ast.USub)
+                and isinstance(expr.operand, ast.Constant)
+                and type(expr.operand.value) is int
+            ):
+                return -expr.operand.value
+            return None
+
+        def current_plus_step(expr: ast.AST, current_name: str, step_name: str) -> bool:
+            return (
+                isinstance(expr, ast.BinOp)
+                and isinstance(expr.op, ast.Add)
+                and isinstance(expr.left, ast.Name)
+                and isinstance(expr.right, ast.Name)
+                and {expr.left.id, expr.right.id} == {current_name, step_name}
+            )
+
+        delta_candidate = None
+        delta_names = neighbor_names
+        for statement in neighbor_loop.body:
+            if not (
+                isinstance(statement, ast.Assign)
+                and len(statement.targets) == 1
+                and tuple_names(statement.targets[0])
+                and isinstance(statement.value, (ast.Tuple, ast.List))
+                and len(statement.value.elts) == 2
+            ):
+                continue
+            candidate_names = tuple_names(statement.targets[0])
+            if candidate_names is None:
+                continue
+            row_expr, col_expr = statement.value.elts
+            if (
+                current_plus_step(row_expr, row_name, delta_names[0])
+                and current_plus_step(col_expr, col_name, delta_names[1])
+            ):
+                delta_candidate = candidate_names
+                break
+
+        delta_vectors = all(
+            literal_offset(pair.elts[0]) is not None
+            and literal_offset(pair.elts[1]) is not None
+            for pair in neighbor_loop.iter.elts
+        )
+        if delta_vectors and delta_candidate is not None:
+            next_row, next_col = delta_candidate
+            offsets = {
+                (literal_offset(pair.elts[0]), literal_offset(pair.elts[1]))
+                for pair in neighbor_loop.iter.elts
+            }
+            neighbor_representation = "delta_vectors_with_candidate_coordinates"
+        else:
+            offsets = set()
+            for pair in neighbor_loop.iter.elts:
+                row_expr, col_expr = pair.elts
+                row_delta = axis_offset(row_expr, row_name)
+                col_delta = axis_offset(col_expr, col_name)
+                if row_delta is None or col_delta is None:
+                    offsets.clear()
+                    break
+                offsets.add((row_delta, col_delta))
+            neighbor_representation = "explicit_coordinate_offsets"
+        if offsets != {(-1, 0), (1, 0), (0, -1), (0, 1)}:
+            continue
+
+        grid_name = next((
+            node.value.value.id
+            for node in ast.walk(column_loop)
+            if isinstance(node, ast.Subscript)
+            and isinstance(node.value, ast.Subscript)
+            and isinstance(node.value.value, ast.Name)
+            and isinstance(node.value.slice, ast.Name)
+            and node.value.slice.id == row_loop.target.id
+            and isinstance(node.slice, ast.Name)
+            and node.slice.id == column_loop.target.id
+        ), None)
+        if grid_name is None:
+            continue
+
+        guarded = False
+        matched_mark = None
+        matched_enqueue = None
+        for guard in (node for node in ast.walk(neighbor_loop) if isinstance(node, ast.If)):
+            if not (
+                isinstance(guard.test, ast.BoolOp)
+                and isinstance(guard.test.op, ast.And)
+                and any(
+                    isinstance(part, ast.Compare)
+                    and isinstance(part.ops[0], ast.NotIn)
+                    and isinstance(part.comparators[0], ast.Name)
+                    and tuple_names(part.left) == (next_row, next_col)
+                    for part in guard.test.values
+                    if isinstance(part, ast.Compare) and part.ops
+                )
+            ):
+                continue
+            visited_name = next(
+                part.comparators[0].id for part in guard.test.values
+                if isinstance(part, ast.Compare) and part.ops
+                and isinstance(part.ops[0], ast.NotIn)
+                and isinstance(part.comparators[0], ast.Name)
+                and tuple_names(part.left) == (next_row, next_col)
+            )
+            if not any(
+                isinstance(node, ast.Subscript)
+                and isinstance(node.value, ast.Subscript)
+                and isinstance(node.value.value, ast.Name)
+                and node.value.value.id == grid_name
+                and isinstance(node.value.slice, ast.Name)
+                and node.value.slice.id == next_row
+                and isinstance(node.slice, ast.Name)
+                and node.slice.id == next_col
+                for node in ast.walk(guard.test)
+            ):
+                continue
+            neighbor_bounds = {
+                node.id for node in ast.walk(guard.test) if isinstance(node, ast.Name)
+            }
+            if not {next_row, next_col}.issubset(neighbor_bounds):
+                continue
+            if any(
+                isinstance(node, (ast.For, ast.AsyncFor, ast.While, ast.If))
+                for statement in guard.body
+                for node in ast.walk(statement)
+            ):
+                continue
+            operations = [
+                node for node in ast.walk(guard)
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                and isinstance(node.func.value, ast.Name)
+            ]
+            marks = [
+                call for call in operations
+                if call.func.value.id == visited_name and call.func.attr == "add"
+                and call.args and tuple_names(call.args[0]) == (next_row, next_col)
+            ]
+            enqueues = [
+                call for call in operations
+                if call.func.value.id == queue_name and call.func.attr == "append"
+                and call.args and tuple_names(call.args[0]) == (next_row, next_col)
+            ]
+            if marks and enqueues and min(
+                (call.lineno, call.col_offset) for call in marks
+            ) < min((call.lineno, call.col_offset) for call in enqueues):
+                guarded = True
+                matched_mark = min(marks, key=lambda call: (call.lineno, call.col_offset))
+                matched_enqueue = min(enqueues, key=lambda call: (call.lineno, call.col_offset))
+                break
+        if not guarded or matched_mark is None or matched_enqueue is None:
+            continue
+
+        row_bound = range_bound(row_loop.iter)
+        col_bound = range_bound(column_loop.iter)
+        if row_bound is None or col_bound is None:
+            continue
+        def bound_comes_from_grid(bound: str, axis: str) -> bool:
+            expected = f"len({grid_name})" if axis == "rows" else f"len({grid_name}[0])"
+            if bound == expected:
+                return True
+            for statement in ast.walk(function):
+                if (
+                    isinstance(statement, ast.Assign)
+                    and len(statement.targets) == 1
+                    and isinstance(statement.targets[0], (ast.Tuple, ast.List))
+                    and isinstance(statement.value, (ast.Tuple, ast.List))
+                    and len(statement.targets[0].elts) == len(statement.value.elts)
+                ):
+                    names = tuple_names(statement.targets[0])
+                    if names is not None and bound in names:
+                        position = names.index(bound)
+                        if ast.unparse(statement.value.elts[position]) == expected:
+                            return True
+                targets = (
+                    statement.targets if isinstance(statement, ast.Assign)
+                    else [statement.target] if isinstance(statement, ast.AnnAssign)
+                    else []
+                )
+                value = getattr(statement, "value", None)
+                if (
+                    any(isinstance(target, ast.Name) and target.id == bound for target in targets)
+                    and value is not None
+                    and ast.unparse(value) == expected
+                    and getattr(statement, "lineno", 0) < row_loop.lineno
+                ):
+                    return True
+            # A single len(grid) bound for both loops is accepted only as a square-grid assumption.
+            return axis == "columns" and row_bound == col_bound and bound_comes_from_grid(bound, "rows")
+
+        if not bound_comes_from_grid(row_bound, "rows") or not bound_comes_from_grid(
+            col_bound, "columns"
+        ):
+            continue
+        # The visited set must be created outside both full-grid scan loops.
+        def initializes_empty_set(statement: ast.AST, name: str) -> bool:
+            if not isinstance(statement, ast.Assign):
+                return False
+            pairs = []
+            if (
+                len(statement.targets) == 1
+                and isinstance(statement.targets[0], (ast.Tuple, ast.List))
+                and isinstance(statement.value, (ast.Tuple, ast.List))
+                and len(statement.targets[0].elts) == len(statement.value.elts)
+            ):
+                pairs = list(zip(statement.targets[0].elts, statement.value.elts))
+            elif all(isinstance(target, ast.Name) for target in statement.targets):
+                pairs = [(target, statement.value) for target in statement.targets]
+            return any(
+                isinstance(target, ast.Name)
+                and target.id == name
+                and isinstance(value, ast.Call)
+                and isinstance(value.func, ast.Name)
+                and value.func.id == "set"
+                and not value.args
+                and not value.keywords
+                for target, value in pairs
+            )
+
+        visited_initializers = [
+            node for node in ast.walk(function)
+            if initializes_empty_set(node, visited_name)
+            and node.lineno < row_loop.lineno
+        ]
+        if not visited_initializers:
+            continue
+        # A single queue seed is guarded by the current land cell and marked before traversal.
+        seed_ops = [
+            node for node in ast.walk(column_loop)
+            if isinstance(node, ast.Assign) and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name) and node.targets[0].id == queue_name
+            and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name)
+            and node.value.func.id == "deque"
+        ]
+        if not seed_ops:
+            continue
+        row_cell = row_loop.target.id
+        col_cell = column_loop.target.id
+        seeded_cell = any(
+            isinstance(node, ast.Tuple)
+            and tuple_names(node) == (row_cell, col_cell)
+            for seed in seed_ops
+            for node in ast.walk(seed.value)
+        )
+        marks_initial_cell = any(
+            isinstance(call, ast.Call)
+            and isinstance(call.func, ast.Attribute)
+            and isinstance(call.func.value, ast.Name)
+            and call.func.value.id == visited_name
+            and call.func.attr == "add"
+            and call.args
+            and tuple_names(call.args[0]) == (row_cell, col_cell)
+            and call.lineno < queue_loop.lineno
+            for call in ast.walk(column_loop)
+        )
+        if not seeded_cell or not marks_initial_cell:
+            continue
+        is_square_symbolic = row_bound == col_bound
+        result = "O(n^2)" if is_square_symbolic else "O(R * C)"
+        return {
+            "line": queue_loop.lineno,
+            "estimate": result,
+            "details": {
+                "language": "python",
+                "rule_version": "bounded_bfs_traversal_v1",
+                "pattern_id": "python_grid_component_bfs_four_neighbors",
+                "source_locations": {
+                    "queue_loop_line": queue_loop.lineno,
+                    "dequeue_line": dequeue.lineno,
+                    "neighbor_loop_line": neighbor_loop.lineno,
+                    "visited_guard_line": guard.lineno,
+                    "initial_queue_seed_line": seed_ops[0].lineno,
+                    "initial_visited_mark_lines": [
+                        call.lineno for call in ast.walk(column_loop)
+                        if isinstance(call, ast.Call)
+                        and isinstance(call.func, ast.Attribute)
+                        and isinstance(call.func.value, ast.Name)
+                        and call.func.value.id == visited_name
+                        and call.func.attr == "add"
+                        and call.args
+                        and tuple_names(call.args[0]) == (row_cell, col_cell)
+                        and call.lineno < queue_loop.lineno
+                    ],
+                    "neighbor_visited_mark_line": matched_mark.lineno,
+                    "neighbor_enqueue_line": matched_enqueue.lineno,
+                },
+                "input_size": {"rows": "R", "columns": "C", "symbolic_bounds": [row_bound, col_bound]},
+                "queue": {"driver": queue_name, "dequeue": "popleft", "line": dequeue.lineno},
+                "visited_state": {
+                    "container": "set",
+                    "name": visited_name,
+                    "mark_before_neighbor_enqueue": True,
+                    "initial_cell_marked_before_queue_processing": True,
+                    "shared_across_component_scans": True,
+                },
+                "neighbor_enumeration": {
+                    "line": neighbor_loop.lineno,
+                    "fixed_neighbors_per_cell": 4,
+                    "representation": neighbor_representation,
+                    "offsets": sorted([list(offset) for offset in offsets]),
+                },
+                "bounded_work_argument": (
+                    "The outer loops inspect R*C cells. The visited set is shared across all "
+                    "component scans, each land cell is enqueued at most once, and each dequeued "
+                    "cell checks exactly four neighbors; total queue and neighbor work is O(R*C)."
+                ),
+                "complexity": result,
+                "assumptions": [
+                    "The two outer loops enumerate each grid cell once.",
+                    "The visited set is not cleared between component searches.",
+                    "Set membership/addition and deque operations are average O(1).",
+                    "Grid indexing and the four neighbor checks are O(1).",
+                ],
+                "limitations": [
+                    "This recognizes only explicit four-neighbor component BFS with tuple coordinates.",
+                    "This is a bounded syntax heuristic, not a proof for arbitrary Python control flow.",
+                    "Called helper work and alias-based mutation are not expanded.",
+                ],
+                "inference_kind": "heuristic_static_bounded_argument",
+            },
+        }
+    return None
+
+
 def _recursive_call_nodes(function: ast.FunctionDef | ast.AsyncFunctionDef) -> list[ast.Call]:
     return _recursive_calls_in_scope(function, function.name)
+
+
+def _recursive_yield_from_line(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
+    recursive_calls = {id(call) for call in _recursive_call_nodes(function)}
+    return min(
+        (
+            node.lineno
+            for node in _function_scope_nodes(function)
+            if isinstance(node, ast.YieldFrom)
+            and isinstance(node.value, ast.Call)
+            and id(node.value) in recursive_calls
+        ),
+        default=None,
+    )
 
 
 def _recursive_calls_in_scope(node: ast.AST, function_name: str) -> list[ast.Call]:
@@ -1035,6 +1624,18 @@ def _local_recursive_helpers(
     return helpers
 
 
+def _has_cache_decorator(function: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    return any(
+        (
+            decorator.id if isinstance(decorator, ast.Name)
+            else decorator.func.id if isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Name)
+            else decorator.attr if isinstance(decorator, ast.Attribute)
+            else None
+        ) in {"cache", "lru_cache"}
+        for decorator in function.decorator_list
+    )
+
+
 def _has_unbounded_cache(function: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     for decorator in function.decorator_list:
         name = (
@@ -1052,6 +1653,147 @@ def _has_unbounded_cache(function: ast.FunctionDef | ast.AsyncFunctionDef) -> bo
             if decorator.args and isinstance(decorator.args[0], ast.Constant) and decorator.args[0].value is None:
                 return True
     return False
+
+
+def _recursive_base_case(function: ast.FunctionDef | ast.AsyncFunctionDef, parameter: str) -> bool:
+    for node in _function_scope_nodes(function):
+        if not isinstance(node, ast.If):
+            continue
+        if not any(
+            isinstance(child, ast.Name) and child.id == parameter
+            for child in ast.walk(node.test)
+        ):
+            continue
+        if node.body and isinstance(node.body[0], ast.Return):
+            return True
+    return False
+
+
+def _scalar_size_reduction(call: ast.Call, parameter: str) -> str | None:
+    if len(call.args) != 1:
+        return None
+    argument = call.args[0]
+    if not isinstance(argument, ast.BinOp) or not isinstance(argument.left, ast.Name):
+        return None
+    if argument.left.id != parameter or not isinstance(argument.right, ast.Constant):
+        return None
+    if not isinstance(argument.right.value, int) or argument.right.value <= 0:
+        return None
+    if isinstance(argument.op, ast.Sub):
+        return "constant_decrement"
+    if isinstance(argument.op, ast.FloorDiv) and argument.right.value == 2:
+        return "factor_two"
+    return None
+
+
+def _direct_recurrence_analysis(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> tuple[str, dict] | None:
+    parameters = [*function.args.posonlyargs, *function.args.args]
+    if len(parameters) != 1:
+        return None
+    parameter = parameters[0].arg
+    scope_nodes = _function_scope_nodes(function)
+    calls = _recursive_call_nodes(function)
+    if not calls or not _recursive_base_case(function, parameter):
+        return None
+    nonrecursive_calls = [
+        node for node in scope_nodes
+        if isinstance(node, ast.Call)
+        and node not in calls
+        and not (isinstance(node.func, ast.Name) and node.func.id == "range")
+    ]
+    if nonrecursive_calls:
+        return None
+    if _has_cache_decorator(function) and not _has_unbounded_cache(function):
+        return None
+    reductions = {_scalar_size_reduction(call, parameter) for call in calls}
+    if None in reductions or len(reductions) != 1:
+        return None
+    reduction = next(iter(reductions))
+
+    if _has_unbounded_cache(function):
+        if reduction != "constant_decrement" or _dynamic_loop_nesting(function):
+            return None
+        return "O(n)", {
+            "rule_version": "bounded_recurrence_v1",
+            "source_location": {"function": function.name, "line": min(call.lineno for call in calls)},
+            "recursive_call_pattern": "cached direct self-calls with strictly decreasing scalar state",
+            "recursive_calls_per_level": len(calls),
+            "input_size_reduction": "constant_decrement",
+            "nonrecursive_work": "O(1)",
+            "base_case": "parameter-guarded return detected",
+            "recurrence": "O(1) work for each of at most n + 1 distinct cached states",
+            "solving_rule": "memoized_monotone_scalar_states",
+            "complexity": "O(n)",
+            "assumptions": [
+                "The scalar parameter is a non-negative integer bounded by n.",
+                "An unbounded cache stores each argument state once with average O(1) access.",
+                "Every recursive argument decreases by a positive constant and reaches the base case.",
+                "No input-sized loop or hidden helper work occurs in the function.",
+            ],
+            "inference_kind": "heuristic_pattern_match",
+        }
+
+    if len(calls) == 2:
+        containing_returns = [
+            node for node in ast.walk(function)
+            if isinstance(node, ast.Return)
+            and all(any(child is call for child in ast.walk(node.value)) for call in calls)
+        ]
+        if not containing_returns:
+            return None
+    elif len(calls) != 1:
+        return None
+
+    loops = [node for node in scope_nodes if isinstance(node, (ast.For, ast.While))]
+    comprehensions = [
+        node for node in scope_nodes
+        if isinstance(node, (ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp))
+    ]
+    if comprehensions:
+        return None
+    nonrecursive_work = "constant"
+    if loops:
+        if len(loops) != 1 or not isinstance(loops[0], ast.For):
+            return None
+        loop = loops[0]
+        if any(any(child is call for child in ast.walk(loop)) for call in calls):
+            return None
+        iterator = loop.iter
+        if not (
+            isinstance(iterator, ast.Call)
+            and isinstance(iterator.func, ast.Name)
+            and iterator.func.id == "range"
+            and iterator.args
+            and isinstance(iterator.args[0], ast.Name)
+            and iterator.args[0].id == parameter
+        ):
+            return None
+        nonrecursive_work = "linear"
+
+    solved = solve_bounded_recurrence(len(calls), reduction, nonrecursive_work)
+    if solved is None:
+        return None
+    recurrence, complexity, rule = solved
+    evidence = recurrence_evidence(
+        function=function.name,
+        recursive_calls=len(calls),
+        size_reduction=reduction,
+        nonrecursive_work=nonrecursive_work,
+        recurrence=recurrence,
+        solving_rule=rule,
+        complexity=complexity,
+        assumptions=[
+            "The scalar parameter is a non-negative integer input size.",
+            "A parameter-guarded terminating base case is present.",
+            "Each recognized recursive call follows the same supported size reduction.",
+            "Any detected loop is a single range(parameter) scan outside recursive calls.",
+            "Arithmetic and constant-time operations use the usual unit-cost model.",
+        ],
+        location={"function": function.name, "line": min(call.lineno for call in calls)},
+    )
+    return complexity, evidence
 
 
 def _memoized_helper_dimensions(
@@ -1117,7 +1859,7 @@ def _backtracking_helper_line(
 ) -> int | None:
     """Recognize recursive state advancement performed inside a candidate loop."""
     for helper in helpers:
-        if _has_unbounded_cache(helper):
+        if _has_cache_decorator(helper):
             continue
         calls = _recursive_call_nodes(helper)
         for loop in (
@@ -1137,7 +1879,7 @@ def _permutation_backtracking_line(
 ) -> int | None:
     """Recognize choose/recurse/unchoose generation using a shared path collection."""
     for helper in helpers:
-        if _has_unbounded_cache(helper):
+        if _has_cache_decorator(helper):
             continue
         calls = _recursive_call_nodes(helper)
         if not calls:
@@ -1174,7 +1916,7 @@ def _binary_recursive_branch_line(
 ) -> int | None:
     """Recognize two progressing recursive calls in one binary expression."""
     for helper in helpers:
-        if _has_unbounded_cache(helper):
+        if _has_cache_decorator(helper):
             continue
         calls = _recursive_call_nodes(helper)
         progressing_calls = [
@@ -1198,7 +1940,7 @@ def _divide_and_conquer_helper_line(
 ) -> int | None:
     """Recognize one recursive call per branch when its search range is halved."""
     for helper in helpers:
-        if _has_unbounded_cache(helper):
+        if _has_cache_decorator(helper):
             continue
         calls = _recursive_call_nodes(helper)
         if len(calls) < 2:
@@ -1733,14 +2475,19 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
 
     amortized_forward_scan = _amortized_forward_scan(function)
     amortized_stack_line = _amortized_stack_scan(function)
+    insertion_sort_line = _is_insertion_sort(function)
     binary_search_line = _is_binary_search_loop(function)
     bisect_line = _has_bisect_call(function)
     kahn_line = _is_kahn_topological_sort(function)
     graph_bfs_line = _is_adjacency_list_bfs(function)
+    grid_bfs = _is_grid_bfs(function)
     graph_dfs_line = _is_adjacency_list_dfs(function)
     local_graph_dfs_line = _is_local_adjacency_list_dfs(function)
     local_tree_dfs_line = _is_local_tree_adjacency_dfs(function)
     tree_recursion_line = _is_tree_recursive_walk(function)
+    recursive_generator_line = (
+        _recursive_yield_from_line(function) if tree_recursion_line is not None else None
+    )
     sort_two_pointer_line = _is_sort_then_two_pointer_scan(function)
     floyd_line = _is_floyd_cycle_detection(function)
     matrix_staircase_line = _is_matrix_staircase_search(function)
@@ -1751,6 +2498,8 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     fenwick_line = _is_fenwick_prefix_loop(function)
     z_algorithm_line = _is_z_algorithm(function)
     local_recursive_helpers = _local_recursive_helpers(function)
+    direct_recurrence = _direct_recurrence_analysis(function)
+    recurrence_details = None
     memoized_state = _memoized_helper_dimensions(function, local_recursive_helpers)
     backtracking_line = _backtracking_helper_line(local_recursive_helpers)
     permutation_line = _permutation_backtracking_line(local_recursive_helpers)
@@ -1761,12 +2510,27 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     data_dependent_loop_nesting = max(
         _dynamic_loop_nesting(function), 1 if iterable_consumers else 0
     )
+    if direct_recurrence is not None:
+        signals.append({
+            "kind": "recurrence",
+            "label": "Direct scalar recurrence matched by bounded recurrence rules",
+            "line": direct_recurrence[1]["source_location"]["line"],
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
     if graph_bfs_line is not None:
         method = "static_ast_graph_bfs"
         signals.append({
             "kind": "graph_bfs",
             "label": "Queue traversal over adjacency lists with a visited guard",
             "line": graph_bfs_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if grid_bfs is not None:
+        method = "static_ast_grid_bfs_v1"
+        signals.append({
+            "kind": "grid_bfs",
+            "label": "Queue traversal over a grid with shared visited state and four neighbors",
+            "line": grid_bfs["line"],
         })
         signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
     if graph_dfs_line is not None:
@@ -1801,11 +2565,26 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "line": tree_recursion_line,
         })
         signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if recursive_generator_line is not None:
+        method = "static_ast_recursive_generator_delegation"
+        signals.append({
+            "kind": "recursive_generator_delegation",
+            "label": "Tree-walk generator delegates recursively with yield from",
+            "line": recursive_generator_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
     if binary_search_line is not None:
         signals.append({
             "kind": "binary_search",
             "label": "Interval-halving loop updates both search bounds from the midpoint",
             "line": binary_search_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if insertion_sort_line is not None:
+        signals.append({
+            "kind": "insertion_sort",
+            "label": "Forward insertion scan with bounded backward shifts",
+            "line": insertion_sort_line,
         })
         signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
     if memoized_state is not None:
@@ -1890,10 +2669,75 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         if line is not None:
             signals.append({"kind": kind, "label": label, "line": line})
     signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
-    if (graph_bfs_line is not None or graph_dfs_line is not None
+    bfs_details = grid_bfs["details"] if grid_bfs is not None else None
+    if grid_bfs is not None:
+        estimate = grid_bfs["estimate"]
+        explanation = (
+            "Recognized full-grid scanning with component BFS, shared visited state, and four "
+            "constant-time neighbor checks per enqueued cell. Each cell is enqueued at most once "
+            f"across all component scans, yielding {estimate}. This is a bounded AST heuristic, "
+            "not a proof for arbitrary Python control flow."
+        )
+    elif (graph_bfs_line is not None or graph_dfs_line is not None
             or local_graph_dfs_line is not None or local_tree_dfs_line is not None
             or kahn_line is not None):
         estimate = "O(V + E)"
+        if graph_bfs_line is not None:
+            bfs_details = {
+                "language": "python",
+                "rule_version": "bounded_bfs_traversal_v1",
+                "pattern_id": "python_adjacency_list_bfs_visited_guard",
+                "input_size": {
+                    "vertices": "V",
+                    "adjacency_entries": "E",
+                    "edge_count_measure": (
+                        "total directed adjacency entries; an undirected list commonly stores "
+                        "each edge twice"
+                    ),
+                },
+                "queue": {"driver": "while queue", "operations": ["popleft", "append"],
+                          "traversal_line": graph_bfs_line},
+                "visited_state": {"bound": "each vertex is enqueued at most once",
+                                  "mark_before_enqueue": True},
+                "neighbor_enumeration": {"representation": "adjacency_list",
+                                         "bound": "each adjacency entry is scanned once"},
+                "source_locations": {
+                    "queue_operations": sorted({
+                        call.lineno for call in ast.walk(function)
+                        if isinstance(call, ast.Call)
+                        and isinstance(call.func, ast.Attribute)
+                        and isinstance(call.func.value, ast.Name)
+                        and call.func.attr in {"popleft", "pop", "append"}
+                    }),
+                    "visited_updates": sorted({
+                        call.lineno for call in ast.walk(function)
+                        if isinstance(call, ast.Call)
+                        and isinstance(call.func, ast.Attribute)
+                        and call.func.attr == "add"
+                    }),
+                    "neighbor_loops": sorted({
+                        node.lineno for node in ast.walk(function)
+                        if isinstance(node, ast.For)
+                        and isinstance(node.iter, ast.Subscript)
+                    }),
+                },
+                "bounded_work_argument": (
+                    "Each vertex is processed at most once and each adjacency entry is examined "
+                    "once, so queue/vertex work contributes O(V) and neighbor scanning O(E)."
+                ),
+                "complexity": "O(V + E)",
+                "assumptions": [
+                    "The graph is represented as adjacency lists.",
+                    "The start vertex is marked visited and each neighbor is marked before enqueue.",
+                    "Visited-set operations and queue operations are average O(1).",
+                    "No enclosing input-sized loop repeats the traversal.",
+                ],
+                "limitations": [
+                    "Only the selected traversal structure is inspected; helpers and aliases are not expanded.",
+                    "This is a heuristic static match, not a formal proof for arbitrary Python code.",
+                ],
+                "inference_kind": "heuristic_static_bounded_argument",
+            }
         if local_tree_dfs_line is not None:
             explanation = (
                 "Recognized paired parent-guarded DFS passes over a bidirectionally built "
@@ -1908,12 +2752,30 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "O(V + E). This assumes constant-time visited-set operations; the syntax check is "
             "a heuristic."
             )
+    elif recursive_generator_line is not None:
+        estimate = "O(n^2)"
+        explanation = (
+            "Recognized recursive tree-generator delegation with yield from. Advancing a yielded "
+            "value through nested delegating generators can cost O(depth); across all yielded "
+            "nodes the work is O(sum of node depths), or O(n*h), with O(n^2) worst-case time "
+            "for a skewed tree and O(n log n) for a balanced tree. This includes delegation "
+            "inside the generator, not work performed by its consumer, and assumes an ordinary "
+            "tree without cycles or shared subtrees."
+        )
     elif tree_recursion_line is not None:
         estimate = "O(n)"
         explanation = (
             "Recognized direct recursion over left/right child links. Assuming the input is a "
             "tree with no cycles or shared subtrees, each node is processed once, for O(n) work. "
             "The syntax check cannot establish that input structure."
+        )
+    elif direct_recurrence is not None:
+        estimate, recurrence_details = direct_recurrence
+        method = "static_ast_recurrence_v1"
+        explanation = (
+            f"Recognized {recurrence_details['recurrence']} and applied "
+            f"{recurrence_details['solving_rule']}, yielding {estimate}. "
+            "This is a heuristic syntax match under the listed recurrence assumptions."
         )
     elif memoized_state is not None:
         dimensions, _ = memoized_state
@@ -1973,6 +2835,15 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "Recognized a forward-only sliding-window scan: the outer loop advances through "
             "the input while an index initialized before it only moves forward. Each pointer "
             "advances at most n times, so their combined work is linear."
+        )
+    elif insertion_sort_line is not None:
+        method = "static_ast_insertion_sort"
+        estimate = "O(n^2)"
+        explanation = (
+            "Recognized insertion sort: each outer iteration may shift a linear number of earlier "
+            "items, giving O(n^2) worst-case time and O(n) best-case time when already sorted. "
+            "This assumes constant-time comparisons and indexed sequence access; the syntax rule "
+            "is a bounded heuristic."
         )
     elif binary_search_line is not None or bisect_line is not None:
         method = "static_ast_binary_search"
@@ -2105,13 +2976,29 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
                 "language": "python",
                 "scope": "selected entrypoint; called helpers are not expanded",
                 "signals": signals,
+                **({"bfs": bfs_details} if bfs_details is not None else {}),
+                **(
+                    {
+                        "recursive_generator": {
+                            "delegation": "yield from a recursive tree-generator call",
+                            "cost_model": "O(sum of node depths) = O(n*h)",
+                            "worst_case": "O(n^2) for a skewed tree",
+                            "balanced_tree": "O(n log n)",
+                            "delegation_cost_is_inside_generator": True,
+                            "consumer_work_included": False,
+                        }
+                    }
+                    if recursive_generator_line is not None
+                    else {}
+                ),
+                **({"recurrence": recurrence_details} if recurrence_details is not None else {}),
                 "loop_count": loop_count,
                 "maximum_loop_nesting": maximum_depth,
                 "maximum_data_dependent_loop_nesting": data_dependent_loop_nesting,
                 "limitations": [
                     "A detected syntax pattern is evidence, not a full algorithmic proof.",
                     "Collection operation costs depend on the concrete type and implementation.",
-                    "Recurrence relations and called helper functions are not analyzed.",
+                    "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded.",
                 ],
             }
         },
