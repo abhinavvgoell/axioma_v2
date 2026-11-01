@@ -2421,8 +2421,6 @@ def _estimate_python_auxiliary_space(
         if empty:
             containers.update(target.id for target in targets if isinstance(target, ast.Name))
 
-    if not containers:
-        return unknown
     returned = {
         node.value.id
         for node in target_nodes
@@ -2464,6 +2462,73 @@ def _estimate_python_auxiliary_space(
                     "Nested growth patterns and recursive space use are reported as unknown.",
                 ],
             }
+    allocation_free_calls = {
+        "abs", "all", "any", "bool", "chr", "enumerate", "float", "int", "iter",
+        "len", "max", "min", "next", "ord", "range", "reversed", "round", "zip",
+    }
+    scalar_names: set[str] = set()
+
+    def is_scalar_expression(node: ast.AST) -> bool:
+        if isinstance(node, ast.Constant):
+            return isinstance(node.value, (int, float, bool))
+        if isinstance(node, ast.Name):
+            return node.id in scalar_names
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            return node.func.id in {"len", "ord", "int", "float", "bool"}
+        if isinstance(node, ast.UnaryOp):
+            return is_scalar_expression(node.operand)
+        if isinstance(node, ast.BinOp):
+            return is_scalar_expression(node.left) and is_scalar_expression(node.right)
+        return False
+
+    def remember_scalar_targets(target: ast.AST, value: ast.AST) -> None:
+        if isinstance(target, ast.Name):
+            if is_scalar_expression(value):
+                scalar_names.add(target.id)
+            else:
+                scalar_names.discard(target.id)
+        elif isinstance(target, (ast.Tuple, ast.List)) and isinstance(value, (ast.Tuple, ast.List)):
+            for target_item, value_item in zip(target.elts, value.elts):
+                remember_scalar_targets(target_item, value_item)
+
+    for statement in function.body:
+        if isinstance(statement, ast.Assign):
+            for target in statement.targets:
+                remember_scalar_targets(target, statement.value)
+        elif isinstance(statement, ast.AnnAssign) and statement.value is not None:
+            remember_scalar_targets(statement.target, statement.value)
+
+    unsupported = any(
+        isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp,
+                          ast.Await, ast.Yield, ast.YieldFrom))
+        or isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Slice)
+        or isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Mult))
+        and not is_scalar_expression(node)
+        or isinstance(node, ast.AugAssign)
+        and isinstance(node.op, ast.Add)
+        and not (
+            isinstance(node.target, ast.Name)
+            and node.target.id in scalar_names
+            and isinstance(node.value, ast.Constant)
+            and isinstance(node.value.value, (int, float))
+        )
+        or isinstance(node, ast.Call)
+        and not (isinstance(node.func, ast.Name) and node.func.id in allocation_free_calls)
+        for node in target_nodes
+    )
+    if not unsupported:
+        return {
+            "state": "estimated",
+            "estimate": "O(1)",
+            "method": "static_python_allocation_free_state",
+            "confidence": "low",
+            "convention": "Excludes input storage and returned output.",
+            "reasoning": "The selected function uses scalar/local state and no recognized input-sized allocation or recursion.",
+            "limitations": [
+                "This rule cannot prove that called built-ins or operators have no hidden allocations.",
+                "Called helpers, called methods, slicing, comprehensions, generators, and recursive space are reported as unknown.",
+            ],
+        }
     return unknown
 
 

@@ -2473,43 +2473,77 @@ def _estimate_java_auxiliary_space(
                 if re.fullmatch(r"[A-Za-z_$][\w$]*", name):
                     containers.add(name)
 
-    if not parameters or not containers or len(spans) != 1:
-        return unknown
-    start, end = spans[0]
-    header_end = next((index for index in range(start, end + 1) if body[index] == "{"), -1)
-    header = body[start : header_end if header_end >= 0 else end]
-    iterates_input = any(name in header for name in parameters) and (
-        ":" in header or "length" in header
-    )
-    if not iterates_input:
-        return unknown
-    loop_body = body[start : end + 1]
-    returned = {
-        body[index + 1]
-        for index, token in enumerate(body[:-1])
-        if token == "return"
-    }
-    for name in containers - returned:
-        if any(
-            index + 2 < len(loop_body)
-            and loop_body[index] == name
-            and loop_body[index + 1] == "."
-            and loop_body[index + 2] in {"put", "add", "offer", "push", "addLast"}
-            for index in range(len(loop_body))
-        ):
-            return {
-                "state": "estimated",
-                "estimate": "O(n)",
-                "method": "static_java_container_growth",
-                "confidence": "low",
-                "convention": "Excludes input storage and returned output.",
-                "reasoning": "A local collection is populated during one scan over an input parameter; O(n) is a conservative upper bound.",
-                "limitations": [
-                    "This bounded rule does not prove the collection reaches linear size; its true bound may be smaller.",
-                    "Called helpers, arrays, recursive space, and nested loops are not analyzed.",
-                    "Collection operation costs depend on the concrete type and implementation.",
-                ],
+    if parameters and containers and len(spans) == 1:
+        start, end = spans[0]
+        header_end = next((index for index in range(start, end + 1) if body[index] == "{"), -1)
+        header = body[start : header_end if header_end >= 0 else end]
+        iterates_input = any(name in header for name in parameters) and (
+            ":" in header or "length" in header
+        )
+        if iterates_input:
+            loop_body = body[start : end + 1]
+            returned = {
+                body[index + 1]
+                for index, token in enumerate(body[:-1])
+                if token == "return"
             }
+            for name in containers - returned:
+                if any(
+                    index + 2 < len(loop_body)
+                    and loop_body[index] == name
+                    and loop_body[index + 1] == "."
+                    and loop_body[index + 2] in {"put", "add", "offer", "push", "addLast"}
+                    for index in range(len(loop_body))
+                ):
+                    return {
+                        "state": "estimated",
+                        "estimate": "O(n)",
+                        "method": "static_java_container_growth",
+                        "confidence": "low",
+                        "convention": "Excludes input storage and returned output.",
+                        "reasoning": "A local collection is populated during one scan over an input parameter; O(n) is a conservative upper bound.",
+                        "limitations": [
+                            "This bounded rule does not prove the collection reaches linear size; its true bound may be smaller.",
+                            "Called helpers, arrays, recursive space, and nested loops are not analyzed.",
+                            "Collection operation costs depend on the concrete type and implementation.",
+                        ],
+                    }
+    control_calls = {"if", "for", "while", "switch", "catch", "synchronized"}
+    unsupported_call = any(
+        token == "(" and index > 0
+        and re.fullmatch(r"[A-Za-z_$][\w$]*", body[index - 1])
+        and body[index - 1] not in control_calls
+        and not (
+            index >= 3
+            and body[index - 1] in {"abs", "max", "min"}
+            and body[index - 2] == "."
+            and body[index - 3] == "Math"
+        )
+        for index, token in enumerate(body)
+    )
+    allocation_prone_types = {
+        "String", "StringBuilder", "StringBuffer", "Integer", "Long", "Double", "Float",
+        "Boolean", "Character", "Byte", "Short", "BigInteger", "BigDecimal",
+    }
+    string_concatenation = "String" in tokens and any(token in {"+", "+="} for token in body)
+    if (
+        "new" not in body
+        and not unsupported_call
+        and not string_concatenation
+        and not allocation_prone_types.intersection(body)
+    ):
+        return {
+            "state": "estimated",
+            "estimate": "O(1)",
+            "method": "static_java_allocation_free_state",
+            "confidence": "low",
+            "convention": "Excludes input storage and returned output.",
+            "reasoning": "The selected method uses scalar/local state and no recognized input-sized allocation or recursion.",
+            "limitations": [
+                "This rule cannot prove that called library operations have no hidden allocations.",
+                "Object construction, non-Math calls, string concatenation, and recursive space are reported as unknown.",
+            ],
+        }
     return unknown
 
 

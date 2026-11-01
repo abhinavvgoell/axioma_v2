@@ -45,6 +45,37 @@ def test_static_auxiliary_space_abstains_when_pattern_is_not_supported() -> None
     assert estimate.details["code_analysis"]["auxiliary_space"]["state"] == "unknown"
 
 
+def test_static_auxiliary_space_recognizes_allocation_free_two_pointer_scan() -> None:
+    estimate = analyze_python_complexity(
+        "def is_palindrome(values):\n"
+        "    left, right = 0, len(values) - 1\n"
+        "    while left < right:\n"
+        "        if values[left] != values[right]: return False\n"
+        "        left += 1\n"
+        "        right -= 1\n"
+        "    return True\n",
+        "is_palindrome",
+    )
+
+    space = estimate.details["code_analysis"]["auxiliary_space"]
+    assert space["state"] == "estimated"
+    assert space["estimate"] == "O(1)"
+    assert space["method"] == "static_python_allocation_free_state"
+
+
+def test_static_auxiliary_space_abstains_on_python_helper_calls_and_slices() -> None:
+    helper = analyze_python_complexity("def solve(values): return custom(values)\n", "solve")
+    sliced = analyze_python_complexity("def solve(values): return values[:]\n", "solve")
+    concatenated = analyze_python_complexity(
+        "def solve(text):\n    result = ''\n    for char in text: result += char\n    return result\n",
+        "solve",
+    )
+
+    assert helper.details["code_analysis"]["auxiliary_space"]["state"] == "unknown"
+    assert sliced.details["code_analysis"]["auxiliary_space"]["state"] == "unknown"
+    assert concatenated.details["code_analysis"]["auxiliary_space"]["state"] == "unknown"
+
+
 def test_complexity_estimator_accounts_for_sort_and_recursion_limits() -> None:
     sorted_case = analyze_python_complexity(
         "def solve(values):\n    return sorted(values)\n", "solve"

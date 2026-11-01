@@ -54,11 +54,50 @@ def test_static_auxiliary_space_recognizes_java_hash_map_growth() -> None:
     assert space["estimate"] == "O(n)"
 
 
-def test_static_auxiliary_space_does_not_claim_for_unrecognized_java_pattern() -> None:
+def test_static_auxiliary_space_recognizes_scalar_java_scan() -> None:
     estimate = analyze_java_complexity(
         "class Solution { int solve(int[] nums) { int sum=0; "
         "for(int value : nums) sum += value; return sum; } }",
         "Solution.solve",
+    )
+
+    space = estimate.details["code_analysis"]["auxiliary_space"]
+    assert space["state"] == "estimated"
+    assert space["estimate"] == "O(1)"
+
+
+def test_static_auxiliary_space_recognizes_allocation_free_java_scan() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { boolean check(int[] values) { int left=0, right=values.length-1; "
+        "while(left<right) { if(values[left]!=values[right]) return false; "
+        "left++; right--; } return true; } }",
+        "Solution.check",
+    )
+
+    space = estimate.details["code_analysis"]["auxiliary_space"]
+    assert space["state"] == "estimated"
+    assert space["estimate"] == "O(1)"
+    assert space["method"] == "static_java_allocation_free_state"
+
+
+def test_static_auxiliary_space_abstains_on_java_allocation_and_helper_calls() -> None:
+    allocated = analyze_java_complexity(
+        "class S { int[] f(int[] values) { int[] copy = new int[values.length]; return copy; } }",
+        "S.f",
+    )
+    helper = analyze_java_complexity(
+        "class S { int f(int value) { return custom(value); } }", "S.f"
+    )
+
+    assert allocated.details["code_analysis"]["auxiliary_space"]["state"] == "unknown"
+    assert helper.details["code_analysis"]["auxiliary_space"]["state"] == "unknown"
+
+
+def test_static_auxiliary_space_abstains_on_java_string_concatenation() -> None:
+    estimate = analyze_java_complexity(
+        "class S { String f(String text) { String result = \"\"; "
+        "for(int i=0;i<text.length();i++) result += text.charAt(i); return result; } }",
+        "S.f",
     )
 
     assert estimate.details["code_analysis"]["auxiliary_space"]["state"] == "unknown"
