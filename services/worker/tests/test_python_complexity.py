@@ -20,6 +20,31 @@ def test_complexity_estimator_uses_maximum_nested_loop_depth() -> None:
     assert estimate.methods_disagree is False
 
 
+def test_static_auxiliary_space_recognizes_input_scanned_hash_map() -> None:
+    estimate = analyze_python_complexity(
+        "def two_sum(nums, target):\n"
+        "    seen = {}\n"
+        "    for i, value in enumerate(nums):\n"
+        "        if target - value in seen: return [seen[target - value], i]\n"
+        "        seen[value] = i\n"
+        "    return []\n",
+        "two_sum",
+    )
+
+    space = estimate.details["code_analysis"]["auxiliary_space"]
+    assert space["state"] == "estimated"
+    assert space["estimate"] == "O(n)"
+    assert "returned output" in space["convention"]
+
+
+def test_static_auxiliary_space_abstains_when_pattern_is_not_supported() -> None:
+    estimate = analyze_python_complexity(
+        "def solve(nums):\n    return [value * 2 for value in nums]\n", "solve"
+    )
+
+    assert estimate.details["code_analysis"]["auxiliary_space"]["state"] == "unknown"
+
+
 def test_complexity_estimator_accounts_for_sort_and_recursion_limits() -> None:
     sorted_case = analyze_python_complexity(
         "def solve(values):\n    return sorted(values)\n", "solve"

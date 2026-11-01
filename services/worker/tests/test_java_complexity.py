@@ -39,6 +39,31 @@ def test_recognizes_java_binary_search_as_logarithmic() -> None:
     assert any(signal["kind"] == "binary_search" for signal in estimate.details["code_analysis"]["signals"])
 
 
+def test_static_auxiliary_space_recognizes_java_hash_map_growth() -> None:
+    estimate = analyze_java_complexity(
+        "import java.util.*; class Solution { int[] twoSum(int[] nums, int target) { "
+        "Map<Integer,Integer> seen = new HashMap<>(); "
+        "for (int i=0; i<nums.length; i++) { "
+        "if (seen.containsKey(target-nums[i])) return new int[]{seen.get(target-nums[i]),i}; "
+        "seen.put(nums[i],i); } return new int[0]; } }",
+        "Solution.twoSum",
+    )
+
+    space = estimate.details["code_analysis"]["auxiliary_space"]
+    assert space["state"] == "estimated"
+    assert space["estimate"] == "O(n)"
+
+
+def test_static_auxiliary_space_does_not_claim_for_unrecognized_java_pattern() -> None:
+    estimate = analyze_java_complexity(
+        "class Solution { int solve(int[] nums) { int sum=0; "
+        "for(int value : nums) sum += value; return sum; } }",
+        "Solution.solve",
+    )
+
+    assert estimate.details["code_analysis"]["auxiliary_space"]["state"] == "unknown"
+
+
 def test_counts_nested_for_loops_in_selected_java_method() -> None:
     estimate = analyze_java_complexity(
         "class Solution { void solve(int[] a) { "

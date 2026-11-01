@@ -2447,6 +2447,72 @@ def _is_adjacency_list_dfs(
     return False
 
 
+def _estimate_java_auxiliary_space(
+    tokens: list[str],
+    class_range: tuple[int, int],
+    method_name: str,
+    body: list[str],
+    spans: list[tuple[int, int]],
+) -> dict[str, object]:
+    unknown = {
+        "state": "unknown",
+        "estimate": None,
+        "method": "static_java_container_growth",
+        "confidence": "low",
+        "convention": "Excludes input storage and returned output.",
+        "reasoning": "No supported auxiliary-space pattern was established.",
+    }
+    parameters = _method_parameter_names(tokens, class_range, method_name) or []
+    containers: set[str] = set()
+    supported_types = {"HashMap", "HashSet", "ArrayList", "ArrayDeque", "LinkedList"}
+    for index in range(len(body) - 3):
+        if body[index] == "=" and body[index + 1] == "new":
+            type_index = index + 2
+            if body[type_index] in supported_types:
+                name = body[index - 1] if index else ""
+                if re.fullmatch(r"[A-Za-z_$][\w$]*", name):
+                    containers.add(name)
+
+    if not parameters or not containers or len(spans) != 1:
+        return unknown
+    start, end = spans[0]
+    header_end = next((index for index in range(start, end + 1) if body[index] == "{"), -1)
+    header = body[start : header_end if header_end >= 0 else end]
+    iterates_input = any(name in header for name in parameters) and (
+        ":" in header or "length" in header
+    )
+    if not iterates_input:
+        return unknown
+    loop_body = body[start : end + 1]
+    returned = {
+        body[index + 1]
+        for index, token in enumerate(body[:-1])
+        if token == "return"
+    }
+    for name in containers - returned:
+        if any(
+            index + 2 < len(loop_body)
+            and loop_body[index] == name
+            and loop_body[index + 1] == "."
+            and loop_body[index + 2] in {"put", "add", "offer", "push", "addLast"}
+            for index in range(len(loop_body))
+        ):
+            return {
+                "state": "estimated",
+                "estimate": "O(n)",
+                "method": "static_java_container_growth",
+                "confidence": "low",
+                "convention": "Excludes input storage and returned output.",
+                "reasoning": "A local collection is populated during one scan over an input parameter; O(n) is a conservative upper bound.",
+                "limitations": [
+                    "This bounded rule does not prove the collection reaches linear size; its true bound may be smaller.",
+                    "Called helpers, arrays, recursive space, and nested loops are not analyzed.",
+                    "Collection operation costs depend on the concrete type and implementation.",
+                ],
+            }
+    return unknown
+
+
 def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     method = "static_java_token_loop_depth"
     explanation = "Heuristic from Java loop nesting, direct recursion, and common sorting calls."
@@ -2483,6 +2549,9 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     body_lines = token_lines[body_range[0] : body_range[1]]
 
     spans, incomplete_loop = _loop_spans(body)
+    auxiliary_space = _estimate_java_auxiliary_space(
+        tokens, class_range, parts[1], body, spans
+    )
     loop_indices = [start for start, _ in spans]
     maximum_depth = max(
         (sum(start <= index <= end for start, end in spans) for index in loop_indices),
@@ -2828,6 +2897,7 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "code_analysis": {
                 "language": "java",
                 "scope": "selected method; called helpers are not expanded",
+                "auxiliary_space": auxiliary_space,
                 "signals": signals,
                 **({"bfs": bfs_details} if bfs_details is not None else {}),
                 **({"monotonic_stack": monotonic_stack} if monotonic_stack is not None else {}),

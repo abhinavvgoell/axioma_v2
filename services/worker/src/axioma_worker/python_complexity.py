@@ -2355,6 +2355,118 @@ def _is_local_tree_adjacency_dfs(function: ast.FunctionDef | ast.AsyncFunctionDe
     return None
 
 
+def _estimate_python_auxiliary_space(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> dict[str, object]:
+    """Recognize empty local containers populated in one direct input scan."""
+    unknown = {
+        "state": "unknown",
+        "estimate": None,
+        "method": "static_python_container_growth",
+        "confidence": "low",
+        "convention": "Excludes input storage and returned output.",
+        "reasoning": "No supported auxiliary-space pattern was established.",
+    }
+    parameters = {
+        arg.arg
+        for arg in (*function.args.posonlyargs, *function.args.args, *function.args.kwonlyargs)
+        if arg.arg not in {"self", "cls"}
+    }
+
+    def selected_nodes(statements: list[ast.stmt]) -> list[ast.AST]:
+        nodes: list[ast.AST] = []
+        stack = list(statements)
+        while stack:
+            node = stack.pop()
+            nodes.append(node)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+                continue
+            stack.extend(ast.iter_child_nodes(node))
+        return nodes
+
+    def iterates_parameter(expression: ast.AST) -> bool:
+        if isinstance(expression, ast.Name):
+            return expression.id in parameters
+        if isinstance(expression, ast.Call) and isinstance(expression.func, ast.Name):
+            if expression.func.id == "enumerate" and expression.args:
+                return iterates_parameter(expression.args[0])
+            if expression.func.id == "range" and len(expression.args) == 1:
+                bound = expression.args[0]
+                return (
+                    isinstance(bound, ast.Call)
+                    and isinstance(bound.func, ast.Name)
+                    and bound.func.id == "len"
+                    and bool(bound.args)
+                    and isinstance(bound.args[0], ast.Name)
+                    and bound.args[0].id in parameters
+                )
+        return False
+
+    containers: set[str] = set()
+    target_nodes = selected_nodes(function.body)
+    for node in target_nodes:
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        value = node.value
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+        empty = (
+            isinstance(value, (ast.List, ast.Set, ast.Dict))
+            and (not value.elts if not isinstance(value, ast.Dict) else not value.keys)
+            or isinstance(value, ast.Call)
+            and isinstance(value.func, ast.Name)
+            and value.func.id in {"list", "set", "dict"}
+            and not value.args
+            and not value.keywords
+        )
+        if empty:
+            containers.update(target.id for target in targets if isinstance(target, ast.Name))
+
+    if not containers:
+        return unknown
+    returned = {
+        node.value.id
+        for node in target_nodes
+        if isinstance(node, ast.Return) and isinstance(node.value, ast.Name)
+    }
+    for loop in (node for node in target_nodes if isinstance(node, (ast.For, ast.AsyncFor))):
+        if not iterates_parameter(loop.iter):
+            continue
+        loop_nodes = selected_nodes(loop.body)
+        nested_growth = any(
+            isinstance(node, (ast.For, ast.AsyncFor, ast.While, ast.ListComp, ast.SetComp, ast.DictComp))
+            for node in loop_nodes
+        )
+        if nested_growth:
+            continue
+        mutated: set[str] = set()
+        for node in loop_nodes:
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                if isinstance(node.func.value, ast.Name) and node.func.value.id in containers and node.func.attr in {
+                    "add", "append", "extend", "insert", "update", "setdefault", "put"
+                }:
+                    mutated.add(node.func.value.id)
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name):
+                        if target.value.id in containers:
+                            mutated.add(target.value.id)
+        if mutated - returned:
+            return {
+                "state": "estimated",
+                "estimate": "O(n)",
+                "method": "static_python_container_growth",
+                "confidence": "low",
+                "convention": "Excludes input storage and returned output.",
+                "reasoning": "A local container is populated during one scan over an input parameter; O(n) is a conservative upper bound.",
+                "limitations": [
+                    "This bounded rule does not prove the container reaches linear size; its true bound may be smaller.",
+                    "Called helpers and indirect allocations are not analyzed.",
+                    "Nested growth patterns and recursive space use are reported as unknown.",
+                ],
+            }
+    return unknown
+
+
 def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     method = "static_ast_loop_depth"
     explanation = "Heuristic from the target function's loop nesting and built-in sorting calls."
@@ -2374,6 +2486,8 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             False,
             "Static analysis could not locate the declared function entrypoint.",
         )
+
+    auxiliary_space = _estimate_python_auxiliary_space(function)
 
     maximum_depth = 0
     has_while = False
@@ -2975,6 +3089,7 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "code_analysis": {
                 "language": "python",
                 "scope": "selected entrypoint; called helpers are not expanded",
+                "auxiliary_space": auxiliary_space,
                 "signals": signals,
                 **({"bfs": bfs_details} if bfs_details is not None else {}),
                 **(

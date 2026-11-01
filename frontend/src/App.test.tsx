@@ -253,6 +253,16 @@ describe('analysis evidence states', () => {
           { size: 10, line_events: 20, input_strategy: 'ascending' },
           { size: 20, line_events: 40, input_strategy: 'ascending' },
         ],
+        code_analysis: {
+          auxiliary_space: {
+            state: 'estimated',
+            estimate: 'O(n)',
+            method: 'static_python_container_growth',
+            confidence: 'low',
+            convention: 'Excludes input storage and returned output.',
+            reasoning: 'A local set grows in one scan over nums.',
+          },
+        },
         space_measurement: { state: 'not_estimated', reason: 'Too few sizes.' },
       },
     }
@@ -262,7 +272,9 @@ describe('analysis evidence states', () => {
     expect(screen.getByText('STATIC ESTIMATE · HEURISTIC')).toBeTruthy()
     expect(screen.getByText('Empirical benchmark · not an asymptotic proof')).toBeTruthy()
     expect(screen.getByText('20 source-line events')).toBeTruthy()
-    expect(screen.getByText('No auxiliary-space estimate was produced for this run.')).toBeTruthy()
+    expect(screen.getByText('Auxiliary space · static estimate')).toBeTruthy()
+    expect(screen.getByText('Low-confidence upper bound · excludes input and returned output')).toBeTruthy()
+    expect(screen.getByText('Measured memory growth')).toBeTruthy()
   })
 
   it('does not present a legacy combined result as a separately stored static estimate', () => {
