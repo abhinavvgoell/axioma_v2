@@ -15,8 +15,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
 REVIEW_DIR = Path(__file__).resolve().parent
-GOLD_PATH = REVIEW_DIR / "gold-reviewed-calibration-v2.jsonl"
-GOLD_MANIFEST_PATH = REVIEW_DIR / "gold-reviewed-calibration-v2.manifest.json"
+GOLD_PATH = REVIEW_DIR / "gold-reviewed-calibration-v1.jsonl"
+GOLD_MANIFEST_PATH = REVIEW_DIR / "gold-reviewed-calibration-v1.manifest.json"
 CASE_PACKETS = (
     "candidate-cases-batch-01-v2.jsonl",
     "candidate-cases-batch-02-v1.jsonl",
