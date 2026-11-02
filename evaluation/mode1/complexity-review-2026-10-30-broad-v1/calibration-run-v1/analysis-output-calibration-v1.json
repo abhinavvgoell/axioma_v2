@@ -1,0 +1,1868 @@
+{
+  "analyzer_branch": "main",
+  "analyzer_commit": "624b5e0532a94f7fc4f4b35621d8b1ea9b241531",
+  "analyzer_source_sha256": {
+    "java_complexity.py": "29dabe27b50d499ad7438a7a7258833881b295556b3c27cf2b850c887e0654f1",
+    "python_complexity.py": "db07cb1aedd5f81e213fb9fec48bf44410669f22c61d22de1b4e4673a2faa566",
+    "recurrence.py": "5c1a91dc9bd79fc2cf29e0577b615e5eab2ba3363f83343c53a2344aaf32cab9"
+  },
+  "benchmark_measurements": {
+    "reason": "This packet evaluates static estimates only.",
+    "state": "not_run"
+  },
+  "candidate_packet_sha256": {
+    "candidate-cases-batch-01-v2.jsonl": "dc631455f4a5d44447f598d46137b4f2ab738d07dfb61dfeb48d3040aa400276",
+    "candidate-cases-batch-02-v1.jsonl": "3f06adcb60b84f909f1f4dc9b105cd0425d1627ba39f0820a6ab618249a493b9",
+    "candidate-cases-batch-03-v1.jsonl": "df3fcbaa078a6a7471db0039bc332d55a87d307d3e29d674a5ea17c02c6354c8",
+    "candidate-cases-batch-04-v1.jsonl": "a8b8cf234741da71407c014ec5a2b2b8d21ae57d27c5d16c4e9af596175d8e4b",
+    "candidate-cases-batch-05-v1.jsonl": "a401a89e5b7362e918f87afcbabd13ed6a9a5e5ca3ce180e2795889f94ca26ee",
+    "candidate-cases-batch-06-v1.jsonl": "ed64db43ec0c3a13851e37f9f2086b7abd4e9aa70045770b1f85ac860a07e96b"
+  },
+  "cases": [
+    {
+      "auxiliary_space": {
+        "confidence": null,
+        "limitations": [],
+        "method": "not_emitted",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": null,
+        "state": "not_emitted"
+      },
+      "entrypoint": "bfs",
+      "family": "graph_traversal",
+      "id": "axioma-20261030-broad-001",
+      "language": "python",
+      "source_sha256": "621e11bd4a320c7437bba42e29715608b05e84a5939562715cde8e32a576a529",
+      "time": {
+        "confidence": "low",
+        "details": {},
+        "explanation": "Static analysis could not locate the declared function entrypoint.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (entrypoint not found)"
+      },
+      "title": "Adjacency-list breadth-first search"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": null,
+        "limitations": [],
+        "method": "not_emitted",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": null,
+        "state": "not_emitted"
+      },
+      "entrypoint": "min_dist_bottom_up",
+      "family": "dynamic_programming",
+      "id": "axioma-20261030-broad-002",
+      "language": "python",
+      "source_sha256": "e844589a5505736ab8a8ee6aee2494f124a7c56c28d92ab860fb817993f0e433",
+      "time": {
+        "confidence": "low",
+        "details": {},
+        "explanation": "Static analysis could not locate the declared function entrypoint.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (entrypoint not found)"
+      },
+      "title": "Bottom-up edit distance"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_java_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "KMP.kmpMatcher",
+      "family": "string_search",
+      "id": "axioma-20261030-broad-003",
+      "language": "java",
+      "source_sha256": "2b7b74597b3246e29ff751dfae3399b833fe7ae6b3367a1fd959e9c7c18a2816",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_java_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "java",
+            "limitations": [
+              "Generic tokenizer loop/collection signals do not retain source line numbers; recognized BFS evidence includes line numbers and token indexes.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 2,
+            "maximum_loop_nesting": 2,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "loop",
+                "label": "while loop",
+                "line": null
+              },
+              {
+                "kind": "collection_operation",
+                "label": ".add() call; concrete type and cost are not inferred",
+                "line": null
+              },
+              {
+                "kind": "indexing",
+                "label": "Array or indexed access; concrete access cost is not inferred",
+                "line": null
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "method": "static_java_token_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (data-dependent or incomplete loop)"
+      },
+      "title": "Knuth–Morris–Pratt string matcher"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [
+          "This rule cannot prove that called library operations have no hidden allocations.",
+          "Object construction, non-Math calls, string concatenation, and recursive space are reported as unknown."
+        ],
+        "method": "static_java_allocation_free_state",
+        "predicted": "O(1)",
+        "raw_estimate": "O(1)",
+        "reasoning": "The selected method uses scalar/local state and no recognized input-sized allocation or recursion.",
+        "state": "estimated"
+      },
+      "entrypoint": "KadaneAlgorithm.maxSum",
+      "family": "array_dynamic_programming",
+      "id": "axioma-20261030-broad-004",
+      "language": "java",
+      "source_sha256": "2d23e1c8f889ef2784b78faab71959a7e374281c39e7cd36658848ffba85567c",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": "O(1)",
+              "limitations": [
+                "This rule cannot prove that called library operations have no hidden allocations.",
+                "Object construction, non-Math calls, string concatenation, and recursive space are reported as unknown."
+              ],
+              "method": "static_java_allocation_free_state",
+              "reasoning": "The selected method uses scalar/local state and no recognized input-sized allocation or recursion.",
+              "state": "estimated"
+            },
+            "language": "java",
+            "limitations": [
+              "Generic tokenizer loop/collection signals do not retain source line numbers; recognized BFS evidence includes line numbers and token indexes.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 1,
+            "maximum_loop_nesting": 1,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "indexing",
+                "label": "Array or indexed access; concrete access cost is not inferred",
+                "line": null
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. One braced loop level was detected. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "method": "static_java_token_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(n)",
+        "raw_estimate": "O(n)"
+      },
+      "title": "Kadane maximum-subarray check"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [
+          "This bounded rule does not prove the container reaches linear size; its true bound may be smaller.",
+          "Called helpers and indirect allocations are not analyzed.",
+          "Nested growth patterns and recursive space use are reported as unknown."
+        ],
+        "method": "static_python_container_growth",
+        "predicted": "O(n)",
+        "raw_estimate": "O(n)",
+        "reasoning": "A local container is populated during one scan over an input parameter; O(n) is a conservative upper bound.",
+        "state": "estimated"
+      },
+      "entrypoint": "sliding_window",
+      "family": "sliding_window",
+      "id": "axioma-20261030-broad-005",
+      "language": "python",
+      "source_sha256": "6d2f69289af704e62a323b78a104b538297cce92fe19478c1d4db273b6cccea2",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": "O(n)",
+              "limitations": [
+                "This bounded rule does not prove the container reaches linear size; its true bound may be smaller.",
+                "Called helpers and indirect allocations are not analyzed.",
+                "Nested growth patterns and recursive space use are reported as unknown."
+              ],
+              "method": "static_python_container_growth",
+              "reasoning": "A local container is populated during one scan over an input parameter; O(n) is a conservative upper bound.",
+              "state": "estimated"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 1,
+            "maximum_data_dependent_loop_nesting": 1,
+            "maximum_loop_nesting": 1,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 49
+              },
+              {
+                "kind": "membership",
+                "label": "Membership check; cost depends on the container",
+                "line": 50
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(n)",
+        "raw_estimate": "O(n)"
+      },
+      "title": "Longest substring without repeating characters"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "binary_search",
+      "family": "divide_and_conquer",
+      "id": "axioma-20261030-broad-006",
+      "language": "python",
+      "source_sha256": "bf133ae3719eb1ee56f418ef103236228fb871ccb1443d013c67b9f68a414807",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 0,
+            "maximum_data_dependent_loop_nesting": 0,
+            "maximum_loop_nesting": 0,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": 50
+              },
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": 52
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Recursive helper behavior is not inferred by this analyzer. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (recursion detected)"
+      },
+      "title": "Recursive binary search with list slicing"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "heap_sort",
+      "family": "sorting",
+      "id": "axioma-20261030-broad-007",
+      "language": "python",
+      "source_sha256": "3ee8373cadc1fc534dde49496a86eb14796a6a355b896d0107758aee907395b4",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 2,
+            "maximum_data_dependent_loop_nesting": 1,
+            "maximum_loop_nesting": 1,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 67
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 69
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(n)",
+        "raw_estimate": "O(n)"
+      },
+      "title": "In-place heap sort"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_java_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "RecursiveBinarySearch.find",
+      "family": "divide_and_conquer",
+      "id": "axioma-20261030-broad-008",
+      "language": "java",
+      "source_sha256": "97b9025bad50969b7ae559c06947f45353e3ec23d996ae0f5f96cc4ba39eaf7b",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_java_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "java",
+            "limitations": [
+              "Generic tokenizer loop/collection signals do not retain source line numbers; recognized BFS evidence includes line numbers and token indexes.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 0,
+            "maximum_loop_nesting": 0,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": []
+          }
+        },
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. No loops or common sort calls were detected. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "method": "static_java_token_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(1)",
+        "raw_estimate": "O(1) (no detected loops or sorting)"
+      },
+      "title": "Recursive binary search in Java"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_java_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "FibonacciSeries.fibonacci",
+      "family": "recursion",
+      "id": "axioma-20261030-broad-009",
+      "language": "java",
+      "source_sha256": "9db818ba99b12a4a145275eac1a46e5d9d52253063318850f2487520156c70e4",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_java_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "java",
+            "limitations": [
+              "Generic tokenizer loop/collection signals do not retain source line numbers; recognized BFS evidence includes line numbers and token indexes.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 0,
+            "maximum_loop_nesting": 0,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": null
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. Recurrence behavior is not inferred by this analyzer. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "method": "static_java_token_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (recursion detected)"
+      },
+      "title": "Naive recursive Fibonacci"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "matrix_chain_order",
+      "family": "dynamic_programming",
+      "id": "axioma-20261030-broad-010",
+      "language": "python",
+      "source_sha256": "18cd15dd9f58090498d093f2db586f62bc3ffa5ae65f0358de34aaef62872032",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 7,
+            "maximum_data_dependent_loop_nesting": 3,
+            "maximum_loop_nesting": 3,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "comprehension",
+                "label": "1-level comprehension",
+                "line": 19
+              },
+              {
+                "kind": "comprehension",
+                "label": "1-level comprehension",
+                "line": 19
+              },
+              {
+                "kind": "comprehension",
+                "label": "1-level comprehension",
+                "line": 20
+              },
+              {
+                "kind": "comprehension",
+                "label": "1-level comprehension",
+                "line": 20
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 22
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 23
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 27
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum data-dependent loop or comprehension nesting depth: 3. Loops with source-level constant bounds are not counted as input growth. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(n^3)",
+        "raw_estimate": "O(n^3)"
+      },
+      "title": "Matrix-chain order dynamic programming"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "selection_sort",
+      "family": "sorting",
+      "id": "axioma-20261030-broad-011",
+      "language": "python",
+      "source_sha256": "b127ba324e56ee5282b62b3336bc3c7e6e750414916c0222f6039cefb4bf2fa0",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 2,
+            "maximum_data_dependent_loop_nesting": 2,
+            "maximum_loop_nesting": 2,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 70
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 72
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum data-dependent loop or comprehension nesting depth: 2. Loops with source-level constant bounds are not counted as input growth. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(n^2)",
+        "raw_estimate": "O(n^2)"
+      },
+      "title": "Selection sort"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "knapsack",
+      "family": "recursion",
+      "id": "axioma-20261030-broad-012",
+      "language": "python",
+      "source_sha256": "46a4586f2afc04c16fa73911f27fa63e928b3263b5854386a223efd4615acae2",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 0,
+            "maximum_data_dependent_loop_nesting": 0,
+            "maximum_loop_nesting": 0,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": 40
+              },
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": 42
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Recursive helper behavior is not inferred by this analyzer. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (recursion detected)"
+      },
+      "title": "Recursive 0/1 knapsack without memoization"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "merge_sort",
+      "family": "sorting",
+      "id": "axioma-20261030-broad-013",
+      "language": "python",
+      "source_sha256": "c37c47ef9c269dc5024ca579433f7c0cd7e61e3bb35e4885bbcebd9a24e2d9a3",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 0,
+            "maximum_data_dependent_loop_nesting": 0,
+            "maximum_loop_nesting": 0,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": 61
+              },
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": 61
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Recursive helper behavior is not inferred by this analyzer. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (recursion detected)"
+      },
+      "title": "Merge sort implementation using pop from list front"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_java_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "LongestCommonSubsequence.getLCS",
+      "family": "dynamic_programming",
+      "id": "axioma-20261030-broad-014",
+      "language": "java",
+      "source_sha256": "ed98d5f455bd5e792a734d763bae810767a679333f3f160f353b2769ded84b5b",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_java_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "java",
+            "limitations": [
+              "Generic tokenizer loop/collection signals do not retain source line numbers; recognized BFS evidence includes line numbers and token indexes.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 4,
+            "maximum_loop_nesting": 2,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "indexing",
+                "label": "Array or indexed access; concrete access cost is not inferred",
+                "line": null
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. Maximum detected braced loop nesting depth: 2. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "method": "static_java_token_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(n^2)",
+        "raw_estimate": "O(n^2)"
+      },
+      "title": "Longest common subsequence dynamic programming (Java)"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_java_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "FibonacciSearch.find",
+      "family": "searching",
+      "id": "axioma-20261030-broad-015",
+      "language": "java",
+      "source_sha256": "372928b9da6ce36c1e36c3178a7503db6663bcee3a23208f1e5248b29ebcb4aa",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_java_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "java",
+            "limitations": [
+              "Generic tokenizer loop/collection signals do not retain source line numbers; recognized BFS evidence includes line numbers and token indexes.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 2,
+            "maximum_loop_nesting": 1,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "while loop",
+                "line": null
+              },
+              {
+                "kind": "loop",
+                "label": "while loop",
+                "line": null
+              },
+              {
+                "kind": "indexing",
+                "label": "Array or indexed access; concrete access cost is not inferred",
+                "line": null
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "method": "static_java_token_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (data-dependent or incomplete loop)"
+      },
+      "title": "Fibonacci search with sortedness validation"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "merge_intervals",
+      "family": "sorting",
+      "id": "axioma-20261030-broad-016",
+      "language": "python",
+      "source_sha256": "af3ae62a436979f4023b8492605b3b2d12c385147ad8621563e03e958e2cb7de",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 2,
+            "maximum_data_dependent_loop_nesting": 1,
+            "maximum_loop_nesting": 1,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 45
+              },
+              {
+                "kind": "sorting",
+                "label": "sorted sorting call",
+                "line": 52
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 56
+              },
+              {
+                "kind": "collection_operation",
+                "label": "Collection method call; concrete type and cost are not inferred",
+                "line": 63
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop level and a built-in sort were detected; sort cost is treated as O(n log n). Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(n log n)",
+        "raw_estimate": "O(n log n)"
+      },
+      "title": "Merge overlapping intervals"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "frac_knapsack",
+      "family": "greedy",
+      "id": "axioma-20261030-broad-017",
+      "language": "python",
+      "source_sha256": "af6c079f473bb580087192af278732b54b48a5cb2e7742ac374d3352bc57916f",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 2,
+            "maximum_data_dependent_loop_nesting": 1,
+            "maximum_loop_nesting": 1,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "sorting",
+                "label": "sorted sorting call",
+                "line": 35
+              },
+              {
+                "kind": "comprehension",
+                "label": "1-level comprehension",
+                "line": 36
+              },
+              {
+                "kind": "comprehension",
+                "label": "1-level comprehension",
+                "line": 36
+              },
+              {
+                "kind": "binary_search",
+                "label": "Standard-library bisect call performs binary search",
+                "line": 38
+              },
+              {
+                "kind": "iterable_consumer",
+                "label": "sum() consumes an iterable",
+                "line": 42
+              },
+              {
+                "kind": "iterable_consumer",
+                "label": "sum() consumes an iterable",
+                "line": 44
+              }
+            ]
+          }
+        },
+        "explanation": "Recognized an interval-halving search loop or standard-library bisect call. The search range shrinks by a constant factor per step, giving O(log n) work. This syntax-based recognition is a heuristic. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_binary_search",
+        "methods_disagree": false,
+        "predicted": "O(log n)",
+        "raw_estimate": "O(log n)"
+      },
+      "title": "Fractional knapsack by value-to-weight ratio"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "topological_sort",
+      "family": "graph_traversal",
+      "id": "axioma-20261030-broad-018",
+      "language": "python",
+      "source_sha256": "8f885c3f490986ab1d25e81a3186f8fb40e47cd3b9e337f4ef41420917caa6d0",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 1,
+            "maximum_data_dependent_loop_nesting": 1,
+            "maximum_loop_nesting": 1,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 39
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(n)",
+        "raw_estimate": "O(n)"
+      },
+      "title": "DFS topological ordering"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_java_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "SentinelLinearSearch.find",
+      "family": "searching",
+      "id": "axioma-20261030-broad-019",
+      "language": "java",
+      "source_sha256": "8dcad37b5d63c1e26c482b91e8a34fe2fec14848ae037dbcd91046747153eca0",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_java_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "java",
+            "limitations": [
+              "Generic tokenizer loop/collection signals do not retain source line numbers; recognized BFS evidence includes line numbers and token indexes.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 1,
+            "maximum_loop_nesting": 1,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "while loop",
+                "line": null
+              },
+              {
+                "kind": "indexing",
+                "label": "Array or indexed access; concrete access cost is not inferred",
+                "line": null
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "method": "static_java_token_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (data-dependent or incomplete loop)"
+      },
+      "title": "Sentinel linear search"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_java_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "CountingSort.sort",
+      "family": "sorting",
+      "id": "axioma-20261030-broad-020",
+      "language": "java",
+      "source_sha256": "861aec19c0c3234874d11014c0af65aed14dcab64361fbcbd54d1cfb1d30be74",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_java_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "java",
+            "limitations": [
+              "Generic tokenizer loop/collection signals do not retain source line numbers; recognized BFS evidence includes line numbers and token indexes.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 0,
+            "maximum_loop_nesting": 0,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "indexing",
+                "label": "Array or indexed access; concrete access cost is not inferred",
+                "line": null
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. No loops or common sort calls were detected. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "method": "static_java_token_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(1)",
+        "raw_estimate": "O(1) (no detected loops or sorting)"
+      },
+      "title": "Counting sort with value-range histogram"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "dijkstra",
+      "family": "graph_traversal",
+      "id": "axioma-20261030-broad-021",
+      "language": "python",
+      "source_sha256": "eebe79cba9ede0138a97bd21d3bcce7ca8749b5e05b735859fa22b4d1077552a",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 2,
+            "maximum_data_dependent_loop_nesting": 2,
+            "maximum_loop_nesting": 2,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "dijkstra",
+                "label": "Heap-based adjacency-list traversal",
+                "line": 56
+              },
+              {
+                "kind": "loop",
+                "label": "while loop",
+                "line": 56
+              },
+              {
+                "kind": "membership",
+                "label": "Membership check; cost depends on the container",
+                "line": 58
+              },
+              {
+                "kind": "collection_operation",
+                "label": "Collection method call; concrete type and cost are not inferred",
+                "line": 60
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 64
+              },
+              {
+                "kind": "membership",
+                "label": "Membership check; cost depends on the container",
+                "line": 65
+              },
+              {
+                "kind": "collection_operation",
+                "label": "Collection method call; concrete type and cost are not inferred",
+                "line": 69
+              }
+            ]
+          }
+        },
+        "explanation": "Recognized a heap-based traversal over adjacency lists. With binary-heap push and pop operations, the conservative cost is O((V + E) log V). This assumes graph size bounds and heap operations follow the usual Dijkstra-style model. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_heap_graph_traversal",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "O((V + E) log V)"
+      },
+      "title": "Lazy-heap Dijkstra shortest path"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "ite_ternary_search",
+      "family": "searching",
+      "id": "axioma-20261030-broad-022",
+      "language": "python",
+      "source_sha256": "24ca1e641d1a16496fc73b29f4cb2d7a997e630861af4f04f04fc35b5c018b77",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 1,
+            "maximum_data_dependent_loop_nesting": 1,
+            "maximum_loop_nesting": 1,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "while loop",
+                "line": 94
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (data-dependent loop bound)"
+      },
+      "title": "Iterative ternary search with fixed-size linear tail"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "longest_common_substring",
+      "family": "dynamic_programming",
+      "id": "axioma-20261030-broad-023",
+      "language": "python",
+      "source_sha256": "4b60ccb26882d8fa5d87e4e2417d9ed810fb12dc4e386f6689b10a2b985bda77",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 3,
+            "maximum_data_dependent_loop_nesting": 2,
+            "maximum_loop_nesting": 2,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "comprehension",
+                "label": "1-level comprehension",
+                "line": 52
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 56
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 57
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Maximum data-dependent loop or comprehension nesting depth: 2. Loops with source-level constant bounds are not counted as input growth. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(n^2)",
+        "raw_estimate": "O(n^2)"
+      },
+      "title": "Longest common substring dynamic programming"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_java_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "KnapsackZeroOneTabulation.compute",
+      "family": "dynamic_programming",
+      "id": "axioma-20261030-broad-024",
+      "language": "java",
+      "source_sha256": "4dac00819b9665faf71aed11c37c83e0782acf83216a38f61fb50894b09568ed",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_java_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "java",
+            "limitations": [
+              "Generic tokenizer loop/collection signals do not retain source line numbers; recognized BFS evidence includes line numbers and token indexes.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 2,
+            "maximum_loop_nesting": 2,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "indexing",
+                "label": "Array or indexed access; concrete access cost is not inferred",
+                "line": null
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. Maximum detected braced loop nesting depth: 2. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "method": "static_java_token_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(n^2)",
+        "raw_estimate": "O(n^2)"
+      },
+      "title": "0/1 knapsack bottom-up tabulation"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_java_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "TopologicalSort.sort",
+      "family": "graph_traversal",
+      "id": "axioma-20261030-broad-025",
+      "language": "java",
+      "source_sha256": "d339d3eaa4e38fbb722b5b4c951412516afe40eea8c32db470c75c28083710c7",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_java_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "java",
+            "limitations": [
+              "Generic tokenizer loop/collection signals do not retain source line numbers; recognized BFS evidence includes line numbers and token indexes.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 0,
+            "maximum_loop_nesting": 0,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": null
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. Recurrence behavior is not inferred by this analyzer. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "method": "static_java_token_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (recursion detected)"
+      },
+      "title": "DFS topological sort with adjacency lists"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [
+          "This rule cannot prove that called built-ins or operators have no hidden allocations.",
+          "Called helpers, called methods, slicing, comprehensions, generators, and recursive space are reported as unknown."
+        ],
+        "method": "static_python_allocation_free_state",
+        "predicted": "O(1)",
+        "raw_estimate": "O(1)",
+        "reasoning": "The selected function uses scalar/local state and no recognized input-sized allocation or recursion.",
+        "state": "estimated"
+      },
+      "entrypoint": "is_palindrome",
+      "family": "string_processing",
+      "id": "axioma-20261030-broad-026",
+      "language": "python",
+      "source_sha256": "0f3bb5314dc0f9c912db888dd7742663381b525afc279b6a7cea726d58e5c38d",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": "O(1)",
+              "limitations": [
+                "This rule cannot prove that called built-ins or operators have no hidden allocations.",
+                "Called helpers, called methods, slicing, comprehensions, generators, and recursive space are reported as unknown."
+              ],
+              "method": "static_python_allocation_free_state",
+              "reasoning": "The selected function uses scalar/local state and no recognized input-sized allocation or recursion.",
+              "state": "estimated"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 1,
+            "maximum_data_dependent_loop_nesting": 1,
+            "maximum_loop_nesting": 1,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "while loop",
+                "line": 33
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. A while-loop was detected, but its iteration count cannot be bounded by the current static rules. It may be linear, logarithmic, or depend on other input values. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (data-dependent loop bound)"
+      },
+      "title": "Linear two-pointer palindrome check"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_python_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "quick_sort",
+      "family": "sorting",
+      "id": "axioma-20261030-broad-027",
+      "language": "python",
+      "source_sha256": "2cdf0918efd16829cd4ac63a11b675e73b61ec77cf58f9d470f5c0730ec301c4",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_python_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 3,
+            "maximum_data_dependent_loop_nesting": 1,
+            "maximum_loop_nesting": 1,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "comprehension",
+                "label": "1-level comprehension",
+                "line": 47
+              },
+              {
+                "kind": "comprehension",
+                "label": "1-level comprehension",
+                "line": 48
+              },
+              {
+                "kind": "comprehension",
+                "label": "1-level comprehension",
+                "line": 49
+              },
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": 50
+              },
+              {
+                "kind": "recursion",
+                "label": "Direct self-call; recurrence is not solved",
+                "line": 50
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. Recursive helper behavior is not inferred by this analyzer. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (recursion detected)"
+      },
+      "title": "Randomized quick sort with list partitions"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_java_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "DijkstraAlgorithm.run",
+      "family": "graph_traversal",
+      "id": "axioma-20261030-broad-028",
+      "language": "java",
+      "source_sha256": "5162609a392cb3cfb17b54aa41af77c26a595d5be437dd0e22182d4d335a78f0",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_java_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "java",
+            "limitations": [
+              "Generic tokenizer loop/collection signals do not retain source line numbers; recognized BFS evidence includes line numbers and token indexes.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 2,
+            "maximum_loop_nesting": 2,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "while loop",
+                "line": null
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "collection_operation",
+                "label": ".add() call; concrete type and cost are not inferred",
+                "line": null
+              },
+              {
+                "kind": "collection_operation",
+                "label": ".add() call; concrete type and cost are not inferred",
+                "line": null
+              },
+              {
+                "kind": "indexing",
+                "label": "Array or indexed access; concrete access cost is not inferred",
+                "line": null
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. A while-loop or an unbraced loop was detected, but its iteration count cannot be bounded by the current static rules. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "method": "static_java_token_loop_depth",
+        "methods_disagree": false,
+        "predicted": "unknown",
+        "raw_estimate": "unknown (data-dependent or incomplete loop)"
+      },
+      "title": "Lazy-priority-queue Dijkstra on an adjacency matrix"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [],
+        "method": "static_java_container_growth",
+        "predicted": "unknown",
+        "raw_estimate": null,
+        "reasoning": "No supported auxiliary-space pattern was established.",
+        "state": "unknown"
+      },
+      "entrypoint": "CoinChange.minimumCoins",
+      "family": "dynamic_programming",
+      "id": "axioma-20261030-broad-029",
+      "language": "java",
+      "source_sha256": "c0ab0923f717537f0c9e52c9044d0b4e9ca8124d8c6e625c4759f956b0871db9",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": null,
+              "method": "static_java_container_growth",
+              "reasoning": "No supported auxiliary-space pattern was established.",
+              "state": "unknown"
+            },
+            "language": "java",
+            "limitations": [
+              "Generic tokenizer loop/collection signals do not retain source line numbers; recognized BFS evidence includes line numbers and token indexes.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 3,
+            "maximum_loop_nesting": 2,
+            "scope": "selected method; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": null
+              },
+              {
+                "kind": "indexing",
+                "label": "Array or indexed access; concrete access cost is not inferred",
+                "line": null
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from Java loop nesting, direct recursion, and common sorting calls. Maximum detected braced loop nesting depth: 2. Called helpers, library costs, and complex control flow are not analyzed; this is not a proof.",
+        "method": "static_java_token_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(n^2)",
+        "raw_estimate": "O(n^2)"
+      },
+      "title": "Minimum coin count by bottom-up dynamic programming"
+    },
+    {
+      "auxiliary_space": {
+        "confidence": "low",
+        "limitations": [
+          "This rule cannot prove that called built-ins or operators have no hidden allocations.",
+          "Called helpers, called methods, slicing, comprehensions, generators, and recursive space are reported as unknown."
+        ],
+        "method": "static_python_allocation_free_state",
+        "predicted": "O(1)",
+        "raw_estimate": "O(1)",
+        "reasoning": "The selected function uses scalar/local state and no recognized input-sized allocation or recursion.",
+        "state": "estimated"
+      },
+      "entrypoint": "linear_search",
+      "family": "searching",
+      "id": "axioma-20261030-broad-030",
+      "language": "python",
+      "source_sha256": "1336d1906f4a77f0eaf8f8a49d2395bde1517d67deb3e6d94af67c4f9f9405d4",
+      "time": {
+        "confidence": "low",
+        "details": {
+          "code_analysis": {
+            "auxiliary_space": {
+              "confidence": "low",
+              "convention": "Excludes input storage and returned output.",
+              "estimate": "O(1)",
+              "limitations": [
+                "This rule cannot prove that called built-ins or operators have no hidden allocations.",
+                "Called helpers, called methods, slicing, comprehensions, generators, and recursive space are reported as unknown."
+              ],
+              "method": "static_python_allocation_free_state",
+              "reasoning": "The selected function uses scalar/local state and no recognized input-sized allocation or recursion.",
+              "state": "estimated"
+            },
+            "language": "python",
+            "limitations": [
+              "A detected syntax pattern is evidence, not a full algorithmic proof.",
+              "Collection operation costs depend on the concrete type and implementation.",
+              "Only the documented bounded recurrence patterns are analyzed; helper calls are otherwise not expanded."
+            ],
+            "loop_count": 1,
+            "maximum_data_dependent_loop_nesting": 1,
+            "maximum_loop_nesting": 1,
+            "scope": "selected entrypoint; called helpers are not expanded",
+            "signals": [
+              {
+                "kind": "loop",
+                "label": "for loop",
+                "line": 30
+              }
+            ]
+          }
+        },
+        "explanation": "Heuristic from the target function's loop nesting and built-in sorting calls. One loop/comprehension level or an iterable-consuming built-in was detected. Called helper functions are not included; this estimate is not a proof.",
+        "method": "static_ast_loop_depth",
+        "methods_disagree": false,
+        "predicted": "O(n)",
+        "raw_estimate": "O(n)"
+      },
+      "title": "Linear search"
+    }
+  ],
+  "dataset_id": "axioma-20261030-external-broad-calibration-v2",
+  "gold_labels_sha256": "c5d016c2cc6dbb57c9e3039d5ba820dd3cdc76ad3b757f81f883162c90cd9ca3",
+  "machine": "AMD64",
+  "partition": "calibration",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python_version": "3.14.3",
+  "run_at_utc": "2026-11-02T12:35:45.774540+00:00",
+  "schema_version": "axioma.mode1.calibration-analysis.v1",
+  "scope": "30 owner-reviewed calibration cases; not an untouched holdout; labels were not passed to analyzers."
+}

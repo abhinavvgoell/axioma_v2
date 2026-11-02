@@ -1,6 +1,19 @@
 # Broad complexity calibration candidates
 
-This folder contains the proposed 30-case calibration review set, assembled in six batches of five. It is separate from the completed five-case v3 pilot. Owner review is incomplete, and no Axioma analysis has been run on these candidates.
+This folder contains the 30-case calibration review set, assembled in six batches of five. The owner reviewed all labels, and the consolidated calibration set is frozen. The preparation notes below preserve historical checkpoints; current run status is recorded first.
+
+## Current calibration run (2026-11-02)
+
+`run_calibration_v1.py` analyzed the frozen 30-case set using the current Java and Python static analyzers. The runner reads only the six source candidate packets while making analyzer calls; labels are loaded afterward for scoring. It produced 60 predictions: one time and one auxiliary-space record per case. No code execution or benchmark timing was performed.
+
+| Dimension | Answered | Coverage | Exact accuracy across all cases | Exact accuracy among answered |
+|---|---:|---:|---:|---:|
+| Time complexity | 15/30 | 50.0% | 36.7% (11/30) | 73.3% (11/15) |
+| Auxiliary space | 4/30 | 13.3% | 13.3% (4/30) | 100% (4/4) |
+
+These are calibration diagnostics, not held-out performance. The sample is under 50 distinct solutions, shares upstream repositories with prior work, and showed significant abstention; the perfect auxiliary-space selective score is based on only four answered cases. The run report also contains family/language/method breakdowns and confidence intervals.
+
+Outputs are in `calibration-run-v1/`: raw analyzer output, prediction JSONL, joined evaluator input, evaluation report, and run manifest. The frozen gold file and manifest remain unchanged. The run used analyzer commit `624b5e0532a94f7fc4f4b35621d8b1ea9b241531`.
 
 Batch 01 contains five exact source files from pinned MIT-licensed upstream commits. The original proposals are preserved in `candidate-cases-batch-01-v1.jsonl` and `review-batch-01.md`; the owner-approved revised packet is preserved separately in `candidate-cases-batch-01-v2.jsonl` and its owner-decision/freeze artifacts. Its partial freeze does not freeze the full calibration set.
 
@@ -12,9 +25,9 @@ Review the cases before any Axioma run. Build subsequent batches only after pres
 
 The files review-batch-01-v2.md, candidate-cases-batch-01-v2.jsonl, and manifest-v2.json preserve the original v1 files and correct case axioma-20261030-broad-002: bottom-up edit distance fills boundary cells even when either input is empty, so its complete time and auxiliary-space bounds are O((m+1)(k+1)). The proposed partition uses the evaluator-supported value calibration.
 
-The project owner confirmed all five batch-01 labels against the exact source on 2026-10-31. The separate owner-decision file and gold-reviewed-batch-01-v2.jsonl preserve that review. On 2026-11-02, the owner reviewed batch 02: cases 006–009 were approved and case 010 was revised to O(1) auxiliary space by excluding the two returned O(d²) tables. `owner-decisions-batch-02-v1.jsonl`, `gold-reviewed-batch-02-v1.jsonl`, and its freeze manifest preserve that review and hash. These are partial batch freezes only; the full 30-case calibration set remains unfrozen, and no analyzer run has been performed.
+The project owner confirmed batch 01 against the exact source on 2026-10-31 and reviewed batches 02–06 on 2026-11-02. Separate decision and partial-freeze files preserve each review. Case 010 was revised to O(1) auxiliary space by excluding the two returned O(d²) tables. These were partial freezes before the consolidated set was frozen and analyzed.
 
-The guarded freeze helper requires an explicit `approve` or `revise` decision, source hash, reviewer ID, review date, and rationale for every case. An `approve` must keep the proposed scoring classes. A `revise` must include the final scoring classes, exact time and space expressions, and updated assumptions; the owner's rationale is preserved with the frozen label. The helper writes a new evaluator-compatible gold file and a SHA-256 freeze record, rejects pending decisions, and never overwrites artifacts. The current batch-01 freeze was produced from `owner-decisions-batch-01-v2.jsonl`. Do not use it as a full-set evaluation until the remaining batches are reviewed and the consolidated set is frozen.
+The guarded freeze helper requires an explicit `approve` or `revise` decision, source hash, reviewer ID, review date, and rationale for every case. An `approve` must keep the proposed scoring classes. A `revise` must include the final scoring classes, exact time and space expressions, and updated assumptions; the owner's rationale is preserved with the frozen label. The helper writes a new evaluator-compatible gold file and a SHA-256 freeze record, rejects pending decisions, and never overwrites artifacts. The current batch-01 freeze was produced from `owner-decisions-batch-01-v2.jsonl`; the six partial freezes were later consolidated into the full calibration file described below.
 
 After all six batches have their own partial gold files and freeze manifests, consolidate and freeze the complete calibration set without running Axioma:
 
@@ -40,7 +53,7 @@ services/api/.venv/Scripts/python.exe evaluation/mode1/complexity-review-2026-10
 
 ## Batch 02 proposal (2026-10-31)
 
-`review-batch-02-v1.md` and `candidate-cases-batch-02-v1.jsonl` preserve the original five proposals and pinned sources. The owner decisions and partial gold artifact are stored separately in `owner-decisions-batch-02-v1.jsonl`, `gold-reviewed-batch-02-v1.jsonl`, and `gold-reviewed-batch-02-v1.manifest.json`. The corrected case 010 label excludes its two returned tables from auxiliary space: O(1) auxiliary, O(d²) output. All 30 cases now have owner-reviewed partial freezes, consolidated in `gold-reviewed-calibration-v1.jsonl`; the full calibration artifact is frozen and hashed. Axioma has not been run on it.
+`review-batch-02-v1.md` and `candidate-cases-batch-02-v1.jsonl` preserve the original five proposals and pinned sources. The owner decisions and partial gold artifact are stored separately in `owner-decisions-batch-02-v1.jsonl`, `gold-reviewed-batch-02-v1.jsonl`, and `gold-reviewed-batch-02-v1.manifest.json`. The corrected case 010 label excludes its two returned tables from auxiliary space: O(1) auxiliary, O(d²) output.
 
 Validate the new proposal:
 
@@ -56,7 +69,7 @@ services/api/.venv/Scripts/python.exe evaluation/mode1/complexity-review-2026-10
 
 ## Batch 03 owner review (2026-11-02)
 
-Cases 011–015 are in `review-batch-03-v1.md`, `candidate-cases-batch-03-v1.jsonl`, and `manifest-batch-03-v1.json`. The owner reviewed all five against the pinned source. `owner-decisions-batch-03-v1.jsonl`, `gold-reviewed-batch-03-v1.jsonl`, and its freeze manifest preserve this partial batch review. Case 013 keeps its proposed scoring labels but corrects the rationale to Θ(n²) time for every input order and O(n) auxiliary space excluding input and output. Case 014 keeps its approved labels with a corrected StringBuilder rationale and a duplicate-source flag linking it to `axioma-20261030-v3-04`. Both records are currently in the calibration partition; keep that alignment if both remain in an evaluation dataset. The original candidate packet and manifest remain unchanged. Axioma has not been run on batch 03.
+Cases 011–015 are in `review-batch-03-v1.md`, `candidate-cases-batch-03-v1.jsonl`, and `manifest-batch-03-v1.json`. The owner reviewed all five against the pinned source. `owner-decisions-batch-03-v1.jsonl`, `gold-reviewed-batch-03-v1.jsonl`, and its freeze manifest preserve this partial batch review. Case 013 keeps its proposed scoring labels but corrects the rationale to Θ(n²) time for every input order and O(n) auxiliary space excluding input and output. Case 014 keeps its approved labels with a corrected StringBuilder rationale and a duplicate-source flag linking it to `axioma-20261030-v3-04`. Both records remain in the calibration partition.
 
 Validate batch 03 and its source provenance:
 
@@ -67,7 +80,7 @@ services/api/.venv/Scripts/python.exe evaluation/mode1/complexity-review-2026-10
 
 ## Batch 04 owner review (2026-11-02)
 
-Cases 016–020 are in `review-batch-04-v1.md`, `candidate-cases-batch-04-v1.jsonl`, and `manifest-batch-04-v1.json`. The owner reviewed all five against pinned source. `owner-decisions-batch-04-v1.jsonl`, `gold-reviewed-batch-04-v1.jsonl`, and its freeze manifest preserve this partial batch review. Case 020's exact auxiliary-space label is O(k), excluding the returned output; its coarse class remains O(n) when k=O(n). Candidate packet and manifest remain unchanged. Axioma has not been run on batch 04. `prepare_batch_04.py` regenerates the proposal from saved pinned snapshots and refuses a source hash already used in batches 01–03.
+Cases 016–020 are in `review-batch-04-v1.md`, `candidate-cases-batch-04-v1.jsonl`, and `manifest-batch-04-v1.json`. The owner reviewed all five against pinned source. `owner-decisions-batch-04-v1.jsonl`, `gold-reviewed-batch-04-v1.jsonl`, and its freeze manifest preserve this partial batch review. Case 020's exact auxiliary-space label is O(k), excluding the returned output; its coarse class remains O(n) when k=O(n). `prepare_batch_04.py` regenerates the proposal from saved pinned snapshots and refuses a source hash already used in batches 01–03.
 
 Validate the proposal, its generator style, and all 20 source records:
 
@@ -79,17 +92,17 @@ services/api/.venv/Scripts/python.exe evaluation/mode1/complexity-review-2026-10
 
 ## Batch 05 owner review (2026-11-02)
 
-Cases 021–025 are preserved in the review sheet, candidate packet, and manifest. The owner confirmed all five against pinned source; the separate owner-decision file and partial gold artifact preserve the decisions. The candidate packet and manifest remain unchanged. Axioma has not been run.
+Cases 021–025 are preserved in the review sheet, candidate packet, and manifest. The owner confirmed all five against pinned source; the separate owner-decision file and partial gold artifact preserve the decisions. The candidate packet and manifest remain unchanged.
 
 ## Batch 06 owner review (2026-11-02)
 
-Cases 026–030 are preserved in the review sheet, candidate packet, and manifest. The owner confirmed all five against pinned source, revising only case 028's coarse time class to O(n²) for n=V+E. The separate owner-decision file and partial gold artifact preserve the decisions. Candidate packet and manifest remain unchanged. Axioma has not been run.
+Cases 026–030 are preserved in the review sheet, candidate packet, and manifest. The owner confirmed all five against pinned source, revising only case 028's coarse time class to O(n²) for n=V+E. The separate owner-decision file and partial gold artifact preserve the decisions. Candidate packet and manifest remain unchanged.
 
 ## Full candidate-set preparation status
 
-All 30 candidates are present across six five-case packets. The 30 IDs and source hashes are unique; every source file matches its pinned upstream commit byte-for-byte. All six packet validators pass. Owner-reviewed partial freezes cover 30/30 cases and are consolidated in `gold-reviewed-calibration-v1.jsonl`. Its manifest records SHA-256 `c5d016c2cc6dbb57c9e3039d5ba820dd3cdc76ad3b757f81f883162c90cd9ca3`. The full calibration set is frozen; Axioma has not been run on it.
+All 30 candidates are present across six five-case packets. The 30 IDs and source hashes are unique; every source file matches its pinned upstream commit byte-for-byte. All six packet validators pass. Owner-reviewed partial freezes cover 30/30 cases and are consolidated in `gold-reviewed-calibration-v1.jsonl`. Its manifest records SHA-256 `c5d016c2cc6dbb57c9e3039d5ba820dd3cdc76ad3b757f81f883162c90cd9ca3`. The full calibration set is frozen and the recorded run is summarized above.
 
-The calibration gold artifact is frozen and hash-verified. The next step is to run Axioma against this calibration set; do not treat its results as untouched final-evaluation performance.
+The calibration run is complete. The next evaluation gate is to use these results for targeted development, then freeze and score a separately selected untouched holdout. Do not use these calibration results as final-evaluation performance.
 
 Validate the last two batches, all six packets, and all pinned upstream source bytes:
 
