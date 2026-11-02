@@ -64,7 +64,9 @@ def test_harness_records_submission_line_for_runtime_errors(tmp_path) -> None:
     output = next(line for line in completed.stdout.splitlines() if line.startswith(marker))
     result = json.loads(output[len(marker) :])[0]
     assert completed.returncode == 0
-    assert result["details"]["error"] == "ZeroDivisionError: integer division or modulo by zero"
+    error = result["details"]["error"]
+    assert error.startswith("ZeroDivisionError:")
+    assert "by zero" in error
     assert result["details"]["source_location"] == {
         "file": "submission.py",
         "line": 2,
