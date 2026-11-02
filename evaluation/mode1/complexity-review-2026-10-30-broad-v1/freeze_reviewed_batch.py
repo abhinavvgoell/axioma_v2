@@ -76,6 +76,7 @@ def freeze_reviewed_batch(
 
     gold_rows = []
     source_hashes = {}
+    review_flags = []
     for case_id, candidate in candidate_by_id.items():
         decision = decision_by_id[case_id]
         if candidate.get("decision_status") != "proposed_pending_owner_confirmation":
@@ -138,12 +139,18 @@ def freeze_reviewed_batch(
         if partition not in PARTITIONS:
             raise ValueError(f"{case_id}: partition is not supported by the evaluator")
 
-        rationale = (
-            f"Time: {candidate['time_rationale']} Auxiliary space: {candidate['space_rationale']} "
-            f"Owner review: {decision['rationale'].strip()}"
-            if decision_status == "approve"
-            else f"Owner-reviewed time and auxiliary-space rationale: {decision['rationale'].strip()}"
-        )
+        rationale_override = decision.get("rationale_override")
+        if rationale_override is not None:
+            if not isinstance(rationale_override, str) or not rationale_override.strip():
+                raise ValueError(f"{case_id}: rationale_override must be a non-empty string")
+            rationale = rationale_override.strip()
+        else:
+            rationale = (
+                f"Time: {candidate['time_rationale']} Auxiliary space: {candidate['space_rationale']} "
+                f"Owner review: {decision['rationale'].strip()}"
+                if decision_status == "approve"
+                else f"Owner-reviewed time and auxiliary-space rationale: {decision['rationale'].strip()}"
+            )
         gold_rows.append(
             {
                 "id": case_id,
@@ -164,6 +171,10 @@ def freeze_reviewed_batch(
             }
         )
         source_hashes[case_id] = source_hash
+        flags = decision.get("review_flags", [])
+        if not isinstance(flags, list) or any(not isinstance(flag, str) or not flag.strip() for flag in flags):
+            raise ValueError(f"{case_id}: review_flags must be a list of non-empty strings")
+        review_flags.extend({"case_id": case_id, "flag": flag.strip()} for flag in flags)
 
     gold_bytes = (
         "".join(json.dumps(row, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n" for row in gold_rows)
@@ -189,6 +200,7 @@ def freeze_reviewed_batch(
         "gold_labels_file": output_path.name,
         "gold_labels_sha256": _sha256(gold_bytes),
         "source_sha256": source_hashes,
+        "review_flags": review_flags,
         "analyzer_run": False,
     }
     output_path.write_bytes(gold_bytes)

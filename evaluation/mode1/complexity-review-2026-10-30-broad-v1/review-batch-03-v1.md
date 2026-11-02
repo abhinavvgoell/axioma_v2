@@ -1,6 +1,6 @@
 # Complexity calibration — batch 03 (proposed)
 
-**Status:** Labels are proposed and pending owner review. Axioma has not been run on these cases. This packet is prepared ahead to keep work moving; review only this batch after batch 02 decisions are recorded. The packet includes the complete pinned source files.
+**Status:** Owner-reviewed on 2026-11-02 against the complete pinned source. Batch decisions are recorded separately in `owner-decisions-batch-03-v1.jsonl`; the original candidate packet and manifest remain unchanged. This is a partial batch review only. Axioma has not been run on these cases.
 
 Packet SHA-256: `df3fcbaa078a6a7471db0039bc332d55a87d307d3e29d674a5ea17c02c6354c8`
 
@@ -177,9 +177,10 @@ if __name__ == "__main__":
 - **Proposed auxiliary space:** `O(n)` (scoring class `O(n)`)
 - **Entrypoint:** `merge_sort`
 - **Input size:** n = len(collection); assume element comparisons are O(1).
-- **Assumptions:** Analyze merge_sort for a list of comparable values with O(1) comparisons. Python list pop(0) shifts the remaining references and is O(k) for a list of length k. Report worst-case time; returned sorted list and temporary lists are included in the O(n) peak storage bound.
-- **Time rationale:** The divide-and-conquer structure would normally be O(n log n), but merge repeatedly calls list.pop(0). Removing the first element shifts the remaining list, so a merge of two Θ(n)-sized halves can take Θ(n²) time on interleaved values. This top-level merge dominates lower levels in the worst case.
-- **Space rationale:** Recursive slicing and merge result lists retain O(n) elements at peak: the active recursive slices decrease geometrically, and each merge holds only O(n) list elements at a time.
+- **Owner decision:** Revise assumptions and rationale wording; complexity labels remain `O(n^2)` time and `O(n)` auxiliary space.
+- **Assumptions:** Analyze merge_sort for a list of comparable values with O(1) comparisons. Python list pop(0) shifts the remaining references and is O(k) for a list of length k. Exclude the input and returned list from auxiliary space; count recursive slices and intermediate merge lists.
+- **Time rationale:** In each merge of two non-empty halves, one half is eventually exhausted through repeated `pop(0)` calls. Those removals shift a total of Θ(n²) references for a top-level merge of n elements, regardless of input order. Thus T(n) = 2T(n/2) + Θ(n²) = Θ(n²). The source docstring's O(n log n) claim is incorrect because it does not account for the shifting cost of list.pop(0).
+- **Space rationale:** Excluding input and returned output, recursive slices and intermediate lists use O(n) peak auxiliary storage. During the top-level merge, the halves and result collectively hold O(n) references; recursion-path slices decrease geometrically.
 
 ```python
 """
@@ -268,8 +269,9 @@ if __name__ == "__main__":
 - **Entrypoint:** `LongestCommonSubsequence.getLCS`
 - **Input size:** m = str1.length(), k = str2.length(); coarse n = max(m,k).
 - **Assumptions:** Both strings are non-null. For the proposed coarse n² scoring class, analyze non-empty strings and set n=max(m,k) and assume m and k are of comparable order; the exact two-parameter bound is O(mk), not necessarily Θ(n²) when lengths are highly unbalanced. Java string splitting and character comparisons are assumed linear/constant per character respectively.
-- **Time rationale:** The DP fills every cell of an (m+1)×(k+1) table, taking Θ(mk). Backtracking is O(m+k); building the returned subsequence by repeated string concatenation can take O(L²), where L≤min(m,k), which is bounded by O(mk) for non-empty inputs. The coarse score class uses n=max(m,k), so O(mk) is O(n²).
+- **Time rationale:** For non-empty strings, the DP fills every cell of an (m+1)×(k+1) table, taking Θ(mk). Backtracking and reconstruction use StringBuilder append/reverse operations and take O(m+k), which is dominated by Θ(mk) for m,k≥1. If either string is empty, the method returns in O(1) before allocating the table. The coarse score class uses n=max(m,k); O(mk) is O(n²), and is Θ(n²) when m and k are comparable.
 - **Space rationale:** The int DP table stores Θ(mk) cells. Character arrays and the reconstructed output use O(m+k), dominated by O(mk) when both strings are non-empty. The empty-input fast path returns before allocating the table.
+- **Duplicate-source flag:** The source SHA-256 and pinned commit are identical to `axioma-20261030-v3-04` in `complexity-review-2026-10-30-fresh-v3/space-review-v1.md`. That earlier case uses a different coarse size convention (total length instead of max(m,k)). Keep this duplicate visible in the review/freeze metadata and ensure both occurrences are assigned to the same evaluation partition if both are retained; otherwise the same implementation could cross partitions.
 
 ```java
 package com.thealgorithms.dynamicprogramming;
@@ -383,6 +385,7 @@ final class LongestCommonSubsequence {
 - **Assumptions:** Analyze the full public find call, including isSorted, not just the search loop. Array is non-null and indexed access and Comparable.compareTo are O(1). An empty array is rejected in O(1). The imported SearchAlgorithm interface only declares the method contract.
 - **Time rationale:** Before its Fibonacci-search loop, find calls isSorted, which scans adjacent array elements and takes O(n). The subsequent Fibonacci search takes O(log n), so total method time remains O(n).
 - **Space rationale:** Both sortedness validation and Fibonacci search keep only a fixed number of indices and Fibonacci counters; no size-dependent storage or recursion is used.
+- **Owner note:** The class Javadoc's O(log n) describes the search loop but omits the full-call `isSorted` validation; the reviewed public method is O(n).
 
 ```java
 package com.thealgorithms.searches;

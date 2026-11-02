@@ -1,0 +1,36 @@
+{
+  "status": "human_reviewed_batch_frozen",
+  "dataset_gold_labels_frozen": false,
+  "partial_batch_only": true,
+  "reviewer_id": "project_owner",
+  "review_date": "2026-11-02",
+  "case_count": 5,
+  "case_ids": [
+    "axioma-20261030-broad-011",
+    "axioma-20261030-broad-012",
+    "axioma-20261030-broad-013",
+    "axioma-20261030-broad-014",
+    "axioma-20261030-broad-015"
+  ],
+  "candidate_manifest": "manifest-batch-03-v1.json",
+  "candidate_manifest_sha256": "157e596d91a5dcebedad5832322a0dfbb75ac43234c327089bff4ea942738c27",
+  "candidate_packet": "candidate-cases-batch-03-v1.jsonl",
+  "candidate_packet_sha256": "df3fcbaa078a6a7471db0039bc332d55a87d307d3e29d674a5ea17c02c6354c8",
+  "review_decisions_sha256": "7ce18f1857e80aa40662a966b18c1d847de40038243a9974c9bc51379e2f63db",
+  "gold_labels_file": "gold-reviewed-batch-03-v1.jsonl",
+  "gold_labels_sha256": "e39ef7c988ab7a11e68e776504a06db1f37766419dab47f88b35bc7bfcc57bdd",
+  "source_sha256": {
+    "axioma-20261030-broad-011": "b127ba324e56ee5282b62b3336bc3c7e6e750414916c0222f6039cefb4bf2fa0",
+    "axioma-20261030-broad-012": "46a4586f2afc04c16fa73911f27fa63e928b3263b5854386a223efd4615acae2",
+    "axioma-20261030-broad-013": "c37c47ef9c269dc5024ca579433f7c0cd7e61e3bb35e4885bbcebd9a24e2d9a3",
+    "axioma-20261030-broad-014": "ed98d5f455bd5e792a734d763bae810767a679333f3f160f353b2769ded84b5b",
+    "axioma-20261030-broad-015": "372928b9da6ce36c1e36c3178a7503db6663bcee3a23208f1e5248b29ebcb4aa"
+  },
+  "review_flags": [
+    {
+      "case_id": "axioma-20261030-broad-014",
+      "flag": "duplicate_source: identical SHA-256 and pinned commit as axioma-20261030-v3-04; keep both records in the same partition or remove one before evaluation to avoid source leakage across partitions."
+    }
+  ],
+  "analyzer_run": false
+}

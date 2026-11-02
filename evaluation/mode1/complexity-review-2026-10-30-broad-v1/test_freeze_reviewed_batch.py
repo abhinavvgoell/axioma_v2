@@ -96,6 +96,29 @@ def test_freeze_requires_explicit_approval_and_emits_evaluator_gold(tmp_path: Pa
     assert record["gold_labels_sha256"] == digest
 
 
+def test_freeze_allows_owner_rationale_correction_without_changing_approved_labels(tmp_path: Path) -> None:
+    manifest, decisions, output, _ = _fixture(tmp_path)
+    rows = [json.loads(line) for line in decisions.read_text(encoding="utf-8").splitlines()]
+    rows[0]["rationale_override"] = "Corrected rationale, with approved labels unchanged."
+    rows[0]["review_flags"] = ["duplicate_source:case-004"]
+    _write_jsonl(decisions, rows)
+
+    gold_path, record_path, _ = freeze_reviewed_batch(
+        manifest_path=manifest,
+        decisions_path=decisions,
+        output_path=output,
+        reviewer_id="owner-1",
+        review_date="2026-10-31",
+    )
+
+    gold = load_gold(gold_path)["case-001"]
+    assert gold["expected_time"] == "O(n)"
+    assert gold["expected_auxiliary_space"] == "O(1)"
+    assert gold["rationale"] == "Corrected rationale, with approved labels unchanged."
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    assert record["review_flags"] == [{"case_id": "case-001", "flag": "duplicate_source:case-004"}]
+
+
 def test_freeze_refuses_pending_decision(tmp_path: Path) -> None:
     manifest, decisions, output, _ = _fixture(tmp_path)
     rows = [json.loads(line) for line in decisions.read_text(encoding="utf-8").splitlines()]
