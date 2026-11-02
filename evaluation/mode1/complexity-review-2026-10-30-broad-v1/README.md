@@ -14,7 +14,7 @@ The files review-batch-01-v2.md, candidate-cases-batch-01-v2.jsonl, and manifest
 
 The project owner confirmed all five batch-01 labels against the exact source on 2026-10-31. The separate owner-decision file and gold-reviewed-batch-01-v2.jsonl preserve that review. The latter is frozen only as a partial batch; the full 30-case calibration set remains unfrozen and no analyzer run has been performed. Its SHA-256 is recorded in gold-reviewed-batch-01-v2.manifest.json.
 
-The guarded freeze helper requires an explicit approve decision, matching labels and source hash for every case, reviewer ID, and review date. It writes a new evaluator-compatible gold file and a SHA-256 freeze record; it refuses pending/revised decisions and never overwrites artifacts. The current batch-01 freeze was produced from owner-decisions-batch-01-v2.jsonl. Do not use it as a full-set evaluation until the remaining batches are reviewed and the consolidated set is frozen.
+The guarded freeze helper requires an explicit `approve` or `revise` decision, source hash, reviewer ID, review date, and rationale for every case. An `approve` must keep the proposed scoring classes. A `revise` must include the final scoring classes, exact time and space expressions, and updated assumptions; the owner's rationale is preserved with the frozen label. The helper writes a new evaluator-compatible gold file and a SHA-256 freeze record, rejects pending decisions, and never overwrites artifacts. The current batch-01 freeze was produced from `owner-decisions-batch-01-v2.jsonl`. Do not use it as a full-set evaluation until the remaining batches are reviewed and the consolidated set is frozen.
 
 Validate the original v1 proposal or revised v2 proposal from the repository root:
 

@@ -121,6 +121,57 @@ def test_freeze_refuses_mismatched_hash_and_label(tmp_path: Path) -> None:
         )
 
 
+def test_freeze_accepts_owner_revised_labels_with_rationale_and_assumptions(tmp_path: Path) -> None:
+    manifest, decisions, output, source_hash = _fixture(tmp_path)
+    rows = [json.loads(line) for line in decisions.read_text(encoding="utf-8").splitlines()]
+    rows[0].update(
+        {
+            "decision": "revise",
+            "expected_time": "O(n log n)",
+            "expected_auxiliary_space": "O(n)",
+            "expected_time_exact": "O(n log n) under the documented input contract",
+            "expected_auxiliary_space_exact": "O(n) temporary storage",
+            "assumptions": "The revised label applies to the stated input-size parameter n.",
+            "rationale": "The owner reviewed a corrected implementation analysis.",
+        }
+    )
+    _write_jsonl(decisions, rows)
+
+    gold_path, _, _ = freeze_reviewed_batch(
+        manifest_path=manifest,
+        decisions_path=decisions,
+        output_path=output,
+        reviewer_id="owner-1",
+        review_date="2026-10-31",
+    )
+
+    gold = load_gold(gold_path)["case-001"]
+    assert gold["expected_time"] == "O(n log n)"
+    assert gold["expected_auxiliary_space"] == "O(n)"
+    assert gold["expected_time_exact"] == "O(n log n) under the documented input contract"
+    assert gold["expected_auxiliary_space_exact"] == "O(n) temporary storage"
+    assert gold["assumptions"] == "The revised label applies to the stated input-size parameter n."
+    assert gold["owner_decision"] == "revise"
+    assert gold["source_sha256"] == source_hash
+
+
+def test_freeze_rejects_revision_without_explicit_exact_labels_and_assumptions(tmp_path: Path) -> None:
+    manifest, decisions, output, _ = _fixture(tmp_path)
+    rows = [json.loads(line) for line in decisions.read_text(encoding="utf-8").splitlines()]
+    rows[0]["decision"] = "revise"
+    _write_jsonl(decisions, rows)
+
+    with pytest.raises(ValueError, match="revised labels require both exact complexity expressions"):
+        freeze_reviewed_batch(
+            manifest_path=manifest,
+            decisions_path=decisions,
+            output_path=output,
+            reviewer_id="owner-1",
+            review_date="2026-10-31",
+        )
+    assert not output.exists()
+
+
 def test_freeze_refuses_incomplete_decisions_and_overwrite(tmp_path: Path) -> None:
     manifest, decisions, output, _ = _fixture(tmp_path)
     decisions.write_text("", encoding="utf-8")

@@ -82,8 +82,9 @@ def freeze_reviewed_batch(
             raise ValueError(f"{case_id}: candidate is not pending owner confirmation")
         if candidate.get("owner_decision") is not None or candidate.get("reviewer") is not None:
             raise ValueError(f"{case_id}: candidate already contains review fields")
-        if decision.get("decision") != "approve":
-            raise ValueError(f"{case_id}: only explicit approve decisions can be frozen")
+        decision_status = decision.get("decision")
+        if decision_status not in {"approve", "revise"}:
+            raise ValueError(f"{case_id}: only explicit approve or revise decisions can be frozen")
         if decision.get("reviewer_id") != reviewer_id.strip():
             raise ValueError(f"{case_id}: reviewer_id does not match the freeze metadata")
         if decision.get("review_date") != review_date:
@@ -101,29 +102,53 @@ def freeze_reviewed_batch(
             raise ValueError(f"{case_id}: source snapshot path escapes the batch directory")
         if source_path.read_bytes() != embedded_source.encode("utf-8"):
             raise ValueError(f"{case_id}: local source snapshot hash mismatch")
-        if decision.get("expected_time") != candidate.get("expected_time"):
-            raise ValueError(f"{case_id}: approved time class differs from the proposed scoring class")
-        if decision.get("expected_auxiliary_space") != candidate.get("expected_auxiliary_space"):
-            raise ValueError(f"{case_id}: approved space class differs from the proposed scoring class")
         if decision.get("rationale") is None or not str(decision["rationale"]).strip():
             raise ValueError(f"{case_id}: reviewer rationale is required")
-        for field in ("expected_time", "expected_auxiliary_space"):
-            if candidate.get(field) not in CLASSES:
+        labels = {
+            "expected_time": decision.get("expected_time"),
+            "expected_auxiliary_space": decision.get("expected_auxiliary_space"),
+        }
+        for field, value in labels.items():
+            if value not in CLASSES:
                 raise ValueError(f"{case_id}: {field} is not an evaluator-supported class")
+        if decision_status == "approve":
+            for field, value in labels.items():
+                if value != candidate.get(field):
+                    dimension = "time" if field == "expected_time" else "space"
+                    raise ValueError(f"{case_id}: approved {dimension} class differs from the proposed scoring class")
+            exact_labels = {
+                "expected_time_exact": candidate["expected_time_exact"],
+                "expected_auxiliary_space_exact": candidate["expected_auxiliary_space_exact"],
+            }
+            assumptions = candidate["assumptions"]
+        else:
+            exact_labels = {
+                "expected_time_exact": decision.get("expected_time_exact"),
+                "expected_auxiliary_space_exact": decision.get("expected_auxiliary_space_exact"),
+            }
+            if any(not isinstance(value, str) or not value.strip() for value in exact_labels.values()):
+                raise ValueError(f"{case_id}: revised labels require both exact complexity expressions")
+            assumptions = decision.get("assumptions")
+            if not isinstance(assumptions, str) or not assumptions.strip():
+                raise ValueError(f"{case_id}: revised labels require updated input assumptions")
+        for field, value in exact_labels.items():
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{case_id}: {field} must be a non-empty expression")
         partition = candidate.get("partition")
         if partition not in PARTITIONS:
             raise ValueError(f"{case_id}: partition is not supported by the evaluator")
 
         rationale = (
-            f"Time: {candidate['time_rationale']} "
-            f"Auxiliary space: {candidate['space_rationale']} "
+            f"Time: {candidate['time_rationale']} Auxiliary space: {candidate['space_rationale']} "
             f"Owner review: {decision['rationale'].strip()}"
+            if decision_status == "approve"
+            else f"Owner-reviewed time and auxiliary-space rationale: {decision['rationale'].strip()}"
         )
         gold_rows.append(
             {
                 "id": case_id,
-                "expected_time": candidate["expected_time"],
-                "expected_auxiliary_space": candidate["expected_auxiliary_space"],
+                "expected_time": labels["expected_time"],
+                "expected_auxiliary_space": labels["expected_auxiliary_space"],
                 "partition": partition,
                 "reviewer": reviewer_id.strip(),
                 "review_date": review_date,
@@ -131,11 +156,11 @@ def freeze_reviewed_batch(
                 "family": candidate["family"],
                 "language": candidate["language"],
                 "source_sha256": source_hash,
-                "expected_time_exact": candidate["expected_time_exact"],
-                "expected_auxiliary_space_exact": candidate["expected_auxiliary_space_exact"],
-                "assumptions": candidate["assumptions"],
+                "expected_time_exact": exact_labels["expected_time_exact"],
+                "expected_auxiliary_space_exact": exact_labels["expected_auxiliary_space_exact"],
+                "assumptions": assumptions,
                 "input_size": candidate["input_size"],
-                "owner_decision": "approve",
+                "owner_decision": decision_status,
             }
         )
         source_hashes[case_id] = source_hash
