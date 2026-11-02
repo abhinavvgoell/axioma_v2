@@ -1,1 +1,4 @@
 evaluation/mode1/bfs-independent-2026-10-29-v1/gold-reviewed-java-adjacency-2026-10-29.json eol=crlf
+evaluation/mode1/complexity-review-2026-10-30-broad-v1/manifest-*.json eol=crlf
+evaluation/mode1/complexity-review-2026-10-30-broad-v1/gold-reviewed-batch-*.manifest.json eol=crlf
+evaluation/mode1/complexity-review-2026-10-30-broad-v1/gold-reviewed-calibration-*.manifest.json eol=crlf

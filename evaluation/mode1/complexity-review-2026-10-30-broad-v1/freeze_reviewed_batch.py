@@ -192,7 +192,8 @@ def freeze_reviewed_batch(
         "analyzer_run": False,
     }
     output_path.write_bytes(gold_bytes)
-    record_path.write_text(json.dumps(freeze_record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    record_bytes = (json.dumps(freeze_record, indent=2, ensure_ascii=False) + "\n").replace("\n", "\r\n").encode("utf-8")
+    record_path.write_bytes(record_bytes)
     return output_path, record_path, freeze_record["gold_labels_sha256"]
 
 

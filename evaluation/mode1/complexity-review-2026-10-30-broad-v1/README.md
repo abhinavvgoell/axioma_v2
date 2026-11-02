@@ -16,6 +16,21 @@ The project owner confirmed all five batch-01 labels against the exact source on
 
 The guarded freeze helper requires an explicit `approve` or `revise` decision, source hash, reviewer ID, review date, and rationale for every case. An `approve` must keep the proposed scoring classes. A `revise` must include the final scoring classes, exact time and space expressions, and updated assumptions; the owner's rationale is preserved with the frozen label. The helper writes a new evaluator-compatible gold file and a SHA-256 freeze record, rejects pending decisions, and never overwrites artifacts. The current batch-01 freeze was produced from `owner-decisions-batch-01-v2.jsonl`. Do not use it as a full-set evaluation until the remaining batches are reviewed and the consolidated set is frozen.
 
+After all six batches have their own partial gold files and freeze manifests, consolidate and freeze the complete calibration set without running Axioma:
+
+```powershell
+services/api/.venv/Scripts/python.exe evaluation/mode1/complexity-review-2026-10-30-broad-v1/consolidate_reviewed_calibration.py `
+  evaluation/mode1/complexity-review-2026-10-30-broad-v1/gold-reviewed-batch-01-v2.manifest.json `
+  evaluation/mode1/complexity-review-2026-10-30-broad-v1/gold-reviewed-batch-02-v1.manifest.json `
+  evaluation/mode1/complexity-review-2026-10-30-broad-v1/gold-reviewed-batch-03-v1.manifest.json `
+  evaluation/mode1/complexity-review-2026-10-30-broad-v1/gold-reviewed-batch-04-v1.manifest.json `
+  evaluation/mode1/complexity-review-2026-10-30-broad-v1/gold-reviewed-batch-05-v1.manifest.json `
+  evaluation/mode1/complexity-review-2026-10-30-broad-v1/gold-reviewed-batch-06-v1.manifest.json `
+  --output evaluation/mode1/complexity-review-2026-10-30-broad-v1/gold-reviewed-calibration-v1.jsonl
+```
+
+The consolidator refuses missing or duplicate batches, altered source/packet/manifest/gold hashes, non-calibration rows, incomplete owner metadata, and existing output paths. Its manifest records the input hashes and leaves `analyzer_run` false. The frozen set is calibration data only; it is not the untouched final evaluation set.
+
 Validate the original v1 proposal or revised v2 proposal from the repository root:
 
 ```powershell
