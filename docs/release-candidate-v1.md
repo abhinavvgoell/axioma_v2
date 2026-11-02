@@ -114,6 +114,8 @@ Clean-checkout validation ran against commit `a97d19fae3ef43cb243c420939802b35bd
 
 The PostgreSQL check is a single concurrency test on a disposable local server, not a broad PostgreSQL compatibility guarantee. The catalog hash result verifies deterministic output for this pinned importer/runtime, not dataset licensing for redistribution. No performance benchmark or public deployment claim is made.
 
+Follow-up local check on 2026-11-02: against a newly created scratch SQLite database (the existing local databases were not used), `services/api/.venv/Scripts/python.exe services/api/scripts/run_release_demo.py --timeout-seconds 120` passed all six scenarios. `GET http://127.0.0.1:8000/health` returned `{"status":"ok"}`, the frontend at `http://127.0.0.1:5173/` returned HTTP 200, and `/analyzer` loaded in the in-app browser. This is a local smoke check, not an independent clean-clone reproduction.
+
 ### Remaining release gate
 
 - Have someone other than the implementer reproduce the documented install/test/demo path from a clean checkout; this independent reproduction remains unverified.
