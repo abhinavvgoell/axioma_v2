@@ -5,19 +5,19 @@
 ## Current counts
 
 - Candidate source implementations: 30 across six batches of five.
-- Owner-confirmed labels: 5 (cases 001–005), frozen as a partial batch only.
-- Labels awaiting owner review: 25 (cases 006–030).
+- Owner-reviewed labels: 10 (cases 001–010), frozen as two partial batches only.
+- Labels awaiting owner review: 20 (cases 011–030).
 - Full-set gold labels frozen: no.
 - Axioma run against these candidates: no.
 
 ## Review sequence
 
-Review one packet at a time, starting with batch 02:
+Review one packet at a time, starting with batch 03:
 
 | Cases | Human review sheet | Proposed packet | State |
 |---|---|---|---|
 | 001–005 | `review-batch-01-v2.md` | `candidate-cases-batch-01-v2.jsonl` | Owner-confirmed; partial freeze only |
-| 006–010 | `review-batch-02-v1.md` | `candidate-cases-batch-02-v1.jsonl` | Pending owner review |
+| 006–010 | `review-batch-02-v1.md` | `candidate-cases-batch-02-v1.jsonl` | Owner-reviewed; partial freeze. Case 010 space revised to O(1) excluding returned tables |
 | 011–015 | `review-batch-03-v1.md` | `candidate-cases-batch-03-v1.jsonl` | Pending owner review |
 | 016–020 | `review-batch-04-v1.md` | `candidate-cases-batch-04-v1.jsonl` | Pending owner review |
 | 021–025 | `review-batch-05-v1.md` | `candidate-cases-batch-05-v1.jsonl` | Pending owner review |
@@ -27,7 +27,7 @@ Each worksheet contains the exact source code used for its proposed labels, sour
 
 ## Validation evidence
 
-- All six candidate validators report five unique cases per packet, matching source hashes, labels not frozen, and no analyzer run.
+- Candidate packets remain unchanged, with five unique cases per batch, matching source hashes, and no analyzer run. Batch 01 and batch 02 have separate owner-reviewed partial gold freezes; candidate manifests intentionally remain unfrozen.
 - Structural audit: exactly 30 unique case IDs (`axioma-20261030-broad-001` through `...030`), 30 distinct source hashes, no missing time/space labels, and every embedded/local snapshot matches its hash.
 - Pinned-source audit: all 30 source files match byte-for-byte with the corresponding GitHub files at the recorded commits.
 - Ruff passed on the source-verification and batch-preparation scripts.
@@ -37,4 +37,4 @@ The source repositories are pinned TheAlgorithms/Python and TheAlgorithms/Java M
 
 ## Gate before analyzer execution
 
-The owner must approve or revise each case in batches 02–06. Record any corrected label and rationale in a separate owner-decision artifact; do not edit the source packets or hashes. Then freeze the consolidated 30-case gold labels, record and verify its SHA-256, and only after that run Axioma and compute evaluation metrics.
+The owner must approve or revise each case in batches 03–06. Record any corrected label and rationale in a separate owner-decision artifact; do not edit the source packets or hashes. Then freeze the consolidated 30-case gold labels, record and verify its SHA-256, and only after that run Axioma and compute evaluation metrics.
