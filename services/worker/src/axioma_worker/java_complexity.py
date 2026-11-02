@@ -309,8 +309,12 @@ def _recursive_binary_search_recurrence(
                 continue
             opening, closing = header
             condition = body[opening + 1 : closing]
-            if len(condition) == 3 and condition[1] == ">":
-                low_high = (condition[0], condition[2])
+            if len(condition) == 3 and condition[1] in {">", "<"}:
+                low_high = (
+                    (condition[0], condition[2])
+                    if condition[1] == ">"
+                    else (condition[2], condition[0])
+                )
                 break
     if low_high is None:
         return None
@@ -334,19 +338,26 @@ def _recursive_binary_search_recurrence(
     argument_lists = [arguments for _, arguments in calls]
     if any(len(arguments) != 4 for arguments in argument_lists):
         return None
-    array, target, _, _ = argument_lists[0]
-    if argument_lists[1][:2] != [array, target]:
+    bound_indexes = [
+        index
+        for index in range(4)
+        if argument_lists[0][index] != argument_lists[1][index]
+    ]
+    if len(bound_indexes) != 2:
         return None
-    bounds = [arguments[2:] for arguments in argument_lists]
-    shapes = {
-        (tuple(_strip_parentheses(pair[0])), tuple(_strip_parentheses(pair[1])))
-        for pair in bounds
+    bound_shapes = {
+        tuple(tuple(_strip_parentheses(arguments[index])) for index in bound_indexes)
+        for arguments in argument_lists
     }
-    expected = {
-        ((mid, "+", "1"), (high,)),
+    expected_shapes = {
         ((low,), (mid, "-", "1")),
+        ((mid, "+", "1"), (high,)),
     }
-    if shapes != expected:
+    reverse_parameter_order = {
+        ((mid, "-", "1"), (low,)),
+        ((high,), (mid, "+", "1")),
+    }
+    if bound_shapes not in {frozenset(expected_shapes), frozenset(reverse_parameter_order)}:
         return None
     call_positions = [position for position, _ in calls]
     first_return = max(
@@ -357,19 +368,31 @@ def _recursive_binary_search_recurrence(
         (index for index, token in enumerate(body[:call_positions[1]]) if token == "return"),
         default=-1,
     )
-    if first_return < 0 or second_return <= first_return or "values" not in body or mid not in body:
+    array_name = argument_lists[0][0][0] if len(argument_lists[0][0]) == 1 else None
+    if (
+        first_return < 0
+        or second_return <= first_return
+        or array_name is None
+        or [array_name, "[", mid, "]"] not in [body[i : i + 4] for i in range(len(body) - 3)]
+        or mid not in body
+    ):
         return None
-    branch_if = max(
-        (index for index, token in enumerate(body[:first_return]) if token == "if"),
-        default=-1,
-    )
-    branch_header = _loop_header(body, branch_if) if branch_if >= 0 else None
-    if branch_header is None:
-        return None
-    branch_close = _matching(body, branch_header[1] + 1, "{", "}")
-    if branch_close is None or not (branch_header[1] < call_positions[0] < branch_close):
-        return None
-    if call_positions[1] <= branch_close:
+    mutually_exclusive_branch = False
+    for branch_if, token in enumerate(body[: call_positions[0]]):
+        if token != "if":
+            continue
+        branch_header = _loop_header(body, branch_if)
+        if branch_header is None:
+            continue
+        branch_close = _matching(body, branch_header[1] + 1, "{", "}")
+        if (
+            branch_close is not None
+            and branch_header[1] < call_positions[0] < branch_close
+            and call_positions[1] > branch_close
+        ):
+            mutually_exclusive_branch = True
+            break
+    if not mutually_exclusive_branch:
         return None
     recurrence, estimate, rule = solve_bounded_recurrence(1, "factor_two", "constant") or ("", "", "")
     evidence = recurrence_evidence(
@@ -384,11 +407,24 @@ def _recursive_binary_search_recurrence(
             "The selected method has one mutually exclusive recursive branch per call.",
             "The midpoint divides the inclusive [low, high] interval into halves.",
             "The bounds are valid array indices and array access is O(1).",
-            "The base case returns when low > high.",
+            "The base case returns when the lower bound exceeds the upper bound.",
         ],
         location={"function": method_name, "line": None},
     )
     return estimate, evidence
+
+
+def _returned_helper_name(body: list[str], method_name: str) -> str | None:
+    """Return the callee for a method whose entire body is `return helper(...);`."""
+    if len(body) < 5 or body[0] != "return" or body[2] != "(":
+        return None
+    helper_name = body[1]
+    if helper_name == method_name or not re.fullmatch(r"[A-Za-z_$][\w$]*", helper_name):
+        return None
+    close = _matching(body, 2, "(", ")")
+    if close is None or body[close + 1 :] != [";"]:
+        return None
+    return helper_name
 
 
 def _is_last_pivot_quicksort(
@@ -2713,6 +2749,20 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         })
 
     binary_recurrence = _recursive_binary_search_recurrence(tokens, parts[1], body)
+    delegated_binary_search = False
+    helper_name = _returned_helper_name(body, parts[1])
+    if binary_recurrence is None and helper_name is not None:
+        helper_range = _method_body_bounds(tokens, class_range, helper_name)
+        if helper_range is not None:
+            helper_body = tokens[helper_range[0] : helper_range[1]]
+            binary_recurrence = _recursive_binary_search_recurrence(
+                tokens, helper_name, helper_body
+            )
+            delegated_binary_search = binary_recurrence is not None
+            if delegated_binary_search and binary_recurrence is not None:
+                binary_recurrence[1]["assumptions"].append(
+                    "The selected entrypoint only returns this helper call, so wrapper overhead is O(1)."
+                )
     quicksort_recurrence = _is_last_pivot_quicksort(tokens, class_range, body, parts[1])
     scalar_recurrence = (
         _recursive_scalar_recurrence(tokens, parts[1], class_range, body)
@@ -2747,6 +2797,12 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         for signal in signals:
             if signal["kind"] == "recursion":
                 signal["label"] = "Direct self-call; bounded recurrence recognized"
+        if delegated_binary_search and helper_name is not None:
+            signals.append({
+                "kind": "delegated_binary_search",
+                "label": f"Entrypoint directly returns recursive binary-search helper {helper_name}()",
+                "line": None,
+            })
         signals.append({
             "kind": "recurrence",
             "label": "Recursive call pattern matched by bounded recurrence rules",
@@ -2850,6 +2906,8 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         method = (
             "static_java_worst_case_quicksort_recurrence"
             if quicksort_recurrence
+            else "static_java_delegated_binary_search_recurrence"
+            if delegated_binary_search
             else "static_java_recurrence_v1"
         )
         explanation = (
@@ -2930,7 +2988,11 @@ def analyze_java_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
         details={
             "code_analysis": {
                 "language": "java",
-                "scope": "selected method; called helpers are not expanded",
+                "scope": (
+                    "selected entrypoint and one directly returned binary-search helper"
+                    if delegated_binary_search
+                    else "selected method; called helpers are not expanded"
+                ),
                 "auxiliary_space": auxiliary_space,
                 "signals": signals,
                 **({"bfs": bfs_details} if bfs_details is not None else {}),

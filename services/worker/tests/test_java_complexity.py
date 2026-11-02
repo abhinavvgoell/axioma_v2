@@ -454,6 +454,32 @@ def test_java_recursive_binary_search_has_recurrence_evidence() -> None:
     assert evidence["input_size_reduction"] == "factor_two"
 
 
+def test_java_entrypoint_delegating_to_recursive_binary_search_is_logarithmic() -> None:
+    estimate = analyze_java_complexity(
+        "class Search { "
+        "int find(Integer[] arr, Integer target) { "
+        "return binsear(arr, 0, arr.length - 1, target); } "
+        "int binsear(Integer[] arr, int left, int right, Integer target) { "
+        "if (right < left) return -1; "
+        "int mid = left + (right - left) / 2; "
+        "int comparison = arr[mid].compareTo(target); "
+        "if (comparison == 0) return mid; "
+        "if (comparison > 0) { return binsear(arr, left, mid - 1, target); } "
+        "return binsear(arr, mid + 1, right, target); } }",
+        "Search.find",
+    )
+
+    assert estimate.method == "static_java_delegated_binary_search_recurrence"
+    assert estimate.estimate == "O(log n)"
+    assert estimate.details["code_analysis"]["scope"] == (
+        "selected entrypoint and one directly returned binary-search helper"
+    )
+    assert any(
+        signal["kind"] == "delegated_binary_search"
+        for signal in estimate.details["code_analysis"]["signals"]
+    )
+
+
 def test_java_last_pivot_quicksort_reports_worst_case_recurrence() -> None:
     estimate = analyze_java_complexity(
         "class Solution { void sort(int[] values, int low, int high) { "
