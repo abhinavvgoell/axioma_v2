@@ -1,0 +1,33 @@
+{
+  "analyzer_branch": "main",
+  "analyzer_commit": "fb617f6e641ac22a15f44ff9b77675829c99b2dc",
+  "analyzer_source_sha256": {
+    "java_complexity.py": "29dabe27b50d499ad7438a7a7258833881b295556b3c27cf2b850c887e0654f1",
+    "python_complexity.py": "72dc52bccca4403ca3681d60116732a13aececea3e8cc11bea777b760efc1aef",
+    "recurrence.py": "5c1a91dc9bd79fc2cf29e0577b615e5eab2ba3363f83343c53a2344aaf32cab9"
+  },
+  "candidate_packet_sha256": {
+    "candidate-cases-batch-01-v2.jsonl": "dc631455f4a5d44447f598d46137b4f2ab738d07dfb61dfeb48d3040aa400276",
+    "candidate-cases-batch-02-v1.jsonl": "3f06adcb60b84f909f1f4dc9b105cd0425d1627ba39f0820a6ab618249a493b9",
+    "candidate-cases-batch-03-v1.jsonl": "df3fcbaa078a6a7471db0039bc332d55a87d307d3e29d674a5ea17c02c6354c8",
+    "candidate-cases-batch-04-v1.jsonl": "a8b8cf234741da71407c014ec5a2b2b8d21ae57d27c5d16c4e9af596175d8e4b",
+    "candidate-cases-batch-05-v1.jsonl": "a401a89e5b7362e918f87afcbabd13ed6a9a5e5ca3ce180e2795889f94ca26ee",
+    "candidate-cases-batch-06-v1.jsonl": "ed64db43ec0c3a13851e37f9f2086b7abd4e9aa70045770b1f85ac860a07e96b"
+  },
+  "dataset_id": "axioma-20261030-external-broad-calibration-v2",
+  "frozen_gold_manifest_sha256": "629c2987072e6d032ebcfdcd74d2aae6dbb259668d46e07a91afbf8943301f0e",
+  "gold_labels_sha256": "c5d016c2cc6dbb57c9e3039d5ba820dd3cdc76ad3b757f81f883162c90cd9ca3",
+  "limitations": [
+    "Calibration data shares source repositories with earlier development work.",
+    "No benchmark timings were run; this measures static analyzer predictions only.",
+    "Auxiliary-space estimates are bounded static heuristics and may abstain."
+  ],
+  "outputs": {
+    "analysis-output-calibration-v2.json": "c6da664b5fde71303a4308dcf9de382e2a5c9d49333c70634b58d8bcf111a101",
+    "evaluation-report-calibration-v2.json": "6e77f00b9d4a6bca1a52a167a06c862b7c352936854c52759a68e1ed74f24732",
+    "joined-calibration-v2.jsonl": "9e182fb78922def85b275ed832b1ffe37b11bc40a493d32c12eb13a264230adf",
+    "predictions-calibration-v2.jsonl": "6228b900c75b0647ffcd9f5585c957983d9892a7c81138da15ecb858f6cd7b94"
+  },
+  "partition": "calibration",
+  "runner_source_sha256": "177144d8df8f5f7de07e7842619e7527c9c0f556a8ffd2a17b5554b690aadf95"
+}

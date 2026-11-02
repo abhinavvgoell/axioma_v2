@@ -2,18 +2,19 @@
 
 This folder contains the 30-case calibration review set, assembled in six batches of five. The owner reviewed all labels, and the consolidated calibration set is frozen. The preparation notes below preserve historical checkpoints; current run status is recorded first.
 
-## Current calibration run (2026-11-02)
+## Calibration runs (2026-11-02)
 
-`run_calibration_v1.py` analyzed the frozen 30-case set using the current Java and Python static analyzers. The runner reads only the six source candidate packets while making analyzer calls; labels are loaded afterward for scoring. It produced 60 predictions: one time and one auxiliary-space record per case. No code execution or benchmark timing was performed.
+Both runs analyzed the frozen 30-case set with the static Java and Python analyzers. Each runner reads only the six source candidate packets while making analyzer calls; labels are loaded afterward for scoring. Each run produced 60 predictions: one time and one auxiliary-space record per case. No submission execution or benchmark timing was performed.
 
-| Dimension | Answered | Coverage | Exact accuracy across all cases | Exact accuracy among answered |
-|---|---:|---:|---:|---:|
-| Time complexity | 15/30 | 50.0% | 36.7% (11/30) | 73.3% (11/15) |
-| Auxiliary space | 4/30 | 13.3% | 13.3% (4/30) | 100% (4/4) |
+| Run | Dimension | Answered | Coverage | Exact accuracy across all cases | Exact accuracy among answered |
+|---|---|---:|---:|---:|---:|
+| v1 | Time complexity | 15/30 | 50.0% | 36.7% (11/30) | 73.3% (11/15) |
+| v2 | Time complexity | 15/30 | 50.0% | 40.0% (12/30) | 80.0% (12/15) |
+| v1 and v2 | Auxiliary space | 4/30 | 13.3% | 13.3% (4/30) | 100% (4/4) |
 
-These are calibration diagnostics, not held-out performance. The sample is under 50 distinct solutions, shares upstream repositories with prior work, and showed significant abstention; the perfect auxiliary-space selective score is based on only four answered cases. The run report also contains family/language/method breakdowns and confidence intervals.
+The v2 replay adds the bounded Python `sort_before_binary_search` rule: a top-level sort completed before a binary-search call now estimates `O(n log n)`, while a plain binary search remains `O(log n)`. The fractional-knapsack case 017 is corrected. Coverage did not change. These are calibration diagnostics, not held-out performance. The sample is under 50 distinct solutions, shares upstream repositories with prior work, and has significant abstention; the auxiliary-space selective score is based on only four answered cases. Reports include family/language/method breakdowns and confidence intervals.
 
-Outputs are in `calibration-run-v1/`: raw analyzer output, prediction JSONL, joined evaluator input, evaluation report, and run manifest. The frozen gold file and manifest remain unchanged. The run used analyzer commit `624b5e0532a94f7fc4f4b35621d8b1ea9b241531`.
+Outputs for each run are in `calibration-run-v1/` and `calibration-run-v2/`: raw analyzer output, prediction JSONL, joined evaluator input, evaluation report, and run manifest. The frozen gold file and manifest remain unchanged. V1 used analyzer commit `624b5e0532a94f7fc4f4b35621d8b1ea9b241531`; v2 used `fb617f6e641ac22a15f44ff9b77675829c99b2dc`. V2 source and output hashes are recorded in its run manifest.
 
 Batch 01 contains five exact source files from pinned MIT-licensed upstream commits. The original proposals are preserved in `candidate-cases-batch-01-v1.jsonl` and `review-batch-01.md`; the owner-approved revised packet is preserved separately in `candidate-cases-batch-01-v2.jsonl` and its owner-decision/freeze artifacts. Its partial freeze does not freeze the full calibration set.
 
