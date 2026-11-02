@@ -719,6 +719,39 @@ def _has_bisect_call(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | 
     return None
 
 
+def _top_level_sort_then_bisect(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> int | None:
+    """Recognize a sort completed before a binary-search call outside input loops."""
+    sort_lines: list[int] = []
+    bisect_lines: list[int] = []
+    stack = [(node, 0) for node in function.body]
+    while stack:
+        node, depth = stack.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            continue
+        nested_depth = depth + int(
+            isinstance(node, (ast.For, ast.AsyncFor, ast.While,
+                              ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp))
+        )
+        if isinstance(node, ast.Call):
+            name = (
+                node.func.id if isinstance(node.func, ast.Name)
+                else node.func.attr if isinstance(node.func, ast.Attribute)
+                else ""
+            )
+            if depth == 0 and name in {"sorted"} or (
+                depth == 0 and isinstance(node.func, ast.Attribute) and name == "sort"
+            ):
+                sort_lines.append(getattr(node, "lineno", 0))
+            if depth == 0 and name in {"bisect", "bisect_left", "bisect_right"}:
+                bisect_lines.append(getattr(node, "lineno", 0))
+        stack.extend((child, nested_depth) for child in ast.iter_child_nodes(node))
+    if sort_lines and bisect_lines and min(sort_lines) < max(bisect_lines):
+        return min(sort_lines)
+    return None
+
+
 def _amortized_stack_scan(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
     """Recognize one push-per-item stacks with pop-only inner while loops."""
     for outer in (node for node in ast.walk(function) if isinstance(node, (ast.For, ast.AsyncFor))):
@@ -2657,6 +2690,7 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
     insertion_sort_line = _is_insertion_sort(function)
     binary_search_line = _is_binary_search_loop(function)
     bisect_line = _has_bisect_call(function)
+    sort_then_bisect_line = _top_level_sort_then_bisect(function)
     kahn_line = _is_kahn_topological_sort(function)
     graph_bfs_line = _is_adjacency_list_bfs(function)
     grid_bfs = _is_grid_bfs(function)
@@ -2757,6 +2791,13 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "kind": "binary_search",
             "label": "Interval-halving loop updates both search bounds from the midpoint",
             "line": binary_search_line,
+        })
+        signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
+    if sort_then_bisect_line is not None:
+        signals.append({
+            "kind": "sort_before_binary_search",
+            "label": "Input is sorted before a binary-search call",
+            "line": sort_then_bisect_line,
         })
         signals.sort(key=lambda signal: (signal.get("line") or 0, signal["kind"]))
     if insertion_sort_line is not None:
@@ -3023,6 +3064,14 @@ def analyze_python_complexity(code: str, entrypoint: str) -> ComplexityEstimate:
             "items, giving O(n^2) worst-case time and O(n) best-case time when already sorted. "
             "This assumes constant-time comparisons and indexed sequence access; the syntax rule "
             "is a bounded heuristic."
+        )
+    elif sort_then_bisect_line is not None:
+        method = "static_ast_sort_then_binary_search"
+        estimate = "O(n log n)"
+        explanation = (
+            "Recognized a top-level sort that completes before a binary-search call. The sort "
+            "costs O(n log n) and dominates the subsequent O(log n) search, so the combined "
+            "work is O(n log n). This bounded syntax match is a heuristic."
         )
     elif binary_search_line is not None or bisect_line is not None:
         method = "static_ast_binary_search"

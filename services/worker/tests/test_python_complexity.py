@@ -157,12 +157,25 @@ def test_recognizes_lower_bound_binary_search_and_bisect() -> None:
         "def solve(values, target): return bisect_left(values, target)\n",
         "solve",
     )
+    sort_then_bisect = analyze_python_complexity(
+        "from bisect import bisect_left\n"
+        "def solve(values, target):\n"
+        "    ordered = sorted(values)\n"
+        "    return bisect_left(ordered, target)\n",
+        "solve",
+    )
 
     assert lower_bound.estimate == "O(log n)"
     assert bisect.estimate == "O(log n)"
+    assert sort_then_bisect.method == "static_ast_sort_then_binary_search"
+    assert sort_then_bisect.estimate == "O(n log n)"
     assert any(
         signal["kind"] == "binary_search"
         for signal in bisect.details["code_analysis"]["signals"]
+    )
+    assert any(
+        signal["kind"] == "sort_before_binary_search"
+        for signal in sort_then_bisect.details["code_analysis"]["signals"]
     )
 
 
