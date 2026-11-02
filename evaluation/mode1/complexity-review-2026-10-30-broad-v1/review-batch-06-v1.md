@@ -1,6 +1,6 @@
 # Complexity calibration — batch 06 (proposed)
 
-**Status:** Five labels proposed and pending owner confirmation. Axioma has not been run. Complete pinned source code, assumptions, rationales, and hashes are included.
+**Status:** Owner-reviewed on 2026-11-02 against the complete pinned sources. Decisions are recorded in `owner-decisions-batch-06-v1.jsonl`; the candidate packet and manifest remain unchanged. This is a partial batch review only. Axioma has not been run.
 
 Packet SHA-256: `ed64db43ec0c3a13851e37f9f2086b7abd4e9aa70045770b1f85ac860a07e96b`
 
@@ -178,9 +178,10 @@ if __name__ == "__main__":
 - **Proposed auxiliary space:** `O(n^2) worst case; expected O(n) for uniformly random pivot ranks` (coarse `O(n^2)`)
 - **Entrypoint:** `quick_sort`
 - **Input size:** n = len(collection).
-- **Assumptions:** Use worst-case labels for scoring. Each pivot selection and comparison is O(1); the random pivot can repeatedly produce a one-sided partition. The expected-case note assumes uniformly random pivot ranks and distinct values. Count partition lists and returned lists as auxiliary storage; exclude the original input.
+- **Owner decision:** Approve; clarify auxiliary-space wording.
+- **Assumptions:** Use worst-case labels for scoring. Each pivot selection and comparison is O(1); the random pivot can repeatedly produce a one-sided partition. The expected-case note assumes uniformly random pivot ranks and distinct values. Exclude the input and final returned output; count retained partition lists and intermediate returned lists while recursion is active.
 - **Time rationale:** Every call builds lesser/equal/greater lists in O(k) for its subproblem size k. Repeated maximally unbalanced pivots yield n+(n-1)+...=O(n²) work; random pivots give expected O(n log n) comparisons for distinct values.
-- **Space rationale:** The recursive frames retain partition lists. With maximally unbalanced partitions, live lists across the call chain sum to n+(n-1)+...=O(n²); balanced random partitions use expected O(n) peak list storage.
+- **Space rationale:** Each recursive frame retains its lesser/equal/greater partition lists, totaling O(k) elements for a k-element subproblem. With maximally unbalanced partitions, live lists across the call chain sum to n+(n-1)+...=O(n²); random balanced partitions use O(n) expected peak retained list storage. The final returned list is excluded, but intermediate lists are counted.
 
 ```python
 """
@@ -245,13 +246,14 @@ if __name__ == "__main__":
 
 - **Source:** [src/main/java/com/thealgorithms/datastructures/graphs/DijkstraAlgorithm.java](https://github.com/TheAlgorithms/Java/blob/410f08753505a0af9e46423396e8768bc97cbc1c/src/main/java/com/thealgorithms/datastructures/graphs/DijkstraAlgorithm.java) (commit `410f08753505a0af9e46423396e8768bc97cbc1c`)
 - **SHA-256:** `5162609a392cb3cfb17b54aa41af77c26a595d5be437dd0e22182d4d335a78f0`
-- **Proposed time:** `O(V^2 + E log(E + 1))` (coarse `O(n log n)`)
+- **Proposed time:** `O(V^2 + E log(E + 1))` (coarse `O(n^2)`)
 - **Proposed auxiliary space:** `O(V + E)` (coarse `O(n)`)
 - **Entrypoint:** `DijkstraAlgorithm.run`
 - **Input size:** V = vertexCount; E = nonzero matrix entries; n = V + E.
-- **Assumptions:** Analyze a valid V×V adjacency matrix with nonnegative edge weights, 0 meaning no edge, valid source, and primitive comparisons/heap node comparisons O(1). Score with n=V+E; exact time is O(V²+E log(E+1)). Include the method's O(V) output printing in time.
-- **Time rationale:** Each processed vertex scans an entire matrix row, for O(V²) scans. Every successful relaxation may enqueue another Node, so up to O(E) heap entries can be inserted and removed at O(log(E+1)) each. Printing distances adds O(V).
-- **Space rationale:** Distances and processed flags use O(V); lazy duplicate queue entries can occupy O(E). The input adjacency matrix is excluded.
+- **Owner decision:** Revise coarse time class only; exact time and space labels remain unchanged.
+- **Assumptions:** Analyze a valid V×V adjacency matrix with nonnegative edge weights, 0 meaning no edge, valid source, and primitive/heap-node comparisons O(1). Score with n=V+E; exact time is O(V²+E log(E+1)). Include O(V) output printing in time. Exclude the input matrix and returned distances array from auxiliary space.
+- **Time rationale:** Each processed vertex scans an entire matrix row, for O(V²) scans. Every successful relaxation may enqueue another Node, so up to O(E) heap entries can be inserted and removed at O(log(E+1)) each. Printing distances adds O(V), dominated. With n=V+E, O(V²+E log(E+1)) is O(n²) and is tight on sparse connected graphs; O(n log n) misses the matrix scan cost.
+- **Space rationale:** The returned `distances` array is output and excluded. Processed flags use O(V), and lazy duplicate queue entries can occupy O(E); auxiliary space is O(V+E), coarse O(n).
 
 ```java
 package com.thealgorithms.datastructures.graphs;

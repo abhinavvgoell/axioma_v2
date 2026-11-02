@@ -1,6 +1,6 @@
 # Complexity calibration — batch 05 (proposed)
 
-**Status:** Five proposed labels, all pending owner confirmation. Axioma has not been run. Full pinned sources, rationales, assumptions, and hashes are included.
+**Status:** Owner-reviewed on 2026-11-02 against the complete pinned sources. Decisions are recorded in `owner-decisions-batch-05-v1.jsonl`; the candidate packet and manifest remain unchanged. This is a partial batch review only. Axioma has not been run.
 
 Packet SHA-256: `a401a89e5b7362e918f87afcbabd13ed6a9a5e5ca3ce180e2795889f94ca26ee`
 
@@ -158,7 +158,8 @@ if __name__ == "__main__":
 - **Entrypoint:** `ite_ternary_search`
 - **Input size:** n = len(array); precision is the module constant 10.
 - **Assumptions:** Analyze ite_ternary_search only, on an array sorted in ascending order, with module precision fixed independently of n and O(1) comparisons/indexing. The file also contains a separate recursive implementation, which is not the selected entrypoint.
-- **Time rationale:** Each loop iteration reduces the active interval to at most about two thirds. Once its size is below the fixed precision threshold, linear search examines at most a constant number of entries.
+- **Owner decision:** Approve; correct rationale wording.
+- **Time rationale:** Each branch reduces the active interval to about one third (lower third, middle third, or upper third), giving O(log n) iterations. With `precision=10`, the linear tail checks at most 9 elements.
 - **Space rationale:** The selected iterative entrypoint uses a fixed number of indices and scalar values; its tail search is also iterative.
 
 ```python
@@ -357,8 +358,8 @@ if __name__ == "__main__":
 - **Proposed auxiliary space:** `O(m * k)` (coarse `O(n^2)`)
 - **Entrypoint:** `longest_common_substring`
 - **Input size:** m = len(text1), k = len(text2), n = max(m,k).
-- **Assumptions:** Inputs are nonempty strings for the coarse n² class; the exact two-parameter bound is O(mk), and an empty input returns in O(1). Character comparison and indexing are O(1). For coarse scoring assume m and k have comparable order.
-- **Time rationale:** For nonempty strings the nested loops fill all m×k interior cells. The final substring slice is O(min(m,k)), dominated by O(mk). The coarse n² class assumes m and k are of comparable order, with n=max(m,k).
+- **Assumptions:** For nonempty strings of lengths m and k, all interior table cells are filled; an empty input returns in O(1). Character comparison and indexing are O(1). Let n=max(m,k). The coarse O(n²) class is a valid upper bound for all lengths and is tight when m and k are comparable.
+- **Time rationale:** For nonempty strings the nested loops fill all m×k interior cells, giving Θ(mk). The final substring slice is O(min(m,k)), dominated by the table work. O(mk)≤O(n²) even when lengths are unbalanced; comparable lengths are needed only for tight Θ(n²).
 - **Space rationale:** The DP table has (m+1)(k+1) cells. The returned substring uses at most O(min(m,k)) additional space, dominated by the table for nonempty strings.
 
 ```python
@@ -528,7 +529,9 @@ public final class KnapsackZeroOneTabulation {
 - **Input size:** V = vertices, E = adjacency entries; n = V + E.
 - **Assumptions:** Input is a DAG represented by the source's adjacency lists; all referenced vertices are present. Hash-map operations for string labels are expected O(1), label hashing/comparison is O(1), and adjacency iteration is linear in degree. Analyze sort, not graph construction. Scoring class uses n=V+E.
 - **Time rationale:** DFS colors each vertex once and checks each adjacency entry once. Linked-list front insertion is O(1), giving O(V+E) time.
-- **Space rationale:** The recursion stack and returned linked list each use O(V). The existing graph input is excluded; output storage is included and remains O(V).
+- **Owner decision:** Approve; correct space-rationale wording.
+- **Space rationale:** Exclude the returned linked list as output. The recursive call stack alone uses O(V) auxiliary space.
+- **Owner note:** `sort` mutates vertex colors, so repeated calls need fresh/reset WHITE state. A deep graph may overflow the Java call stack.
 
 ```java
 package com.thealgorithms.sorts;

@@ -40,7 +40,7 @@ services/api/.venv/Scripts/python.exe evaluation/mode1/complexity-review-2026-10
 
 ## Batch 02 proposal (2026-10-31)
 
-`review-batch-02-v1.md` and `candidate-cases-batch-02-v1.jsonl` preserve the original five proposals and pinned sources. The owner decisions and partial gold artifact are stored separately in `owner-decisions-batch-02-v1.jsonl`, `gold-reviewed-batch-02-v1.jsonl`, and `gold-reviewed-batch-02-v1.manifest.json`. The corrected case 010 label excludes its two returned tables from auxiliary space: O(1) auxiliary, O(d²) output. Batches 01–03 now preserve 15/30 owner-reviewed labels as partial freezes. Cases 016–030 remain pending, the full calibration set is unfrozen, and Axioma has not been run on these candidates. Review the remaining cases in five-case increments; only run Axioma after all labels are reviewed and the full calibration set is frozen.
+`review-batch-02-v1.md` and `candidate-cases-batch-02-v1.jsonl` preserve the original five proposals and pinned sources. The owner decisions and partial gold artifact are stored separately in `owner-decisions-batch-02-v1.jsonl`, `gold-reviewed-batch-02-v1.jsonl`, and `gold-reviewed-batch-02-v1.manifest.json`. The corrected case 010 label excludes its two returned tables from auxiliary space: O(1) auxiliary, O(d²) output. All 30 cases now have separate owner-reviewed partial freezes; the full calibration set remains unconsolidated, and Axioma has not been run on these candidates. Consolidate and hash the 30-case labels before analysis.
 
 Validate the new proposal:
 
@@ -77,19 +77,19 @@ services/api/.venv/Scripts/python.exe evaluation/mode1/complexity-review-2026-10
 services/api/.venv/Scripts/python.exe evaluation/mode1/complexity-review-2026-10-30-broad-v1/verify_pinned_sources.py --manifest evaluation/mode1/complexity-review-2026-10-30-broad-v1/manifest-v2.json evaluation/mode1/complexity-review-2026-10-30-broad-v1/manifest-batch-02-v1.json evaluation/mode1/complexity-review-2026-10-30-broad-v1/manifest-batch-03-v1.json evaluation/mode1/complexity-review-2026-10-30-broad-v1/manifest-batch-04-v1.json
 ```
 
-## Batch 05 proposal (2026-10-31)
+## Batch 05 owner review (2026-11-02)
 
-Cases 021–025 are in `review-batch-05-v1.md`, `candidate-cases-batch-05-v1.jsonl`, and `manifest-batch-05-v1.json`. The packet includes graph search, ternary search, substring dynamic programming, knapsack tabulation, and graph topological sorting. All five labels remain pending owner confirmation; Axioma has not been run. `prepare_batch_05.py` regenerates the packet and checks source-hash uniqueness against batches 01–04.
+Cases 021–025 are preserved in the review sheet, candidate packet, and manifest. The owner confirmed all five against pinned source; the separate owner-decision file and partial gold artifact preserve the decisions. The candidate packet and manifest remain unchanged. Axioma has not been run.
 
-## Batch 06 proposal (2026-10-31)
+## Batch 06 owner review (2026-11-02)
 
-Cases 026–030 are in `review-batch-06-v1.md`, `candidate-cases-batch-06-v1.jsonl`, and `manifest-batch-06-v1.json`. This completes the 30-case **candidate preparation** set. Batches 01–04 have owner-reviewed partial freezes (20 cases total); cases 021–030 remain proposed. The full set is not frozen, and Axioma has not been run against these candidates. `prepare_batch_06.py` regenerates the packet and checks source-hash uniqueness against batches 01–05.
+Cases 026–030 are preserved in the review sheet, candidate packet, and manifest. The owner confirmed all five against pinned source, revising only case 028's coarse time class to O(n²) for n=V+E. The separate owner-decision file and partial gold artifact preserve the decisions. Candidate packet and manifest remain unchanged. Axioma has not been run.
 
 ## Full candidate-set preparation status
 
-All 30 candidates are present across six five-case packets. The 30 IDs and source hashes are unique; every source file matches its pinned upstream commit byte-for-byte. All six packet validators pass. Owner-reviewed partial freezes cover 20/30 cases (001–020); cases 021–030 remain proposed and pending owner review. The full set is not frozen, and the analyzer has not been run on these candidates.
+All 30 candidates are present across six five-case packets. The 30 IDs and source hashes are unique; every source file matches its pinned upstream commit byte-for-byte. All six packet validators pass. Owner-reviewed partial freezes cover 30/30 cases. The full set is not yet consolidated, and Axioma has not been run on these candidates.
 
-Use `review-batch-05-v1.md` and `review-batch-06-v1.md` for the remaining five-case reviews. Do not analyze candidate labels until all owner decisions are recorded and the consolidated gold-label artifact is frozen.
+Consolidate the six partial gold artifacts, verify the resulting SHA-256, then run Axioma. Do not analyze candidate labels before the consolidated artifact is frozen.
 
 Validate the last two batches, all six packets, and all pinned upstream source bytes:
 

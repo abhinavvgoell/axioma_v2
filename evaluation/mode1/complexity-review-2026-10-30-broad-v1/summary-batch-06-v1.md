@@ -1,7 +1,6 @@
 # Batch 06 review summary
 
-- Proposed cases: 5 (026–030); all owner decisions pending.
-- Batches 01–06 contain 30 candidates; only batch 01 has 5 owner-confirmed labels.
-- Full calibration labels frozen: no. Axioma run against these candidates: no.
-
-Review remains in packets of five, beginning with batch 02.
+- Cases 026–030: all owner decisions recorded on 2026-11-02; batch 06 is frozen as a partial batch only.
+- 026, 027, 029, 030 approved. 027 wording excludes the final returned list but counts active partition and intermediate lists.
+- 028 revised coarse time class only: exact O(V² + E log(E+1)); for n=V+E, coarse time is O(n²). Exact auxiliary space remains O(V+E), coarse O(n); returned distances are output.
+- Total owner-reviewed: 30/30. Full calibration labels frozen: no. Axioma run against candidates: no.
