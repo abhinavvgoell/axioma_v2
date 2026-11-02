@@ -40,7 +40,7 @@ services/api/.venv/Scripts/python.exe evaluation/mode1/complexity-review-2026-10
 
 ## Batch 02 proposal (2026-10-31)
 
-`review-batch-02-v1.md` and `candidate-cases-batch-02-v1.jsonl` preserve the original five proposals and pinned sources. The owner decisions and partial gold artifact are stored separately in `owner-decisions-batch-02-v1.jsonl`, `gold-reviewed-batch-02-v1.jsonl`, and `gold-reviewed-batch-02-v1.manifest.json`. The corrected case 010 label excludes its two returned tables from auxiliary space: O(1) auxiliary, O(d²) output. All 30 cases now have separate owner-reviewed partial freezes; the full calibration set remains unconsolidated, and Axioma has not been run on these candidates. Consolidate and hash the 30-case labels before analysis.
+`review-batch-02-v1.md` and `candidate-cases-batch-02-v1.jsonl` preserve the original five proposals and pinned sources. The owner decisions and partial gold artifact are stored separately in `owner-decisions-batch-02-v1.jsonl`, `gold-reviewed-batch-02-v1.jsonl`, and `gold-reviewed-batch-02-v1.manifest.json`. The corrected case 010 label excludes its two returned tables from auxiliary space: O(1) auxiliary, O(d²) output. All 30 cases now have owner-reviewed partial freezes, consolidated in `gold-reviewed-calibration-v1.jsonl`; the full calibration artifact is frozen and hashed. Axioma has not been run on it.
 
 Validate the new proposal:
 
@@ -87,9 +87,9 @@ Cases 026–030 are preserved in the review sheet, candidate packet, and manifes
 
 ## Full candidate-set preparation status
 
-All 30 candidates are present across six five-case packets. The 30 IDs and source hashes are unique; every source file matches its pinned upstream commit byte-for-byte. All six packet validators pass. Owner-reviewed partial freezes cover 30/30 cases. The full set is not yet consolidated, and Axioma has not been run on these candidates.
+All 30 candidates are present across six five-case packets. The 30 IDs and source hashes are unique; every source file matches its pinned upstream commit byte-for-byte. All six packet validators pass. Owner-reviewed partial freezes cover 30/30 cases and are consolidated in `gold-reviewed-calibration-v1.jsonl`. Its manifest records SHA-256 `c5d016c2cc6dbb57c9e3039d5ba820dd3cdc76ad3b757f81f883162c90cd9ca3`. The full calibration set is frozen; Axioma has not been run on it.
 
-Consolidate the six partial gold artifacts, verify the resulting SHA-256, then run Axioma. Do not analyze candidate labels before the consolidated artifact is frozen.
+The calibration gold artifact is frozen and hash-verified. The next step is to run Axioma against this calibration set; do not treat its results as untouched final-evaluation performance.
 
 Validate the last two batches, all six packets, and all pinned upstream source bytes:
 

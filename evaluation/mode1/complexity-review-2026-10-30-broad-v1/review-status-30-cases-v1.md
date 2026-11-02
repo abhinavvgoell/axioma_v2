@@ -1,13 +1,13 @@
 # Axioma broad complexity calibration — 30-case review status
 
-**Candidate preparation is complete. Label review and analyzer evaluation are not.**
+**Candidate preparation, owner label review, and calibration gold freeze are complete. Axioma evaluation remains unrun.**
 
 ## Current counts
 
 - Candidate source implementations: 30 across six batches of five.
-- Owner-reviewed labels: 30 (cases 001–030), frozen as six partial batches only.
+- Owner-reviewed labels: 30 (cases 001–030), frozen in six partial batches and one consolidated calibration artifact.
 - Labels awaiting owner review: 0.
-- Full-set gold labels frozen: no.
+- Full-set gold labels frozen: yes. SHA-256: `c5d016c2cc6dbb57c9e3039d5ba820dd3cdc76ad3b757f81f883162c90cd9ca3`.
 - Axioma run against these candidates: no.
 
 ## Review sequence
@@ -27,14 +27,14 @@ Each worksheet contains the exact source code used for its proposed labels, sour
 
 ## Validation evidence
 
-- Candidate packets remain unchanged, with five unique cases per batch, matching source hashes, and no analyzer run. Batches 01–06 have separate owner-reviewed partial gold freezes; candidate manifests intentionally remain unfrozen.
+- Candidate packets remain unchanged, with five unique cases per batch and matching source hashes. Batches 01–06 have separate partial gold freezes, consolidated into `gold-reviewed-calibration-v1.jsonl`; the candidate manifests remain unfrozen. Axioma has not been run.
 - Structural audit: exactly 30 unique case IDs (`axioma-20261030-broad-001` through `...030`), 30 distinct source hashes, no missing time/space labels, and every embedded/local snapshot matches its hash.
 - Pinned-source audit: all 30 source files match byte-for-byte with the corresponding GitHub files at the recorded commits.
 - Ruff passed on the source-verification and batch-preparation scripts.
-- Batch freeze helper tests passed (8/8); batch 05 and 06 source verification matched all ten pinned sources, and both candidate validators confirmed five unique cases with matching hashes. `git diff --check` is run for this update before completion.
+- Batch freeze helper tests passed (8/8), consolidation tests passed (3/3), batches 05 and 06 each matched all five pinned sources, and their candidate validators confirmed five unique cases with matching hashes. The consolidated artifact contains 30 unique IDs and passes the gold loader; `git diff --check` is run for this update before completion.
 
 The source repositories are pinned TheAlgorithms/Python and TheAlgorithms/Java MIT commits recorded in each manifest. This is a **calibration** set that shares upstream repositories with earlier development work; it is not the untouched final evaluation. Keep a separate repository- or time-held-out set for final performance claims.
 
 ## Gate before analyzer execution
 
-All 30 cases now have owner-reviewed partial gold freezes. The next gate is to consolidate the six partial freezes into one 30-case calibration gold artifact, verify its SHA-256 and source integrity, and only then run Axioma and compute evaluation metrics. The analyzer has not been run on this set.
+The six partial freezes are consolidated and frozen in `gold-reviewed-calibration-v1.jsonl`; its recorded SHA-256 is `c5d016c2cc6dbb57c9e3039d5ba820dd3cdc76ad3b757f81f883162c90cd9ca3`. The next gate is to run Axioma against this calibration artifact and compute evaluation metrics. This remains calibration data, not the untouched final evaluation set.
