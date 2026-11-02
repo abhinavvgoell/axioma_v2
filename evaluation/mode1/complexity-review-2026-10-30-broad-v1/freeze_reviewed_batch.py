@@ -121,7 +121,9 @@ def freeze_reviewed_batch(
                 "expected_time_exact": candidate["expected_time_exact"],
                 "expected_auxiliary_space_exact": candidate["expected_auxiliary_space_exact"],
             }
-            assumptions = candidate["assumptions"]
+            assumptions = decision.get("assumptions_override", candidate["assumptions"])
+            if not isinstance(assumptions, str) or not assumptions.strip():
+                raise ValueError(f"{case_id}: assumptions_override must be a non-empty string")
         else:
             exact_labels = {
                 "expected_time_exact": decision.get("expected_time_exact"),

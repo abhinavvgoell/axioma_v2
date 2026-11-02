@@ -1,6 +1,6 @@
 # Complexity calibration — batch 04 (proposed)
 
-**Status:** Five labels are proposed and pending owner confirmation. Axioma has not been run. Full source code is included; review cases 016–020 after the preceding batches.
+**Status:** Owner-reviewed on 2026-11-02 against the complete pinned source. Decisions are recorded separately in `owner-decisions-batch-04-v1.jsonl`; the original candidate packet and manifest remain unchanged. This is a partial batch review only. Axioma has not been run.
 
 Packet SHA-256: `a8b8cf234741da71407c014ec5a2b2b8d21ae57d27c5d16c4e9af596175d8e4b`
 
@@ -13,8 +13,10 @@ Packet SHA-256: `a8b8cf234741da71407c014ec5a2b2b8d21ae57d27c5d16c4e9af596175d8e4
 - **Entrypoint:** `merge_intervals`
 - **Input size:** n = number of intervals.
 - **Assumptions:** Intervals are two-element lists of integers. Sorting uses O(n log n) comparisons, each O(1). Count returned intervals and temporary copies in space; exclude the input.
-- **Time rationale:** Sorting the copied interval list by start takes O(n log n). Validation and the one-pass merge each take O(n), so sorting dominates.
-- **Space rationale:** The sorted copy, merged output, and interval copies each require O(n) storage.
+- **Owner decision:** Approve labels unchanged; correct rationale and space convention.
+- **Assumptions:** Intervals are two-element lists of integers and comparisons/indexing are O(1). Exclude the input and returned merged output from auxiliary space. The validation error-message formatting is O(1) per two-element interval.
+- **Time rationale:** Sorting the copied interval list by start takes O(n log n). Validation and the one-pass merge each take O(n), so sorting dominates. The formatted validation message is constructed on every iteration, but is O(1) per interval under the fixed two-element contract.
+- **Space rationale:** `sorted_intervals` stores O(n) references and Timsort may use up to O(n) temporary storage. The merged list and its interval copies are returned output and excluded. Auxiliary space remains O(n).
 
 ```python
 def merge_intervals(intervals: list[list[int]]) -> list[list[int]]:
@@ -94,6 +96,7 @@ def merge_intervals(intervals: list[list[int]]) -> list[list[int]]:
 - **Assumptions:** Analyze valid input with vl and wt equal in length n, n matching that length, positive weights, and O(1) arithmetic/comparisons. Exclude input and scalar output.
 - **Time rationale:** Sorting n value/weight pairs takes O(n log n). Building lists and prefix sums is O(n), bisect is O(log n), and the final slice sum is O(n); sorting dominates.
 - **Space rationale:** The sorted tuple list, copied value and weight lists, and accumulated weights each use O(n) storage.
+- **Owner note:** Runtime work and storage scale with `len(vl)`; `zip` truncates to the shorter input. The stated contract requires both lists and `n` to agree, so the proposed labels apply. Doctests with mismatched lengths are outside that contract.
 
 ```python
 from bisect import bisect
@@ -160,6 +163,7 @@ if __name__ == "__main__":
 - **Assumptions:** Analyze one call on a DAG with dense vertex IDs 0..V-1, valid adjacency endpoints, a zero-initialized visited list of length V, and an empty global stack. The recursive implementation may hit Python recursion limits on deep graphs. Scoring class uses n=V+E.
 - **Time rationale:** With a zeroed visited list, the driver starts DFS once per unvisited vertex. Each vertex is marked before descent and each adjacency entry is checked once, so work is O(V+E).
 - **Space rationale:** Recursion depth is at most V and each vertex is appended once to the output stack, giving O(V) space.
+- **Owner note:** The recursive call stack alone uses O(V); counting the global result stack does not change the bound because it also holds O(V). Start from an empty global output stack and a fresh all-zero `visited` list of length V. A repeated call with already-marked `visited` state will skip previously visited vertices. Deep chains can exceed Python's recursion limit (around 1000 frames in a typical default configuration).
 
 ```python
 # Author: Phyllipe Bezerra (https://github.com/pmba)
@@ -222,6 +226,7 @@ if __name__ == "__main__":
 - **Assumptions:** Analyze one find call with O(1) comparisons. The method temporarily replaces the last array element and restores it. The imported SearchAlgorithm type only declares the method contract.
 - **Time rationale:** The sentinel loop can inspect n entries when the key is absent; the null-key helper also scans n entries. Setup and restoration are constant-time.
 - **Space rationale:** The methods store only the prior last value and a loop index.
+- **Owner note:** This method mutates the input array temporarily and does not restore the sentinel in a `finally` block if `compareTo` throws. It assumes a consistent comparator, including `key.compareTo(key) == 0`; these are correctness/robustness caveats, not complexity-label changes.
 
 ```java
 package com.thealgorithms.searches;
@@ -331,12 +336,13 @@ public final class SentinelLinearSearch implements SearchAlgorithm {
 - **Source:** [src/main/java/com/thealgorithms/sorts/CountingSort.java](https://github.com/TheAlgorithms/Java/blob/410f08753505a0af9e46423396e8768bc97cbc1c/src/main/java/com/thealgorithms/sorts/CountingSort.java) (commit `410f08753505a0af9e46423396e8768bc97cbc1c`)
 - **SHA-256:** `861aec19c0c3234874d11014c0af65aed14dcab64361fbcbd54d1cfb1d30be74`
 - **Proposed time:** `O(n + k)` (coarse `O(n)`)
-- **Proposed auxiliary space:** `O(n + k)` (coarse `O(n)`)
+- **Proposed auxiliary space:** `O(k)` (coarse `O(n)` when `k = O(n)`)
 - **Entrypoint:** `CountingSort.sort`
 - **Input size:** n = array length; k = max(array)-min(array)+1.
-- **Assumptions:** Input is an int array; k is positive and fits array-size limits. For coarse scoring assume value spread k=O(n); exact time and auxiliary space are O(n+k). Treat fixed-width integer operations and array access as O(1).
+- **Assumptions:** Input is an int array; k = max(array)-min(array)+1 is positive and representable within array-size limits. Exclude the input and returned n-element array from auxiliary space. For coarse scoring assume k=O(n). Treat fixed-width integer operations and array access as O(1).
 - **Time rationale:** The method scans n values for min/max, builds a k-cell histogram, accumulates k counts, and reconstructs n outputs: O(n+k). The coarse O(n) score requires k=O(n).
-- **Space rationale:** The count array has k entries and the result has n entries, so space is O(n+k); coarse O(n) requires k=O(n).
+- **Owner decision:** Revise auxiliary space only. Exact auxiliary space is O(k); the coarse scoring class remains O(n) under k=O(n).
+- **Space rationale:** The histogram array is the only size-dependent auxiliary structure and has k entries, so auxiliary space is O(k). The returned result array has n entries and is output, excluded by the project convention. Counting output too, total additional storage is O(n+k). `IntSummaryStatistics` uses O(1) space. The existing range assumption rules out integer overflow in `max - min + 1`.
 
 ```java
 package com.thealgorithms.sorts;

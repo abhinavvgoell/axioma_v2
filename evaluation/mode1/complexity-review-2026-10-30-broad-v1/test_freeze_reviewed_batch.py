@@ -119,6 +119,26 @@ def test_freeze_allows_owner_rationale_correction_without_changing_approved_labe
     assert record["review_flags"] == [{"case_id": "case-001", "flag": "duplicate_source:case-004"}]
 
 
+def test_freeze_allows_approved_assumption_correction_without_changing_labels(tmp_path: Path) -> None:
+    manifest, decisions, output, _ = _fixture(tmp_path)
+    rows = [json.loads(line) for line in decisions.read_text(encoding="utf-8").splitlines()]
+    rows[0]["assumptions_override"] = "Corrected input and auxiliary-space assumptions."
+    _write_jsonl(decisions, rows)
+
+    gold_path, _, _ = freeze_reviewed_batch(
+        manifest_path=manifest,
+        decisions_path=decisions,
+        output_path=output,
+        reviewer_id="owner-1",
+        review_date="2026-10-31",
+    )
+
+    gold = load_gold(gold_path)["case-001"]
+    assert gold["expected_time"] == "O(n)"
+    assert gold["expected_auxiliary_space"] == "O(1)"
+    assert gold["assumptions"] == "Corrected input and auxiliary-space assumptions."
+
+
 def test_freeze_refuses_pending_decision(tmp_path: Path) -> None:
     manifest, decisions, output, _ = _fixture(tmp_path)
     rows = [json.loads(line) for line in decisions.read_text(encoding="utf-8").splitlines()]
